@@ -58,37 +58,37 @@
 
 	__webpack_require__(317);
 
-	var _colors = __webpack_require__(564);
+	var _colors = __webpack_require__(569);
 
 	var _colors2 = _interopRequireDefault(_colors);
 
 	var _svgIcon = __webpack_require__(483);
 
-	var _searchTerms = __webpack_require__(565);
+	var _searchTerms = __webpack_require__(570);
 
 	var _searchTerms2 = _interopRequireDefault(_searchTerms);
 
-	__webpack_require__(566);
+	__webpack_require__(571);
 
-	__webpack_require__(574);
-
-	__webpack_require__(578);
+	__webpack_require__(579);
 
 	__webpack_require__(583);
 
-	__webpack_require__(587);
+	__webpack_require__(588);
 
-	__webpack_require__(591);
+	__webpack_require__(592);
 
-	__webpack_require__(595);
+	__webpack_require__(596);
 
-	__webpack_require__(599);
+	__webpack_require__(600);
 
-	var _index = __webpack_require__(605);
+	__webpack_require__(604);
+
+	var _index = __webpack_require__(610);
 
 	var _index2 = _interopRequireDefault(_index);
 
-	__webpack_require__(606);
+	__webpack_require__(611);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -46696,11 +46696,13 @@
 
 	__webpack_require__(552);
 
-	__webpack_require__(555);
+	__webpack_require__(557);
 
-	__webpack_require__(558);
+	__webpack_require__(560);
 
-	__webpack_require__(561);
+	__webpack_require__(563);
+
+	__webpack_require__(566);
 
 /***/ },
 /* 528 */
@@ -49237,7 +49239,13 @@
 	        return projectUrl + '/insights/#' + _jsurl2.default.stringify(urlParams);
 	      } else if (firstAlert.funnelsQuery) {
 	        var funnelsQuery = firstAlert.funnelsQuery;
-	        var _urlParams = (0, _util.extend)((0, _utils.funnelsQueryToUrlParams)(funnelsQuery), { alert_content_ids: alertContentIds });
+	        // TODO(mack): Consider having startStepIdx be part of the funnelsQuery
+	        // TODO(mack): Support isOverallConversion
+	        var startStepIdx = firstAlert.anomaly.funnelsDetails.startStepIdx;
+	        var _urlParams = (0, _util.extend)((0, _utils.funnelsQueryToUrlParams)(funnelsQuery), {
+	          alert_content_ids: alertContentIds,
+	          event_index: startStepIdx + 1
+	        });
 	        var urlHash = _rison2.default.encode(_urlParams);
 	        return projectUrl + '/funnels/#view/' + funnelsQuery.bookmarkId + '/' + urlHash.substring(1, urlHash.length - 1);
 	      } else if (firstAlert.retentionQuery) {
@@ -49249,8 +49257,13 @@
 	    /* eslint-enable camelcase */
 
 	  }, {
-	    key: 'updateStateFromAlert',
-	    value: function updateStateFromAlert(smartHubAlert) {
+	    key: 'updateAlertState',
+	    value: function updateAlertState() {
+	      var smartHubAlert = this.state.smartHubAlert;
+	      if (!smartHubAlert) {
+	        return;
+	      }
+
 	      var alertId = void 0,
 	          alertMetadata = void 0,
 	          groupedAlertId = void 0,
@@ -49259,15 +49272,20 @@
 	        var alert = smartHubAlert.alert;
 	        alertMetadata = alert.alertMetadata;
 	        alertId = alert.alertId;
-	        permalink = this.generatePermalink([alert]);
+	        if (this.state.isLink) {
+	          permalink = this.generatePermalink([alert]);
+	        }
 	      } else {
 	        var groupedAlert = smartHubAlert.groupedAlert;
 	        alertMetadata = groupedAlert.alertMetadata;
 	        groupedAlertId = groupedAlert.groupedAlertId;
-	        permalink = this.generatePermalink(groupedAlert.alerts);
+	        if (this.state.isLink) {
+	          permalink = this.generatePermalink(groupedAlert.alerts);
+	        }
 	      }
+
 	      this.update({
-	        alert: smartHubAlert,
+	        smartHubAlert: smartHubAlert,
 	        alertId: alertId,
 	        groupedAlertId: groupedAlertId,
 	        permalink: permalink,
@@ -49282,14 +49300,16 @@
 	    key: 'attributeChangedCallback',
 	    value: function attributeChangedCallback(name, oldValue, value) {
 	      _get(_class.prototype.__proto__ || Object.getPrototypeOf(_class.prototype), 'attributeChangedCallback', this).apply(this, arguments);
-	      if (name === 'alert') {
-	        var alert = this.getJSONAttribute('alert');
-	        this.updateStateFromAlert(alert);
+	      if (name === 'smart-hub-alert') {
+	        this.update({ smartHubAlert: this.getJSONAttribute(name) });
 	      } else if (name === 'project-id') {
 	        this.update({ projectId: Number(value) });
 	      } else if (name === 'mixpanel-host') {
 	        this.update({ mixpanelHost: value });
+	      } else if (name === 'is-link') {
+	        this.update({ isLink: this.isAttributeEnabled(name) });
 	      }
+	      this.updateAlertState();
 	    }
 	  }, {
 	    key: 'config',
@@ -49303,6 +49323,7 @@
 	        defaultState: {
 	          projectId: null,
 	          mixpanelHost: '',
+	          isLink: false,
 	          alert: null,
 	          alertId: null,
 	          groupedAlertId: null,
@@ -50055,24 +50076,18 @@
 /* 546 */
 /***/ function(module, exports, __webpack_require__) {
 
-	"use strict";
+	'use strict';
 
 	function _jade_template_fn(locals) {
 	  locals = locals || {};;;
-	  var result_of_with = function ($component, $helpers, Object, alert, alertId, hasSentFeedback, ingestedTimeStr, isRead, markedUseful, message, permalink, type) {
+	  var result_of_with = function ($helpers, Object, alertId, hasSentFeedback, ingestedTimeStr, isLink, isRead, markedUseful, message, permalink, smartHubAlert, type) {
 	    var h = __webpack_require__(299).h;
-	    return {
-	      value: h("a", {
-	        "attrs": {
-	          href: permalink
-	        },
-	        "class": Object.assign({}, {
-	          'mp-sh-alert-unread': !isRead,
-	          'mp-sh-alert-no-hover': $component.getAttribute('no-hover')
-	        }, {
-	          'mp-sh-alert-container': true
-	        })
-	      }, function () {
+	    var jade_mixins = {};
+	    jade_mixins['alert-content'] = function () {
+	      var block = this && this.block,
+	          attributes = this && this.attributes || {};
+
+	      return function () {
 	        var __jade_nodes = [];
 	        __jade_nodes = __jade_nodes.concat(h("div", {
 	          "class": {
@@ -50086,7 +50101,7 @@
 	            }
 	          }, function () {
 	            var __jade_nodes = [];
-	            __jade_nodes = __jade_nodes.concat(type == "ANOMALY" ? function () {
+	            __jade_nodes = __jade_nodes.concat(type == 'ANOMALY' ? function () {
 	              var __jade_nodes = [];
 	              __jade_nodes = __jade_nodes.concat(h("div", {
 	                "class": {
@@ -50094,7 +50109,7 @@
 	                }
 	              }, function () {
 	                var __jade_nodes = []; /*  TODO(mack): Need to figure out how to handle grouped alert */
-	                __jade_nodes = __jade_nodes.concat(!alert.groupedAlert && alert.alert.anomaly.direction === 'NEGATIVE' ? function () {
+	                __jade_nodes = __jade_nodes.concat(!smartHubAlert.groupedAlert && smartHubAlert.alert.anomaly.direction === 'NEGATIVE' ? function () {
 	                  var __jade_nodes = [];
 	                  __jade_nodes = __jade_nodes.concat(h('div', {
 	                    props: {
@@ -50133,7 +50148,7 @@
 	              }
 	            },
 	            "class": {
-	              'mp-sh-alert-delete': true
+	              'mp-sh-alert-remove': true
 	            }
 	          }, function () {
 	            var __jade_nodes = [];
@@ -50189,7 +50204,6 @@
 	                }
 	              }, function () {
 	                var __jade_nodes = [];
-	                __jade_nodes = __jade_nodes.concat(" ");
 	                __jade_nodes = __jade_nodes.concat(h('div', {
 	                  props: {
 	                    innerHTML: '<?xml version="1.0" encoding="UTF-8"?><svg width="22px" height="22px" viewBox="0 0 22 22" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">    <title>thumbs-up</title>    <desc>Anamoly Detection Thumbs Up Icon</desc>    <defs></defs>    <g id="thumbs-up" stroke="none" stroke-width="1" fill-rule="evenodd">        <g id="16-x-16" fill-rule="nonzero" transform="translate(3.000000, 3.000000)">            <path d="M1.33333333,12.9999656 L1.33333333,7.99998471 C3.71668467,6.66127956 5.33339754,4.58605115 6.0471433,2.31392737 L6.09434927,2.15549385 C6.21939618,1.68325067 6.65293291,1.33333333 7.16669533,1.33333333 C7.78055643,1.33333333 8.27780899,1.83055532 8.27780899,2.44438584 C8.27780899,2.55833446 8.26099339,2.66956201 8.22754563,2.77479709 L7.87793404,5.08327314 C7.87793404,5.46660766 8.18874746,5.7777574 8.57241829,5.7777574 L13.5556142,5.7777574 C14.1694753,5.7777574 14.6666667,6.27494881 14.6666667,6.88884048 C14.6666667,7.50270158 14.1694753,7.99995414 13.5556142,7.99995414 C14.1694753,7.99995414 14.6666667,8.49714555 14.6666667,9.11103722 C14.6666667,9.72489832 14.1694753,10.222212 13.5556142,10.222212 L12.9999962,10.222212 C13.6138879,10.222212 14.1110793,10.719434 14.1110793,11.3333257 C14.1110793,11.9471562 13.6138879,12.4443782 12.9999962,12.4443782 L12.9029243,12.4443782 C13.1335426,12.6472966 13.2777899,12.9474092 13.2777899,13.2777593 C13.2777899,13.6361762 13.1082886,13.9554585 12.8442532,14.158377 C12.6554904,14.3026242 12.2192632,14.4276406 11.8834098,14.4832543 C11.0249276,14.6249334 10.1443405,14.6666361 9.24996465,14.6666361 C6.49147258,14.6666361 3.69167528,14.069346 1.33333333,12.9999656 Z M14.2513318,9.23289838 C14.0308386,9.29822156 13.7973302,9.33328747 13.5556142,9.33328747 L13.5556142,6.66662081 C14.5057424,6.66662081 15.329055,7.2083901 15.7335697,7.99993533 C15.903921,8.33327494 16,8.71091142 16,9.11103722 C16,9.73952919 15.7629405,10.3125699 15.3733342,10.7456087 C14.9943702,11.1668188 14.4710795,11.4555709 13.8812365,11.5340553 C13.8176005,11.5425227 13.7531899,11.5485427 13.6881023,11.5520176 C13.6442371,11.5543595 13.6000644,11.5555454 13.5556142,11.5555454 L12.9999962,11.5555454 L12.9999962,8.8888787 C13.1911264,8.8888787 13.3771246,8.91080181 13.5556142,8.95227112 C13.8042284,9.01003283 14.0382751,9.10571633 14.2513318,9.23289838 C14.8037848,9.56267983 15.2151093,10.1042445 15.3733342,10.7456087 C15.419776,10.9338603 15.4444126,11.1307099 15.4444126,11.3333257 C15.4444126,12.0673704 15.1210324,12.7257349 14.6089281,13.173758 C14.1790513,13.5498429 13.6161909,13.7777115 12.9999962,13.7777115 L12.9029243,13.7777115 L12.9029243,12.4443782 L13.7836987,11.4433716 C13.8171073,11.4727674 13.8496276,11.5030097 13.8812365,11.5340553 C14.3194913,11.9644997 14.5825458,12.549369 14.6089281,13.173758 C14.610388,13.2083105 14.6111232,13.2429841 14.6111232,13.2777593 C14.6111232,14.0453211 14.2534737,14.7569572 13.6538299,15.2177934 C13.2640393,15.5156606 12.6857512,15.7018847 12.1005189,15.7987928 C11.2338288,15.9418264 10.326097,15.9999694 9.24996465,15.9999694 C6.31735285,15.9999694 3.32796714,15.3684296 0.782702925,14.2142901 L0,13.8593767 L0,7.21963741 L0.680366905,6.83748197 C2.69872198,5.70379165 4.13965129,3.93719758 4.76932443,1.93319554 L4.8054369,1.81419826 C5.08665823,0.752157991 6.053029,0 7.16669533,0 C8.51692018,0 9.61114232,1.09415974 9.61114232,2.44438584 C9.61114232,2.65187057 9.58522818,2.85768098 9.5333117,3.05721524 L9.32322319,4.44442406 L13.5556142,4.44442406 C14.9058653,4.44442406 16,5.53857954 16,6.88884048 C16,7.28895713 15.903921,7.66659261 15.7335697,7.99993533 C15.4319651,8.59011397 14.8975448,9.04145163 14.2513318,9.23289838 Z" id="glove-outside" fill="#3391E9"></path>            <path d="M1.33666671,12.9999656 C3.69500866,14.069346 6.49480596,14.6666361 9.25329803,14.6666361 C10.1476739,14.6666361 11.028261,14.6249334 11.8867432,14.4832543 C12.2225966,14.4276406 12.6588238,14.3026242 12.8475866,14.158377 C13.111622,13.9554585 13.2811233,13.6361762 13.2811233,13.2777593 C13.2811233,12.9474092 13.136876,12.6472966 12.9062577,12.4443782 L13.0033296,12.4443782 C13.6172213,12.4443782 14.1144127,11.9471562 14.1144127,11.3333257 C14.1144127,10.719434 13.6172213,10.222212 13.0033296,10.222212 L13.5589476,10.222212 C14.1728087,10.222212 14.6700001,9.72489832 14.6700001,9.11103722 C14.6700001,8.49714555 14.1728087,7.99995414 13.5589476,7.99995414 C14.1728087,7.99995414 14.6700001,7.50270158 14.6700001,6.88884048 C14.6700001,6.27494881 14.1728087,5.7777574 13.5589476,5.7777574 L8.57575167,5.7777574 C8.19208084,5.7777574 7.88126742,5.46660766 7.88126742,5.08327314 L8.23087901,2.77479709 C8.26432677,2.66956201 8.28114237,2.55833446 8.28114237,2.44438584 C8.28114237,1.83055532 7.78388981,1.33333333 7.17002871,1.33333333 C6.65626629,1.33333333 6.22272956,1.68325067 6.09768265,2.15549385 L6.05047668,2.31392737 C5.33673092,4.58605115 3.72001805,6.66127956 1.33666671,7.99998471 L1.33666671,12.9999656 Z" id="glove-inside" fill="#FFFFFF"></path>        </g>    </g></svg>'
@@ -50252,9 +50266,46 @@
 	          return __jade_nodes;
 	        }.call(this).filter(Boolean)));;
 	        return __jade_nodes;
+	      }.call(this);
+	    };
+	    return {
+	      value: h("div", function () {
+	        var __jade_nodes = [];
+	        __jade_nodes = __jade_nodes.concat(isLink ? function () {
+	          var __jade_nodes = [];
+	          __jade_nodes = __jade_nodes.concat(h("a", {
+	            "attrs": {
+	              href: permalink
+	            },
+	            "class": Object.assign({}, {
+	              'mp-sh-alert-unread': !isRead,
+	              'mp-sh-alert-hoverable': true
+	            }, {
+	              'mp-sh-alert-container': true
+	            })
+	          }, function () {
+	            var __jade_nodes = [];
+	            __jade_nodes = __jade_nodes.concat(jade_mixins['alert-content'].call(this));;
+	            return __jade_nodes;
+	          }.call(this).filter(Boolean)));;
+	          return __jade_nodes;
+	        }.call(this) : function () {
+	          var __jade_nodes = [];
+	          __jade_nodes = __jade_nodes.concat(h("div", {
+	            "class": {
+	              'mp-sh-alert-container': true
+	            }
+	          }, function () {
+	            var __jade_nodes = [];
+	            __jade_nodes = __jade_nodes.concat(jade_mixins['alert-content'].call(this));;
+	            return __jade_nodes;
+	          }.call(this).filter(Boolean)));;
+	          return __jade_nodes;
+	        }.call(this));;
+	        return __jade_nodes;
 	      }.call(this).filter(Boolean))
 	    };
-	  }.call(this, "$component" in locals ? locals.$component : typeof $component !== "undefined" ? $component : undefined, "$helpers" in locals ? locals.$helpers : typeof $helpers !== "undefined" ? $helpers : undefined, "Object" in locals ? locals.Object : typeof Object !== "undefined" ? Object : undefined, "alert" in locals ? locals.alert : typeof alert !== "undefined" ? alert : undefined, "alertId" in locals ? locals.alertId : typeof alertId !== "undefined" ? alertId : undefined, "hasSentFeedback" in locals ? locals.hasSentFeedback : typeof hasSentFeedback !== "undefined" ? hasSentFeedback : undefined, "ingestedTimeStr" in locals ? locals.ingestedTimeStr : typeof ingestedTimeStr !== "undefined" ? ingestedTimeStr : undefined, "isRead" in locals ? locals.isRead : typeof isRead !== "undefined" ? isRead : undefined, "markedUseful" in locals ? locals.markedUseful : typeof markedUseful !== "undefined" ? markedUseful : undefined, "message" in locals ? locals.message : typeof message !== "undefined" ? message : undefined, "permalink" in locals ? locals.permalink : typeof permalink !== "undefined" ? permalink : undefined, "type" in locals ? locals.type : typeof type !== "undefined" ? type : undefined);
+	  }.call(this, "$helpers" in locals ? locals.$helpers : typeof $helpers !== "undefined" ? $helpers : undefined, "Object" in locals ? locals.Object : typeof Object !== "undefined" ? Object : undefined, "alertId" in locals ? locals.alertId : typeof alertId !== "undefined" ? alertId : undefined, "hasSentFeedback" in locals ? locals.hasSentFeedback : typeof hasSentFeedback !== "undefined" ? hasSentFeedback : undefined, "ingestedTimeStr" in locals ? locals.ingestedTimeStr : typeof ingestedTimeStr !== "undefined" ? ingestedTimeStr : undefined, "isLink" in locals ? locals.isLink : typeof isLink !== "undefined" ? isLink : undefined, "isRead" in locals ? locals.isRead : typeof isRead !== "undefined" ? isRead : undefined, "markedUseful" in locals ? locals.markedUseful : typeof markedUseful !== "undefined" ? markedUseful : undefined, "message" in locals ? locals.message : typeof message !== "undefined" ? message : undefined, "permalink" in locals ? locals.permalink : typeof permalink !== "undefined" ? permalink : undefined, "smartHubAlert" in locals ? locals.smartHubAlert : typeof smartHubAlert !== "undefined" ? smartHubAlert : undefined, "type" in locals ? locals.type : typeof type !== "undefined" ? type : undefined);
 	  if (result_of_with) return result_of_with.value;
 	}
 	module.exports = _jade_template_fn;
@@ -50263,7 +50314,7 @@
 /* 547 */
 /***/ function(module, exports) {
 
-	module.exports = "* {   -webkit-font-smoothing: antialiased; } *:focus {   outline: 0; } *::-ms-clear {   height: 0;   width: 0; } body {   color: #6d859e;   font-family: 'Helvetica Neue', 'Helvetica', 'Tahoma', 'Geneva', 'Arial', sans-serif;   font-size: 13px;   font-stretch: normal;   font-weight: 400; } a, .mp-link {   cursor: pointer;   text-decoration: none; } a, .mp-link, a:visited, .mp-link:visited {   color: #3b99f0; } a:hover, .mp-link:hover {   color: #4ba8ff; } .mp-font-size-xl {   font-size: 18px; } .mp-font-size-large {   font-size: 16px; } .mp-font-size-medium {   font-size: 14px; } .mp-font-size-default {   font-size: 13px; } .mp-font-size-xs {   font-size: 11px;   text-transform: uppercase; } .mp-font-weight-bold {   font-weight: 600; } .mp-font-weight-medium {   font-weight: 500; } .mp-font-weight-regular {   font-weight: 400; } .mp-font-paragraph {   color: #6d859e;   font-size: 14px;   font-family: 'Helvetica Neue', 'Helvetica', 'Tahoma', 'Geneva', 'Arial', sans-serif;   font-stretch: normal;   font-weight: 500;   line-height: 18px; } input[type=text], textarea {   border: 1px solid #d8e0ea;   border-radius: 5px;   box-sizing: border-box;   color: #4c6072;   display: inline-block;   font-family: 'Helvetica Neue', 'Helvetica', 'Tahoma', 'Geneva', 'Arial', sans-serif;   font-size: 13px;   font-weight: 400;   padding: 8px;   transition: border-color 150ms ease-out; } input[type=text]::-webkit-input-placeholder, textarea::-webkit-input-placeholder {   color: #9bacbf !important;   font-weight: weight-normal !important; } input[type=text]::-moz-placeholder, textarea::-moz-placeholder {   color: #9bacbf !important;   font-weight: weight-normal !important; } input[type=text]:-ms-input-placeholder, textarea:-ms-input-placeholder {   color: #9bacbf !important;   font-weight: weight-normal !important; } input[type=text]::placeholder, textarea::placeholder {   color: #9bacbf !important;   font-weight: weight-normal !important; } input[type=text]:focus, textarea:focus, input[type=text]:active, textarea:active {   border-color: #3391e9;   transition: border-color 200ms ease-in; } input[type=text] {   height: 36px; } mp-truncated-text {   display: inline-block;   white-space: nowrap;   width: 100%; } svg-icon {   display: inline-block;   height: 22px;   min-height: 22px;   min-width: 22px;   position: relative;   width: 22px; } svg-icon[icon=type-boolean] #left-dot {   color: #fff;   fill: #fff; } svg-icon[icon=type-boolean] #right-dot {   color: #4c6072;   fill: #4c6072; } svg-icon[icon=lightning-bolt] #bolt, svg-icon[icon=lighting-bolt] #bolt {   color: #fff;   fill: #fff; } svg-icon[icon=alert] #circle, svg-icon[icon=alert] #stem {   color: #fff;   fill: #fff; } svg-icon svg {   height: 22px;   left: 0;   min-height: 22px;   min-width: 22px;   position: absolute;   top: 0;   width: 22px; } .mp-sh-alert-unread {   background-color: #f4f9fd; } .mp-sh-alert-container {   cursor: pointer;   display: -webkit-box;   display: -ms-flexbox;   display: flex;   -webkit-box-orient: vertical;   -webkit-box-direction: normal;       -ms-flex-direction: column;           flex-direction: column;   height: 135px;   -webkit-box-pack: justify;       -ms-flex-pack: justify;           justify-content: space-between;   padding: 0 20px;   width: 320px; } .mp-sh-alert-container:hover:not(.mp-sh-alert-no-hover) {   background-color: #f4f9fd; } .mp-sh-alert-container:hover:not(.mp-sh-alert-no-hover) .mp-sh-alert-delete {   display: -webkit-box;   display: -ms-flexbox;   display: flex; } .mp-sh-alert-container:hover:not(.mp-sh-alert-no-hover) .mp-sh-alert-delete svg-icon {   display: inline-block;   height: 20px;   min-height: 20px;   min-width: 20px;   position: relative;   width: 20px; } .mp-sh-alert-container:hover:not(.mp-sh-alert-no-hover) .mp-sh-alert-delete svg-icon[icon=type-boolean] #left-dot {   color: #fff;   fill: #fff; } .mp-sh-alert-container:hover:not(.mp-sh-alert-no-hover) .mp-sh-alert-delete svg-icon[icon=type-boolean] #right-dot {   color: #4c6072;   fill: #4c6072; } .mp-sh-alert-container:hover:not(.mp-sh-alert-no-hover) .mp-sh-alert-delete svg-icon[icon=lightning-bolt] #bolt, .mp-sh-alert-container:hover:not(.mp-sh-alert-no-hover) .mp-sh-alert-delete svg-icon[icon=lighting-bolt] #bolt {   color: #fff;   fill: #fff; } .mp-sh-alert-container:hover:not(.mp-sh-alert-no-hover) .mp-sh-alert-delete svg-icon[icon=alert] #circle, .mp-sh-alert-container:hover:not(.mp-sh-alert-no-hover) .mp-sh-alert-delete svg-icon[icon=alert] #stem {   color: #fff;   fill: #fff; } .mp-sh-alert-container:hover:not(.mp-sh-alert-no-hover) .mp-sh-alert-delete svg-icon svg {   height: 20px;   left: 0;   min-height: 20px;   min-width: 20px;   position: absolute;   top: 0;   width: 20px; } .mp-sh-alert-container:hover:not(.mp-sh-alert-no-hover) .mp-sh-alert-delete svg-icon svg, .mp-sh-alert-container:hover:not(.mp-sh-alert-no-hover) .mp-sh-alert-delete svg-icon path {   color: #9bacbf;   fill: #9bacbf;   transition: 0.2s; } .mp-sh-alert-container:hover:not(.mp-sh-alert-no-hover) .mp-sh-alert-delete:hover svg-icon svg, .mp-sh-alert-container:hover:not(.mp-sh-alert-no-hover) .mp-sh-alert-delete:hover svg-icon path {   color: #e4567b;   fill: #e4567b; } .mp-sh-alert-container .mp-sh-alert-header {   display: -webkit-box;   display: -ms-flexbox;   display: flex;   height: 20px;   -webkit-box-pack: justify;       -ms-flex-pack: justify;           justify-content: space-between;   padding: 15px 0; } .mp-sh-alert-container .mp-sh-alert-header .mp-sh-alert-header-title {   display: -webkit-box;   display: -ms-flexbox;   display: flex; } .mp-sh-alert-container .mp-sh-alert-header .mp-sh-alert-header-title .mp-sh-alert-header-icon {   display: -webkit-box;   display: -ms-flexbox;   display: flex;   margin-right: 6px;   position: relative;   top: -3px; } .mp-sh-alert-container .mp-sh-alert-header .mp-sh-alert-header-title .mp-sh-alert-header-icon .mp-sh-alert-header-icon-background {   border-radius: 30px;   height: 17px;   position: absolute;   width: 17px; } .mp-sh-alert-container .mp-sh-alert-header .mp-sh-alert-header-title .mp-sh-alert-header-icon .mp-sh-alert-header-icon-svg {   left: 1px;   position: relative;   top: 1px; } .mp-sh-alert-container .mp-sh-alert-header .mp-sh-alert-header-title .mp-sh-alert-header-icon .mp-sh-alert-header-icon-svg svg-icon {   display: inline-block;   height: 15px;   min-height: 15px;   min-width: 15px;   position: relative;   width: 15px; } .mp-sh-alert-container .mp-sh-alert-header .mp-sh-alert-header-title .mp-sh-alert-header-icon .mp-sh-alert-header-icon-svg svg-icon[icon=type-boolean] #left-dot {   color: #fff;   fill: #fff; } .mp-sh-alert-container .mp-sh-alert-header .mp-sh-alert-header-title .mp-sh-alert-header-icon .mp-sh-alert-header-icon-svg svg-icon[icon=type-boolean] #right-dot {   color: #4c6072;   fill: #4c6072; } .mp-sh-alert-container .mp-sh-alert-header .mp-sh-alert-header-title .mp-sh-alert-header-icon .mp-sh-alert-header-icon-svg svg-icon[icon=lightning-bolt] #bolt, .mp-sh-alert-container .mp-sh-alert-header .mp-sh-alert-header-title .mp-sh-alert-header-icon .mp-sh-alert-header-icon-svg svg-icon[icon=lighting-bolt] #bolt {   color: #fff;   fill: #fff; } .mp-sh-alert-container .mp-sh-alert-header .mp-sh-alert-header-title .mp-sh-alert-header-icon .mp-sh-alert-header-icon-svg svg-icon[icon=alert] #circle, .mp-sh-alert-container .mp-sh-alert-header .mp-sh-alert-header-title .mp-sh-alert-header-icon .mp-sh-alert-header-icon-svg svg-icon[icon=alert] #stem {   color: #fff;   fill: #fff; } .mp-sh-alert-container .mp-sh-alert-header .mp-sh-alert-header-title .mp-sh-alert-header-icon .mp-sh-alert-header-icon-svg svg-icon svg {   height: 15px;   left: 0;   min-height: 15px;   min-width: 15px;   position: absolute;   top: 0;   width: 15px; } .mp-sh-alert-container .mp-sh-alert-header .mp-sh-alert-header-title .mp-sh-alert-header-icon .mp-sh-alert-header-icon-svg svg-icon svg, .mp-sh-alert-container .mp-sh-alert-header .mp-sh-alert-header-title .mp-sh-alert-header-icon .mp-sh-alert-header-icon-svg svg-icon path {   color: #fff;   fill: #fff;   transition: 0.2s; } .mp-sh-alert-container .mp-sh-alert-header .mp-sh-alert-header-title .mp-sh-alert-header-text {   color: #4c6072;   font-weight: 600;   font-size: 13px; } .mp-sh-alert-container .mp-sh-alert-delete {   display: none; } .mp-sh-alert-container .mp-sh-alert-message {   color: #6d859e;   font-weight: 500;   text-align: start;   white-space: normal; } .mp-sh-alert-container .mp-sh-alert-footer {   display: -webkit-box;   display: -ms-flexbox;   display: flex;   -webkit-box-orient: horizontal;   -webkit-box-direction: normal;       -ms-flex-direction: row;           flex-direction: row;   height: 26px;   -webkit-box-pack: justify;       -ms-flex-pack: justify;           justify-content: space-between;   padding: 10px 0; } .mp-sh-alert-container .mp-sh-alert-footer .mp-sh-alert-footer-time {   color: #9bacbf;   display: -webkit-box;   display: -ms-flexbox;   display: flex;   -webkit-box-orient: vertical;   -webkit-box-direction: normal;       -ms-flex-direction: column;           flex-direction: column;   font-size: 12px;   -webkit-box-pack: center;       -ms-flex-pack: center;           justify-content: center; } .mp-sh-alert-container .mp-sh-alert-footer .mp-sh-alert-footer-useful {   color: #4ba8ff;   cursor: pointer;   display: -webkit-box;   display: -ms-flexbox;   display: flex;   -webkit-box-orient: horizontal;   -webkit-box-direction: normal;       -ms-flex-direction: row;           flex-direction: row;   font-size: 12px; } .mp-sh-alert-container .mp-sh-alert-footer .mp-sh-alert-footer-useful .mp-sh-alert-footer-good {   margin-right: 15px; } .mp-sh-alert-container .mp-sh-alert-footer .mp-sh-alert-footer-useful .mp-sh-alert-footer-good, .mp-sh-alert-container .mp-sh-alert-footer .mp-sh-alert-footer-useful .mp-sh-alert-footer-bad {   display: -webkit-box;   display: -ms-flexbox;   display: flex;   padding-bottom: 1px; } .mp-sh-alert-container .mp-sh-alert-footer .mp-sh-alert-footer-useful .mp-sh-alert-footer-good:hover, .mp-sh-alert-container .mp-sh-alert-footer .mp-sh-alert-footer-useful .mp-sh-alert-footer-bad:hover {   border-bottom: 1px solid #4ba8ff;   padding-bottom: 0; } .mp-sh-alert-container .mp-sh-alert-footer .mp-sh-alert-footer-useful .mp-sh-alert-footer-good .mp-sh-alert-footer-good-text, .mp-sh-alert-container .mp-sh-alert-footer .mp-sh-alert-footer-useful .mp-sh-alert-footer-bad .mp-sh-alert-footer-good-text, .mp-sh-alert-container .mp-sh-alert-footer .mp-sh-alert-footer-useful .mp-sh-alert-footer-good .mp-sh-alert-footer-bad-text, .mp-sh-alert-container .mp-sh-alert-footer .mp-sh-alert-footer-useful .mp-sh-alert-footer-bad .mp-sh-alert-footer-bad-text {   position: relative;   top: 5px; } .mp-sh-alert-container .mp-sh-alert-footer .mp-sh-alert-footer-useful .mp-sh-alert-footer-thank-you {   color: #9bacbf;   display: -webkit-box;   display: -ms-flexbox;   display: flex;   -webkit-box-orient: vertical;   -webkit-box-direction: normal;       -ms-flex-direction: column;           flex-direction: column;   font-size: 12px;   -webkit-box-pack: center;       -ms-flex-pack: center;           justify-content: center; } .background-mp-yellow {   background-color: #ffd209; } .background-mp-turquoise {   background-color: #24d2ef; } .background-mp-aquamarine {   background-color: #6fe9aa; } ";
+	module.exports = "* {   -webkit-font-smoothing: antialiased; } *:focus {   outline: 0; } *::-ms-clear {   height: 0;   width: 0; } body {   color: #6d859e;   font-family: 'Helvetica Neue', 'Helvetica', 'Tahoma', 'Geneva', 'Arial', sans-serif;   font-size: 13px;   font-stretch: normal;   font-weight: 400; } a, .mp-link {   cursor: pointer;   text-decoration: none; } a, .mp-link, a:visited, .mp-link:visited {   color: #3b99f0; } a:hover, .mp-link:hover {   color: #4ba8ff; } .mp-font-size-xl {   font-size: 18px; } .mp-font-size-large {   font-size: 16px; } .mp-font-size-medium {   font-size: 14px; } .mp-font-size-default {   font-size: 13px; } .mp-font-size-xs {   font-size: 11px;   text-transform: uppercase; } .mp-font-weight-bold {   font-weight: 600; } .mp-font-weight-medium {   font-weight: 500; } .mp-font-weight-regular {   font-weight: 400; } .mp-font-paragraph {   color: #6d859e;   font-size: 14px;   font-family: 'Helvetica Neue', 'Helvetica', 'Tahoma', 'Geneva', 'Arial', sans-serif;   font-stretch: normal;   font-weight: 500;   line-height: 18px; } input[type=text], textarea {   border: 1px solid #d8e0ea;   border-radius: 5px;   box-sizing: border-box;   color: #4c6072;   display: inline-block;   font-family: 'Helvetica Neue', 'Helvetica', 'Tahoma', 'Geneva', 'Arial', sans-serif;   font-size: 13px;   font-weight: 400;   padding: 8px;   transition: border-color 150ms ease-out; } input[type=text]::-webkit-input-placeholder, textarea::-webkit-input-placeholder {   color: #9bacbf !important;   font-weight: weight-normal !important; } input[type=text]::-moz-placeholder, textarea::-moz-placeholder {   color: #9bacbf !important;   font-weight: weight-normal !important; } input[type=text]:-ms-input-placeholder, textarea:-ms-input-placeholder {   color: #9bacbf !important;   font-weight: weight-normal !important; } input[type=text]::placeholder, textarea::placeholder {   color: #9bacbf !important;   font-weight: weight-normal !important; } input[type=text]:focus, textarea:focus, input[type=text]:active, textarea:active {   border-color: #3391e9;   transition: border-color 200ms ease-in; } input[type=text] {   height: 36px; } mp-truncated-text {   display: inline-block;   white-space: nowrap;   width: 100%; } svg-icon {   display: inline-block;   height: 22px;   min-height: 22px;   min-width: 22px;   position: relative;   width: 22px; } svg-icon[icon=type-boolean] #left-dot {   color: #fff;   fill: #fff; } svg-icon[icon=type-boolean] #right-dot {   color: #4c6072;   fill: #4c6072; } svg-icon[icon=lightning-bolt] #bolt, svg-icon[icon=lighting-bolt] #bolt {   color: #fff;   fill: #fff; } svg-icon[icon=alert] #circle, svg-icon[icon=alert] #stem {   color: #fff;   fill: #fff; } svg-icon svg {   height: 22px;   left: 0;   min-height: 22px;   min-width: 22px;   position: absolute;   top: 0;   width: 22px; } mp-smart-hub-alert {   display: -webkit-inline-box;   display: -ms-inline-flexbox;   display: inline-flex; } :host {   display: -webkit-inline-box;   display: -ms-inline-flexbox;   display: inline-flex; } .mp-sh-alert-container {   background-color: #fff;   display: -webkit-box;   display: -ms-flexbox;   display: flex;   -webkit-box-orient: vertical;   -webkit-box-direction: normal;       -ms-flex-direction: column;           flex-direction: column;   height: 135px;   -webkit-box-pack: justify;       -ms-flex-pack: justify;           justify-content: space-between;   padding: 0 20px;   width: 320px; } .mp-sh-alert-container.mp-sh-alert-unread {   background-color: #f4f9fd; } .mp-sh-alert-container:hover.mp-sh-alert-hoverable {   background-color: #f4f9fd; } .mp-sh-alert-container .mp-sh-alert-header {   display: -webkit-box;   display: -ms-flexbox;   display: flex;   height: 20px;   -webkit-box-pack: justify;       -ms-flex-pack: justify;           justify-content: space-between;   padding: 15px 0; } .mp-sh-alert-container .mp-sh-alert-header .mp-sh-alert-header-title {   display: -webkit-box;   display: -ms-flexbox;   display: flex; } .mp-sh-alert-container .mp-sh-alert-header .mp-sh-alert-header-title .mp-sh-alert-header-icon {   display: -webkit-box;   display: -ms-flexbox;   display: flex;   margin-right: 6px;   position: relative;   top: -3px; } .mp-sh-alert-container .mp-sh-alert-header .mp-sh-alert-header-title .mp-sh-alert-header-icon .mp-sh-alert-header-icon-background {   border-radius: 30px;   height: 17px;   position: absolute;   width: 17px; } .mp-sh-alert-container .mp-sh-alert-header .mp-sh-alert-header-title .mp-sh-alert-header-icon .mp-sh-alert-header-icon-svg {   left: 1px;   position: relative;   top: 1px; } .mp-sh-alert-container .mp-sh-alert-header .mp-sh-alert-header-title .mp-sh-alert-header-icon .mp-sh-alert-header-icon-svg svg-icon {   display: inline-block;   height: 15px;   min-height: 15px;   min-width: 15px;   position: relative;   width: 15px; } .mp-sh-alert-container .mp-sh-alert-header .mp-sh-alert-header-title .mp-sh-alert-header-icon .mp-sh-alert-header-icon-svg svg-icon[icon=type-boolean] #left-dot {   color: #fff;   fill: #fff; } .mp-sh-alert-container .mp-sh-alert-header .mp-sh-alert-header-title .mp-sh-alert-header-icon .mp-sh-alert-header-icon-svg svg-icon[icon=type-boolean] #right-dot {   color: #4c6072;   fill: #4c6072; } .mp-sh-alert-container .mp-sh-alert-header .mp-sh-alert-header-title .mp-sh-alert-header-icon .mp-sh-alert-header-icon-svg svg-icon[icon=lightning-bolt] #bolt, .mp-sh-alert-container .mp-sh-alert-header .mp-sh-alert-header-title .mp-sh-alert-header-icon .mp-sh-alert-header-icon-svg svg-icon[icon=lighting-bolt] #bolt {   color: #fff;   fill: #fff; } .mp-sh-alert-container .mp-sh-alert-header .mp-sh-alert-header-title .mp-sh-alert-header-icon .mp-sh-alert-header-icon-svg svg-icon[icon=alert] #circle, .mp-sh-alert-container .mp-sh-alert-header .mp-sh-alert-header-title .mp-sh-alert-header-icon .mp-sh-alert-header-icon-svg svg-icon[icon=alert] #stem {   color: #fff;   fill: #fff; } .mp-sh-alert-container .mp-sh-alert-header .mp-sh-alert-header-title .mp-sh-alert-header-icon .mp-sh-alert-header-icon-svg svg-icon svg {   height: 15px;   left: 0;   min-height: 15px;   min-width: 15px;   position: absolute;   top: 0;   width: 15px; } .mp-sh-alert-container .mp-sh-alert-header .mp-sh-alert-header-title .mp-sh-alert-header-icon .mp-sh-alert-header-icon-svg svg-icon svg, .mp-sh-alert-container .mp-sh-alert-header .mp-sh-alert-header-title .mp-sh-alert-header-icon .mp-sh-alert-header-icon-svg svg-icon path {   color: #fff;   fill: #fff;   transition: 0.2s; } .mp-sh-alert-container .mp-sh-alert-header .mp-sh-alert-header-title .mp-sh-alert-header-text {   color: #4c6072;   font-weight: 600;   font-size: 13px; } .mp-sh-alert-container .mp-sh-alert-remove {   cursor: pointer;   display: -webkit-box;   display: -ms-flexbox;   display: flex; } .mp-sh-alert-container .mp-sh-alert-remove svg-icon {   display: inline-block;   height: 20px;   min-height: 20px;   min-width: 20px;   position: relative;   width: 20px; } .mp-sh-alert-container .mp-sh-alert-remove svg-icon[icon=type-boolean] #left-dot {   color: #fff;   fill: #fff; } .mp-sh-alert-container .mp-sh-alert-remove svg-icon[icon=type-boolean] #right-dot {   color: #4c6072;   fill: #4c6072; } .mp-sh-alert-container .mp-sh-alert-remove svg-icon[icon=lightning-bolt] #bolt, .mp-sh-alert-container .mp-sh-alert-remove svg-icon[icon=lighting-bolt] #bolt {   color: #fff;   fill: #fff; } .mp-sh-alert-container .mp-sh-alert-remove svg-icon[icon=alert] #circle, .mp-sh-alert-container .mp-sh-alert-remove svg-icon[icon=alert] #stem {   color: #fff;   fill: #fff; } .mp-sh-alert-container .mp-sh-alert-remove svg-icon svg {   height: 20px;   left: 0;   min-height: 20px;   min-width: 20px;   position: absolute;   top: 0;   width: 20px; } .mp-sh-alert-container .mp-sh-alert-remove svg-icon svg, .mp-sh-alert-container .mp-sh-alert-remove svg-icon path {   color: #9bacbf;   fill: #9bacbf;   transition: 0.2s; } .mp-sh-alert-container .mp-sh-alert-remove:hover svg-icon svg, .mp-sh-alert-container .mp-sh-alert-remove:hover svg-icon path {   color: #e4567b;   fill: #e4567b; } .mp-sh-alert-container .mp-sh-alert-message {   color: #6d859e;   font-weight: 500;   text-align: start;   white-space: normal; } .mp-sh-alert-container .mp-sh-alert-footer {   display: -webkit-box;   display: -ms-flexbox;   display: flex;   -webkit-box-orient: horizontal;   -webkit-box-direction: normal;       -ms-flex-direction: row;           flex-direction: row;   height: 26px;   -webkit-box-pack: justify;       -ms-flex-pack: justify;           justify-content: space-between;   padding: 10px 0; } .mp-sh-alert-container .mp-sh-alert-footer .mp-sh-alert-footer-time {   color: #9bacbf;   display: -webkit-box;   display: -ms-flexbox;   display: flex;   -webkit-box-orient: vertical;   -webkit-box-direction: normal;       -ms-flex-direction: column;           flex-direction: column;   font-size: 12px;   -webkit-box-pack: center;       -ms-flex-pack: center;           justify-content: center; } .mp-sh-alert-container .mp-sh-alert-footer .mp-sh-alert-footer-useful {   color: #4ba8ff;   cursor: pointer;   display: -webkit-box;   display: -ms-flexbox;   display: flex;   -webkit-box-orient: horizontal;   -webkit-box-direction: normal;       -ms-flex-direction: row;           flex-direction: row;   font-size: 12px; } .mp-sh-alert-container .mp-sh-alert-footer .mp-sh-alert-footer-useful .mp-sh-alert-footer-good {   margin-right: 15px; } .mp-sh-alert-container .mp-sh-alert-footer .mp-sh-alert-footer-useful .mp-sh-alert-footer-good, .mp-sh-alert-container .mp-sh-alert-footer .mp-sh-alert-footer-useful .mp-sh-alert-footer-bad {   display: -webkit-box;   display: -ms-flexbox;   display: flex;   padding-bottom: 1px; } .mp-sh-alert-container .mp-sh-alert-footer .mp-sh-alert-footer-useful .mp-sh-alert-footer-good:hover, .mp-sh-alert-container .mp-sh-alert-footer .mp-sh-alert-footer-useful .mp-sh-alert-footer-bad:hover {   border-bottom: 1px solid #4ba8ff;   padding-bottom: 0; } .mp-sh-alert-container .mp-sh-alert-footer .mp-sh-alert-footer-useful .mp-sh-alert-footer-good .mp-sh-alert-footer-good-text, .mp-sh-alert-container .mp-sh-alert-footer .mp-sh-alert-footer-useful .mp-sh-alert-footer-bad .mp-sh-alert-footer-good-text, .mp-sh-alert-container .mp-sh-alert-footer .mp-sh-alert-footer-useful .mp-sh-alert-footer-good .mp-sh-alert-footer-bad-text, .mp-sh-alert-container .mp-sh-alert-footer .mp-sh-alert-footer-useful .mp-sh-alert-footer-bad .mp-sh-alert-footer-bad-text {   position: relative;   top: 5px; } .mp-sh-alert-container .mp-sh-alert-footer .mp-sh-alert-footer-useful .mp-sh-alert-footer-thank-you {   color: #9bacbf;   display: -webkit-box;   display: -ms-flexbox;   display: flex;   -webkit-box-orient: vertical;   -webkit-box-direction: normal;       -ms-flex-direction: column;           flex-direction: column;   font-size: 12px;   -webkit-box-pack: center;       -ms-flex-pack: center;           justify-content: center; } .background-mp-yellow {   background-color: #ffd209; } .background-mp-turquoise {   background-color: #24d2ef; } .background-mp-aquamarine {   background-color: #6fe9aa; } ";
 
 
 /***/ },
@@ -50424,6 +50475,7 @@
 	  urlParams.to_date = (0, _moment2.default)(query.dateRange.to).diff(currMoment, 'days');
 
 	  var filters = query.propertyFilters.map(propertyFilterToSegFilter);
+
 	  if (query.groupByProperty) {
 	    var groupByProperty = query.groupByProperty;
 	    var propertySegFilter = propertyToSegFilter(groupByProperty);
@@ -50433,7 +50485,7 @@
 	    urlParams.segment_type = 'unknown';
 	  }
 
-	  urlParams.segfilters = {
+	  urlParams.segfilter = {
 	    filters: filters,
 	    op: 'and'
 	  };
@@ -50774,7 +50826,6 @@
 	      // TODO(mack): Check if it's necessary to do this in both attachedCallback and attributeChangedCallback
 	      // bootstrap the widget's state from attributes
 	      this.update({
-	        alerts: this.getJSONAttribute('alerts'),
 	        open: this.isAttributeEnabled('open')
 	      });
 	    }
@@ -50782,12 +50833,13 @@
 	    key: 'attributeChangedCallback',
 	    value: function attributeChangedCallback(name, oldValue, value) {
 	      _get(_class.prototype.__proto__ || Object.getPrototypeOf(_class.prototype), 'attributeChangedCallback', this).apply(this, arguments);
-	      if (this.initialized) {
-	        if (name === 'open') {
-	          var open = this.isAttributeEnabled('open');
-	          this.dispatchEvent(new CustomEvent('change', { detail: { open: open } }));
-	          this.update({ open: open });
-	        }
+	      if (name === 'open') {
+	        // TODO(mack): Improve how open/close is handled.
+	        var open = this.isAttributeEnabled('open');
+	        this.dispatchEvent(new CustomEvent('change', { detail: { open: open } }));
+	        this.update({ open: open });
+	      } else if (name === 'smart-hub-alerts') {
+	        this.update({ smartHubAlerts: this.getJSONAttribute('smart-hub-alerts') });
 	      } else if (name === 'mixpanel-host') {
 	        this.update({ mixpanelHost: value });
 	      } else if (name === 'project-id') {
@@ -50818,6 +50870,10 @@
 	            }
 	          },
 	          handleDropMenuChange: function handleDropMenuChange(e) {
+	            var state = e.detail.state;
+	            if (!['open', 'closed'].includes(state)) {
+	              return;
+	            }
 	            var open = e.detail.state === 'open';
 	            _this2.setAttribute('open', open);
 	          },
@@ -50852,7 +50908,7 @@
 
 	function _jade_template_fn(locals) {
 	  locals = locals || {};;;
-	  var result_of_with = function ($helpers, JSON, Object, alerts, confirmDeleteOpen, mixpanelHost, open, projectId) {
+	  var result_of_with = function ($helpers, JSON, Object, confirmDeleteOpen, mixpanelHost, open, projectId, smartHubAlerts) {
 	    var h = __webpack_require__(299).h;
 	    return {
 	      value: h("div", {
@@ -50952,7 +51008,7 @@
 	                  click: $helpers.openConfirmDelete
 	                },
 	                "class": Object.assign({}, {
-	                  'mp-sh-hide-clear-all': alerts.length == 0
+	                  'mp-sh-hide-clear-all': smartHubAlerts.length == 0
 	                }, {
 	                  'mp-sh-menu-clear-all': true,
 	                  'mp-font-size-small': true
@@ -50975,16 +51031,17 @@
 	              }
 	            }, function () {
 	              var __jade_nodes = [];
-	              __jade_nodes = __jade_nodes.concat(alerts.length > 0 ? function () {
+	              __jade_nodes = __jade_nodes.concat(smartHubAlerts.length > 0 ? function () {
 	                var __jade_nodes = [];
-	                __jade_nodes = __jade_nodes.concat(alerts.reduce(function (__each_nodes, alert, $index) {
+	                __jade_nodes = __jade_nodes.concat(smartHubAlerts.reduce(function (__each_nodes, smartHubAlert, $index) {
 	                  return __each_nodes.concat(function () {
 	                    var __jade_nodes = [];
 	                    __jade_nodes = __jade_nodes.concat(h("mp-smart-hub-alert", {
 	                      "attrs": {
 	                        'mixpanel-host': mixpanelHost,
 	                        'project-id': projectId,
-	                        'alert': JSON.stringify(alert)
+	                        'smart-hub-alert': JSON.stringify(smartHubAlert),
+	                        'is-link': true
 	                      },
 	                      "on": {
 	                        sentFeedback: $helpers.handleSentFeedback,
@@ -51030,7 +51087,7 @@
 	        return __jade_nodes;
 	      }.call(this).filter(Boolean))
 	    };
-	  }.call(this, "$helpers" in locals ? locals.$helpers : typeof $helpers !== "undefined" ? $helpers : undefined, "JSON" in locals ? locals.JSON : typeof JSON !== "undefined" ? JSON : undefined, "Object" in locals ? locals.Object : typeof Object !== "undefined" ? Object : undefined, "alerts" in locals ? locals.alerts : typeof alerts !== "undefined" ? alerts : undefined, "confirmDeleteOpen" in locals ? locals.confirmDeleteOpen : typeof confirmDeleteOpen !== "undefined" ? confirmDeleteOpen : undefined, "mixpanelHost" in locals ? locals.mixpanelHost : typeof mixpanelHost !== "undefined" ? mixpanelHost : undefined, "open" in locals ? locals.open : typeof open !== "undefined" ? open : undefined, "projectId" in locals ? locals.projectId : typeof projectId !== "undefined" ? projectId : undefined);
+	  }.call(this, "$helpers" in locals ? locals.$helpers : typeof $helpers !== "undefined" ? $helpers : undefined, "JSON" in locals ? locals.JSON : typeof JSON !== "undefined" ? JSON : undefined, "Object" in locals ? locals.Object : typeof Object !== "undefined" ? Object : undefined, "confirmDeleteOpen" in locals ? locals.confirmDeleteOpen : typeof confirmDeleteOpen !== "undefined" ? confirmDeleteOpen : undefined, "mixpanelHost" in locals ? locals.mixpanelHost : typeof mixpanelHost !== "undefined" ? mixpanelHost : undefined, "open" in locals ? locals.open : typeof open !== "undefined" ? open : undefined, "projectId" in locals ? locals.projectId : typeof projectId !== "undefined" ? projectId : undefined, "smartHubAlerts" in locals ? locals.smartHubAlerts : typeof smartHubAlerts !== "undefined" ? smartHubAlerts : undefined);
 	  if (result_of_with) return result_of_with.value;
 	}
 	module.exports = _jade_template_fn;
@@ -51039,7 +51096,7 @@
 /* 551 */
 /***/ function(module, exports) {
 
-	module.exports = "* {   -webkit-font-smoothing: antialiased; } *:focus {   outline: 0; } *::-ms-clear {   height: 0;   width: 0; } body {   color: #6d859e;   font-family: 'Helvetica Neue', 'Helvetica', 'Tahoma', 'Geneva', 'Arial', sans-serif;   font-size: 13px;   font-stretch: normal;   font-weight: 400; } a, .mp-link {   cursor: pointer;   text-decoration: none; } a, .mp-link, a:visited, .mp-link:visited {   color: #3b99f0; } a:hover, .mp-link:hover {   color: #4ba8ff; } .mp-font-size-xl {   font-size: 18px; } .mp-font-size-large {   font-size: 16px; } .mp-font-size-medium {   font-size: 14px; } .mp-font-size-default {   font-size: 13px; } .mp-font-size-xs {   font-size: 11px;   text-transform: uppercase; } .mp-font-weight-bold {   font-weight: 600; } .mp-font-weight-medium {   font-weight: 500; } .mp-font-weight-regular {   font-weight: 400; } .mp-font-paragraph {   color: #6d859e;   font-size: 14px;   font-family: 'Helvetica Neue', 'Helvetica', 'Tahoma', 'Geneva', 'Arial', sans-serif;   font-stretch: normal;   font-weight: 500;   line-height: 18px; } input[type=text], textarea {   border: 1px solid #d8e0ea;   border-radius: 5px;   box-sizing: border-box;   color: #4c6072;   display: inline-block;   font-family: 'Helvetica Neue', 'Helvetica', 'Tahoma', 'Geneva', 'Arial', sans-serif;   font-size: 13px;   font-weight: 400;   padding: 8px;   transition: border-color 150ms ease-out; } input[type=text]::-webkit-input-placeholder, textarea::-webkit-input-placeholder {   color: #9bacbf !important;   font-weight: weight-normal !important; } input[type=text]::-moz-placeholder, textarea::-moz-placeholder {   color: #9bacbf !important;   font-weight: weight-normal !important; } input[type=text]:-ms-input-placeholder, textarea:-ms-input-placeholder {   color: #9bacbf !important;   font-weight: weight-normal !important; } input[type=text]::placeholder, textarea::placeholder {   color: #9bacbf !important;   font-weight: weight-normal !important; } input[type=text]:focus, textarea:focus, input[type=text]:active, textarea:active {   border-color: #3391e9;   transition: border-color 200ms ease-in; } input[type=text] {   height: 36px; } mp-truncated-text {   display: inline-block;   white-space: nowrap;   width: 100%; } svg-icon {   display: inline-block;   height: 22px;   min-height: 22px;   min-width: 22px;   position: relative;   width: 22px; } svg-icon[icon=type-boolean] #left-dot {   color: #fff;   fill: #fff; } svg-icon[icon=type-boolean] #right-dot {   color: #4c6072;   fill: #4c6072; } svg-icon[icon=lightning-bolt] #bolt, svg-icon[icon=lighting-bolt] #bolt {   color: #fff;   fill: #fff; } svg-icon[icon=alert] #circle, svg-icon[icon=alert] #stem {   color: #fff;   fill: #fff; } svg-icon svg {   height: 22px;   left: 0;   min-height: 22px;   min-width: 22px;   position: absolute;   top: 0;   width: 22px; } .mp-sh-menu mp-drop-menu {   left: -257px;   top: 40px;   width: 300px; } .mp-sh-menu .mp-sh-menu-container {   position: relative; } .mp-sh-menu .mp-sh-menu-container .mp-sh-triangle-up {   left: 255px;   position: absolute;   top: -19px; } .mp-sh-menu .mp-sh-menu-container .mp-sh-triangle-up svg-icon {   display: inline-block;   height: 30px;   min-height: 30px;   min-width: 30px;   position: relative;   width: 30px; } .mp-sh-menu .mp-sh-menu-container .mp-sh-triangle-up svg-icon[icon=type-boolean] #left-dot {   color: #fff;   fill: #fff; } .mp-sh-menu .mp-sh-menu-container .mp-sh-triangle-up svg-icon[icon=type-boolean] #right-dot {   color: #4c6072;   fill: #4c6072; } .mp-sh-menu .mp-sh-menu-container .mp-sh-triangle-up svg-icon[icon=lightning-bolt] #bolt, .mp-sh-menu .mp-sh-menu-container .mp-sh-triangle-up svg-icon[icon=lighting-bolt] #bolt {   color: #fff;   fill: #fff; } .mp-sh-menu .mp-sh-menu-container .mp-sh-triangle-up svg-icon[icon=alert] #circle, .mp-sh-menu .mp-sh-menu-container .mp-sh-triangle-up svg-icon[icon=alert] #stem {   color: #fff;   fill: #fff; } .mp-sh-menu .mp-sh-menu-container .mp-sh-triangle-up svg-icon svg {   height: 30px;   left: 0;   min-height: 30px;   min-width: 30px;   position: absolute;   top: 0;   width: 30px; } .mp-sh-menu .mp-sh-menu-container .mp-sh-triangle-up svg-icon svg, .mp-sh-menu .mp-sh-menu-container .mp-sh-triangle-up svg-icon path {   color: #fff;   fill: #fff;   transition: 0.2s; } .mp-sh-menu .mp-sh-menu-container .mp-sh-menu-header {   -webkit-box-align: end;       -ms-flex-align: end;           align-items: flex-end;   display: -webkit-box;   display: -ms-flexbox;   display: flex;   -webkit-box-orient: horizontal;   -webkit-box-direction: normal;       -ms-flex-direction: row;           flex-direction: row;   -webkit-box-pack: justify;       -ms-flex-pack: justify;           justify-content: space-between;   padding: 15px 20px; } .mp-sh-menu .mp-sh-menu-container .mp-sh-menu-header .mp-sh-menu-title {   color: #4c6072;   font-weight: 600; } .mp-sh-menu .mp-sh-menu-container .mp-sh-menu-header .mp-sh-menu-clear-all {   color: #4ba8ff;   cursor: pointer; } .mp-sh-menu .mp-sh-menu-container .mp-sh-menu-header .mp-sh-hide-clear-all {   display: none; } .mp-sh-menu .mp-sh-menu-container .mp-sh-menu-divider, .mp-sh-menu .mp-sh-menu-container .mp-sh-alert-divider:not(:last-child) {   border-top: 1px solid #d8e0ea;   padding: 0;   position: relative;   width: 100%; } .mp-sh-menu .mp-sh-menu-container .mp-sh-alerts-container {   max-height: 510px;   overflow-y: scroll; } .mp-sh-menu .mp-sh-menu-container .mp-sh-alerts-container .mp-sh-alert-empty-state {   -webkit-box-align: center;       -ms-flex-align: center;           align-items: center;   color: #6d859e;   display: -webkit-box;   display: -ms-flexbox;   display: flex;   -webkit-box-orient: horizontal;   -webkit-box-direction: normal;       -ms-flex-direction: row;           flex-direction: row;   font-weight: 500;   height: 100px;   -webkit-box-pack: center;       -ms-flex-pack: center;           justify-content: center;   width: 300px; } ";
+	module.exports = "* {   -webkit-font-smoothing: antialiased; } *:focus {   outline: 0; } *::-ms-clear {   height: 0;   width: 0; } body {   color: #6d859e;   font-family: 'Helvetica Neue', 'Helvetica', 'Tahoma', 'Geneva', 'Arial', sans-serif;   font-size: 13px;   font-stretch: normal;   font-weight: 400; } a, .mp-link {   cursor: pointer;   text-decoration: none; } a, .mp-link, a:visited, .mp-link:visited {   color: #3b99f0; } a:hover, .mp-link:hover {   color: #4ba8ff; } .mp-font-size-xl {   font-size: 18px; } .mp-font-size-large {   font-size: 16px; } .mp-font-size-medium {   font-size: 14px; } .mp-font-size-default {   font-size: 13px; } .mp-font-size-xs {   font-size: 11px;   text-transform: uppercase; } .mp-font-weight-bold {   font-weight: 600; } .mp-font-weight-medium {   font-weight: 500; } .mp-font-weight-regular {   font-weight: 400; } .mp-font-paragraph {   color: #6d859e;   font-size: 14px;   font-family: 'Helvetica Neue', 'Helvetica', 'Tahoma', 'Geneva', 'Arial', sans-serif;   font-stretch: normal;   font-weight: 500;   line-height: 18px; } input[type=text], textarea {   border: 1px solid #d8e0ea;   border-radius: 5px;   box-sizing: border-box;   color: #4c6072;   display: inline-block;   font-family: 'Helvetica Neue', 'Helvetica', 'Tahoma', 'Geneva', 'Arial', sans-serif;   font-size: 13px;   font-weight: 400;   padding: 8px;   transition: border-color 150ms ease-out; } input[type=text]::-webkit-input-placeholder, textarea::-webkit-input-placeholder {   color: #9bacbf !important;   font-weight: weight-normal !important; } input[type=text]::-moz-placeholder, textarea::-moz-placeholder {   color: #9bacbf !important;   font-weight: weight-normal !important; } input[type=text]:-ms-input-placeholder, textarea:-ms-input-placeholder {   color: #9bacbf !important;   font-weight: weight-normal !important; } input[type=text]::placeholder, textarea::placeholder {   color: #9bacbf !important;   font-weight: weight-normal !important; } input[type=text]:focus, textarea:focus, input[type=text]:active, textarea:active {   border-color: #3391e9;   transition: border-color 200ms ease-in; } input[type=text] {   height: 36px; } mp-truncated-text {   display: inline-block;   white-space: nowrap;   width: 100%; } svg-icon {   display: inline-block;   height: 22px;   min-height: 22px;   min-width: 22px;   position: relative;   width: 22px; } svg-icon[icon=type-boolean] #left-dot {   color: #fff;   fill: #fff; } svg-icon[icon=type-boolean] #right-dot {   color: #4c6072;   fill: #4c6072; } svg-icon[icon=lightning-bolt] #bolt, svg-icon[icon=lighting-bolt] #bolt {   color: #fff;   fill: #fff; } svg-icon[icon=alert] #circle, svg-icon[icon=alert] #stem {   color: #fff;   fill: #fff; } svg-icon svg {   height: 22px;   left: 0;   min-height: 22px;   min-width: 22px;   position: absolute;   top: 0;   width: 22px; } mp-smart-hub-dropdown {   display: -webkit-inline-box;   display: -ms-inline-flexbox;   display: inline-flex; } :host {   display: -webkit-inline-box;   display: -ms-inline-flexbox;   display: inline-flex; } .mp-sh-menu mp-drop-menu {   left: -257px;   top: 40px; } .mp-sh-menu .mp-sh-menu-container {   position: relative; } .mp-sh-menu .mp-sh-menu-container .mp-sh-triangle-up {   left: 255px;   position: absolute;   top: -19px; } .mp-sh-menu .mp-sh-menu-container .mp-sh-triangle-up svg-icon {   display: inline-block;   height: 30px;   min-height: 30px;   min-width: 30px;   position: relative;   width: 30px; } .mp-sh-menu .mp-sh-menu-container .mp-sh-triangle-up svg-icon[icon=type-boolean] #left-dot {   color: #fff;   fill: #fff; } .mp-sh-menu .mp-sh-menu-container .mp-sh-triangle-up svg-icon[icon=type-boolean] #right-dot {   color: #4c6072;   fill: #4c6072; } .mp-sh-menu .mp-sh-menu-container .mp-sh-triangle-up svg-icon[icon=lightning-bolt] #bolt, .mp-sh-menu .mp-sh-menu-container .mp-sh-triangle-up svg-icon[icon=lighting-bolt] #bolt {   color: #fff;   fill: #fff; } .mp-sh-menu .mp-sh-menu-container .mp-sh-triangle-up svg-icon[icon=alert] #circle, .mp-sh-menu .mp-sh-menu-container .mp-sh-triangle-up svg-icon[icon=alert] #stem {   color: #fff;   fill: #fff; } .mp-sh-menu .mp-sh-menu-container .mp-sh-triangle-up svg-icon svg {   height: 30px;   left: 0;   min-height: 30px;   min-width: 30px;   position: absolute;   top: 0;   width: 30px; } .mp-sh-menu .mp-sh-menu-container .mp-sh-triangle-up svg-icon svg, .mp-sh-menu .mp-sh-menu-container .mp-sh-triangle-up svg-icon path {   color: #fff;   fill: #fff;   transition: 0.2s; } .mp-sh-menu .mp-sh-menu-container .mp-sh-menu-header {   -webkit-box-align: end;       -ms-flex-align: end;           align-items: flex-end;   display: -webkit-box;   display: -ms-flexbox;   display: flex;   -webkit-box-orient: horizontal;   -webkit-box-direction: normal;       -ms-flex-direction: row;           flex-direction: row;   -webkit-box-pack: justify;       -ms-flex-pack: justify;           justify-content: space-between;   padding: 15px 20px; } .mp-sh-menu .mp-sh-menu-container .mp-sh-menu-header .mp-sh-menu-title {   color: #4c6072;   font-weight: 600; } .mp-sh-menu .mp-sh-menu-container .mp-sh-menu-header .mp-sh-menu-clear-all {   color: #4ba8ff;   cursor: pointer; } .mp-sh-menu .mp-sh-menu-container .mp-sh-menu-header .mp-sh-hide-clear-all {   display: none; } .mp-sh-menu .mp-sh-menu-container .mp-sh-menu-divider, .mp-sh-menu .mp-sh-menu-container .mp-sh-alert-divider:not(:last-child) {   border-top: 1px solid #d8e0ea;   padding: 0;   position: relative;   width: 100%; } .mp-sh-menu .mp-sh-menu-container .mp-sh-alerts-container {   max-height: 510px;   overflow-y: scroll; } .mp-sh-menu .mp-sh-menu-container .mp-sh-alerts-container .mp-sh-alert-empty-state {   -webkit-box-align: center;       -ms-flex-align: center;           align-items: center;   color: #6d859e;   display: -webkit-box;   display: -ms-flexbox;   display: flex;   -webkit-box-orient: horizontal;   -webkit-box-direction: normal;       -ms-flex-direction: row;           flex-direction: row;   font-weight: 500;   height: 100px;   -webkit-box-pack: center;       -ms-flex-pack: center;           justify-content: center;   width: 300px; } ";
 
 
 /***/ },
@@ -51060,15 +51117,272 @@
 
 	var _registerElement = __webpack_require__(320);
 
-	var _string = __webpack_require__(492);
-
-	var _function = __webpack_require__(487);
-
 	var _index = __webpack_require__(553);
 
 	var _index2 = _interopRequireDefault(_index);
 
-	var _index3 = __webpack_require__(554);
+	__webpack_require__(554);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+	exports.default = (0, _registerElement.registerMPElement)('mp-smart-hub-tooltip', function (_Component) {
+	  _inherits(_class, _Component);
+
+	  function _class() {
+	    _classCallCheck(this, _class);
+
+	    return _possibleConstructorReturn(this, (_class.__proto__ || Object.getPrototypeOf(_class)).apply(this, arguments));
+	  }
+
+	  _createClass(_class, [{
+	    key: 'createdCallback',
+	    value: function createdCallback() {
+	      var _this2 = this;
+
+	      _get(_class.prototype.__proto__ || Object.getPrototypeOf(_class.prototype), 'createdCallback', this).apply(this, arguments);
+	      this.tooltipEl = document.createElement('mp-smart-hub-tooltip-internal');
+
+	      this._handleEventPropagation = function (ev) {
+	        ev.stopPropagation();
+	        _this2.dispatchEvent(new CustomEvent(ev.type, ev));
+	      };
+	      this.tooltipEl.addEventListener('click', this._handleEventPropagation);
+	      this.tooltipEl.addEventListener('removedAlert', this._handleEventPropagation);
+	      this.tooltipEl.addEventListener('sentFeedback', this._handleEventPropagation);
+	    }
+	  }, {
+	    key: 'attachedCallback',
+	    value: function attachedCallback() {
+	      _get(_class.prototype.__proto__ || Object.getPrototypeOf(_class.prototype), 'attachedCallback', this).apply(this, arguments);
+	      document.body.appendChild(this.tooltipEl);
+	      this._updateTooltip();
+	    }
+	  }, {
+	    key: '_updateTooltip',
+	    value: function _updateTooltip() {
+	      var _this3 = this;
+
+	      if (!this.initialized) {
+	        return;
+	      }
+
+	      var placement = this.getAttribute('placement');
+	      if (!this.getAttribute('offset-left') || !this.getAttribute('offset-top')) {
+	        console.error('Missing required arg offset-left/top');
+	      }
+
+	      this.tooltipEl.style.visibility = 'hidden';
+	      this.tooltipEl.style.position = 'absolute';
+
+	      window.requestAnimationFrame(function () {
+	        var tooltipElRect = _this3.tooltipEl.getBoundingClientRect();
+	        var offsetLeft = Number(_this3.getAttribute('offset-left'));
+	        var offsetTop = Number(_this3.getAttribute('offset-top'));
+	        _this3.tooltipEl.style.left = offsetLeft - tooltipElRect.width / 2 + 'px';
+	        if (placement === 'top') {
+	          _this3.tooltipEl.style.top = offsetTop - tooltipElRect.height + 'px';
+	        } else if (placement === 'bottom') {
+	          _this3.tooltipEl.style.top = offsetTop + 'px';
+	        } else {
+	          console.error('Unsupported placement: ' + placement);
+	        }
+	        _this3.tooltipEl.style.visibility = 'visible';
+	      });
+	    }
+	  }, {
+	    key: 'detachedCallback',
+	    value: function detachedCallback() {
+	      document.body.removeChild(this.tooltipEl);
+	      this.tooltipEl.removeEventListener('click', this._handleEventPropagation);
+	      this.tooltipEl.removeEventListener('removedAlert', this._handleEventPropagation);
+	      this.tooltipEl.removeEventListener('sentFeedback', this._handleEventPropagation);
+	      _get(_class.prototype.__proto__ || Object.getPrototypeOf(_class.prototype), 'detachedCallback', this).apply(this, arguments);
+	    }
+	  }, {
+	    key: 'attributeChangedCallback',
+	    value: function attributeChangedCallback(name, oldValue, value) {
+	      _get(_class.prototype.__proto__ || Object.getPrototypeOf(_class.prototype), 'attributeChangedCallback', this).apply(this, arguments);
+	      if (['alert', 'placement'].includes(name)) {
+	        this.tooltipEl.setAttribute(name, value);
+	      }
+	      this._updateTooltip();
+	    }
+	  }, {
+	    key: 'config',
+	    get: function get() {
+	      return {
+	        template: _index2.default,
+	        useShadowDom: true,
+	        defaultState: {
+	          offsetLeft: null,
+	          offsetTop: null
+	        }
+	      };
+	    }
+	  }]);
+
+	  return _class;
+	}(_panel.Component));
+
+/***/ },
+/* 553 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+
+	function _jade_template_fn(locals) {
+	  locals = locals || {};
+	  var h = __webpack_require__(299).h;
+	  return h("div");
+	}
+	module.exports = _jade_template_fn;
+
+/***/ },
+/* 554 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+	var _get = function get(object, property, receiver) { if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { return get(parent, property, receiver); } } else if ("value" in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } };
+
+	var _panel = __webpack_require__(299);
+
+	var _registerElement = __webpack_require__(320);
+
+	var _index = __webpack_require__(555);
+
+	var _index2 = _interopRequireDefault(_index);
+
+	var _index3 = __webpack_require__(556);
+
+	var _index4 = _interopRequireDefault(_index3);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+	exports.default = (0, _registerElement.registerMPElement)('mp-smart-hub-tooltip-internal', function (_Component) {
+	  _inherits(_class, _Component);
+
+	  function _class() {
+	    _classCallCheck(this, _class);
+
+	    return _possibleConstructorReturn(this, (_class.__proto__ || Object.getPrototypeOf(_class)).apply(this, arguments));
+	  }
+
+	  _createClass(_class, [{
+	    key: 'attributeChangedCallback',
+	    value: function attributeChangedCallback(name, oldValue, value) {
+	      _get(_class.prototype.__proto__ || Object.getPrototypeOf(_class.prototype), 'attributeChangedCallback', this).apply(this, arguments);
+	      if (name === 'alert') {
+	        this.update({ alert: this.getJSONAttribute(name) });
+	      } else if (name === 'placement') {
+	        this.update({ placement: value });
+	      }
+	    }
+	  }, {
+	    key: 'config',
+	    get: function get() {
+	      return {
+	        css: _index4.default,
+	        template: _index2.default,
+	        useShadowDom: true,
+	        defaultState: {
+	          alert: null,
+	          placement: 'top'
+	        }
+	      };
+	    }
+	  }]);
+
+	  return _class;
+	}(_panel.Component));
+
+/***/ },
+/* 555 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+
+	function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
+	function _jade_template_fn(locals) {
+	  locals = locals || {};;;
+	  var result_of_with = function (JSON, Object, alert, placement) {
+	    var h = __webpack_require__(299).h;
+	    return {
+	      value: h("div", {
+	        "class": Object.assign({}, _defineProperty({}, "mp-sh-tooltip-internal-placement-" + placement, true), {
+	          'mp-sh-tooltip-internal-container': true
+	        })
+	      }, function () {
+	        var __jade_nodes = [];
+	        __jade_nodes = __jade_nodes.concat(h("mp-smart-hub-alert", {
+	          "attrs": {
+	            'is-link': false,
+	            'smart-hub-alert': JSON.stringify({
+	              alert: alert
+	            })
+	          }
+	        }));;
+	        return __jade_nodes;
+	      }.call(this).filter(Boolean))
+	    };
+	  }.call(this, "JSON" in locals ? locals.JSON : typeof JSON !== "undefined" ? JSON : undefined, "Object" in locals ? locals.Object : typeof Object !== "undefined" ? Object : undefined, "alert" in locals ? locals.alert : typeof alert !== "undefined" ? alert : undefined, "placement" in locals ? locals.placement : typeof placement !== "undefined" ? placement : undefined);
+	  if (result_of_with) return result_of_with.value;
+	}
+	module.exports = _jade_template_fn;
+
+/***/ },
+/* 556 */
+/***/ function(module, exports) {
+
+	module.exports = "* {   -webkit-font-smoothing: antialiased; } *:focus {   outline: 0; } *::-ms-clear {   height: 0;   width: 0; } body {   color: #6d859e;   font-family: 'Helvetica Neue', 'Helvetica', 'Tahoma', 'Geneva', 'Arial', sans-serif;   font-size: 13px;   font-stretch: normal;   font-weight: 400; } a, .mp-link {   cursor: pointer;   text-decoration: none; } a, .mp-link, a:visited, .mp-link:visited {   color: #3b99f0; } a:hover, .mp-link:hover {   color: #4ba8ff; } .mp-font-size-xl {   font-size: 18px; } .mp-font-size-large {   font-size: 16px; } .mp-font-size-medium {   font-size: 14px; } .mp-font-size-default {   font-size: 13px; } .mp-font-size-xs {   font-size: 11px;   text-transform: uppercase; } .mp-font-weight-bold {   font-weight: 600; } .mp-font-weight-medium {   font-weight: 500; } .mp-font-weight-regular {   font-weight: 400; } .mp-font-paragraph {   color: #6d859e;   font-size: 14px;   font-family: 'Helvetica Neue', 'Helvetica', 'Tahoma', 'Geneva', 'Arial', sans-serif;   font-stretch: normal;   font-weight: 500;   line-height: 18px; } input[type=text], textarea {   border: 1px solid #d8e0ea;   border-radius: 5px;   box-sizing: border-box;   color: #4c6072;   display: inline-block;   font-family: 'Helvetica Neue', 'Helvetica', 'Tahoma', 'Geneva', 'Arial', sans-serif;   font-size: 13px;   font-weight: 400;   padding: 8px;   transition: border-color 150ms ease-out; } input[type=text]::-webkit-input-placeholder, textarea::-webkit-input-placeholder {   color: #9bacbf !important;   font-weight: weight-normal !important; } input[type=text]::-moz-placeholder, textarea::-moz-placeholder {   color: #9bacbf !important;   font-weight: weight-normal !important; } input[type=text]:-ms-input-placeholder, textarea:-ms-input-placeholder {   color: #9bacbf !important;   font-weight: weight-normal !important; } input[type=text]::placeholder, textarea::placeholder {   color: #9bacbf !important;   font-weight: weight-normal !important; } input[type=text]:focus, textarea:focus, input[type=text]:active, textarea:active {   border-color: #3391e9;   transition: border-color 200ms ease-in; } input[type=text] {   height: 36px; } mp-truncated-text {   display: inline-block;   white-space: nowrap;   width: 100%; } svg-icon {   display: inline-block;   height: 22px;   min-height: 22px;   min-width: 22px;   position: relative;   width: 22px; } svg-icon[icon=type-boolean] #left-dot {   color: #fff;   fill: #fff; } svg-icon[icon=type-boolean] #right-dot {   color: #4c6072;   fill: #4c6072; } svg-icon[icon=lightning-bolt] #bolt, svg-icon[icon=lighting-bolt] #bolt {   color: #fff;   fill: #fff; } svg-icon[icon=alert] #circle, svg-icon[icon=alert] #stem {   color: #fff;   fill: #fff; } svg-icon svg {   height: 22px;   left: 0;   min-height: 22px;   min-width: 22px;   position: absolute;   top: 0;   width: 22px; } mp-smart-hub-tooltip-internal {   display: inline-block; } :host {   display: inline-block; } .mp-sh-tooltip-internal-container {   border: 1px solid #ecf3f8;   border-radius: 5px;   box-shadow: 0 10px 40px rgba(0,0,0,0.15);   position: relative; } .mp-sh-tooltip-internal-container mp-smart-hub-alert {   border-radius: 5px;   overflow: hidden; } .mp-sh-tooltip-internal-container::after {   border: 5px solid transparent;   content: '';   height: 0;   position: absolute;   width: 0; } .mp-sh-tooltip-internal-container.mp-sh-tooltip-internal-placement-top {   margin-bottom: 5px; } .mp-sh-tooltip-internal-container.mp-sh-tooltip-internal-placement-top::after {   border-top-color: #fff;   left: 50%;   margin-left: -5px;   top: 100%; } .mp-sh-tooltip-internal-container.mp-sh-tooltip-internal-placement-bottom {   margin-top: 5px; } .mp-sh-tooltip-internal-container.mp-sh-tooltip-internal-placement-bottom::after {   border-bottom-color: #fff;   bottom: 100%;   left: 50%;   margin-left: -5px; } .mp-sh-tooltip-internal-container.mp-sh-tooltip-internal-placement-left {   margin-right: 5px; } .mp-sh-tooltip-internal-container.mp-sh-tooltip-internal-placement-left::after {   border-left-color: #fff;   left: 100%;   margin-top: -5px;   top: 50%; } .mp-sh-tooltip-internal-container.mp-sh-tooltip-internal-placement-right {   margin-left: 5px; } .mp-sh-tooltip-internal-container.mp-sh-tooltip-internal-placement-right::after {   border-right-color: #fff;   margin-top: -5px;   right: 100%;   top: 50%; } ";
+
+
+/***/ },
+/* 557 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+	var _get = function get(object, property, receiver) { if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { return get(parent, property, receiver); } } else if ("value" in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } };
+
+	var _panel = __webpack_require__(299);
+
+	var _registerElement = __webpack_require__(320);
+
+	var _string = __webpack_require__(492);
+
+	var _function = __webpack_require__(487);
+
+	var _index = __webpack_require__(558);
+
+	var _index2 = _interopRequireDefault(_index);
+
+	var _index3 = __webpack_require__(559);
 
 	var _index4 = _interopRequireDefault(_index3);
 
@@ -51295,14 +51609,14 @@
 	}(_panel.Component));
 
 /***/ },
-/* 553 */
+/* 558 */
 /***/ function(module, exports) {
 
 	module.exports = "* {   -webkit-font-smoothing: antialiased; } *:focus {   outline: 0; } *::-ms-clear {   height: 0;   width: 0; } body {   color: #6d859e;   font-family: 'Helvetica Neue', 'Helvetica', 'Tahoma', 'Geneva', 'Arial', sans-serif;   font-size: 13px;   font-stretch: normal;   font-weight: 400; } a, .mp-link {   cursor: pointer;   text-decoration: none; } a, .mp-link, a:visited, .mp-link:visited {   color: #3b99f0; } a:hover, .mp-link:hover {   color: #4ba8ff; } .mp-font-size-xl {   font-size: 18px; } .mp-font-size-large {   font-size: 16px; } .mp-font-size-medium {   font-size: 14px; } .mp-font-size-default {   font-size: 13px; } .mp-font-size-xs {   font-size: 11px;   text-transform: uppercase; } .mp-font-weight-bold {   font-weight: 600; } .mp-font-weight-medium {   font-weight: 500; } .mp-font-weight-regular {   font-weight: 400; } .mp-font-paragraph {   color: #6d859e;   font-size: 14px;   font-family: 'Helvetica Neue', 'Helvetica', 'Tahoma', 'Geneva', 'Arial', sans-serif;   font-stretch: normal;   font-weight: 500;   line-height: 18px; } input[type=text], textarea {   border: 1px solid #d8e0ea;   border-radius: 5px;   box-sizing: border-box;   color: #4c6072;   display: inline-block;   font-family: 'Helvetica Neue', 'Helvetica', 'Tahoma', 'Geneva', 'Arial', sans-serif;   font-size: 13px;   font-weight: 400;   padding: 8px;   transition: border-color 150ms ease-out; } input[type=text]::-webkit-input-placeholder, textarea::-webkit-input-placeholder {   color: #9bacbf !important;   font-weight: weight-normal !important; } input[type=text]::-moz-placeholder, textarea::-moz-placeholder {   color: #9bacbf !important;   font-weight: weight-normal !important; } input[type=text]:-ms-input-placeholder, textarea:-ms-input-placeholder {   color: #9bacbf !important;   font-weight: weight-normal !important; } input[type=text]::placeholder, textarea::placeholder {   color: #9bacbf !important;   font-weight: weight-normal !important; } input[type=text]:focus, textarea:focus, input[type=text]:active, textarea:active {   border-color: #3391e9;   transition: border-color 200ms ease-in; } input[type=text] {   height: 36px; } mp-truncated-text {   display: inline-block;   white-space: nowrap;   width: 100%; } svg-icon {   display: inline-block;   height: 22px;   min-height: 22px;   min-width: 22px;   position: relative;   width: 22px; } svg-icon[icon=type-boolean] #left-dot {   color: #fff;   fill: #fff; } svg-icon[icon=type-boolean] #right-dot {   color: #4c6072;   fill: #4c6072; } svg-icon[icon=lightning-bolt] #bolt, svg-icon[icon=lighting-bolt] #bolt {   color: #fff;   fill: #fff; } svg-icon[icon=alert] #circle, svg-icon[icon=alert] #stem {   color: #fff;   fill: #fff; } svg-icon svg {   height: 22px;   left: 0;   min-height: 22px;   min-width: 22px;   position: absolute;   top: 0;   width: 22px; } mp-drop-menu {   border-radius: 5px;   display: -webkit-box;   display: -ms-flexbox;   display: flex;   width: 340px; } :host {   border-radius: 5px;   display: -webkit-box;   display: -ms-flexbox;   display: flex;   width: 340px; } .mp-tag-selector-container {   border-radius: inherit;   width: 100%; } .mp-tag-selector-container, .mp-tag-selector-container * {   box-sizing: border-box; } .mp-tag-selector-container .mp-tag-selector-top-input-wrapper {   margin: 0 auto;   margin-bottom: 20px;   padding: 0 20px; } .mp-tag-selector-container .mp-tag-selector-top-input-wrapper .mp-tag-selector-input-wrapper {   -webkit-box-align: center;       -ms-flex-align: center;           align-items: center;   cursor: text;   display: -webkit-box;   display: -ms-flexbox;   display: flex;   -webkit-box-orient: horizontal;   -webkit-box-direction: normal;       -ms-flex-direction: row;           flex-direction: row;   -ms-flex-wrap: wrap;       flex-wrap: wrap;   -webkit-box-pack: start;       -ms-flex-pack: start;           justify-content: flex-start;   min-height: 36px;   padding: 6px 6px 0;   position: relative;   width: 300px; } .mp-tag-selector-container .mp-tag-selector-top-input-wrapper .mp-tag-selector-input-wrapper input:focus::-webkit-contacts-auto-fill-button {   display: none;   height: 0;   margin: 0;   opacity: 0;   padding: 0;   width: 0; } .mp-tag-selector-container .mp-tag-selector-top-input-wrapper .mp-tag-selector-input-wrapper .mp-tag-selector-mp-icon {   -webkit-box-align: center;       -ms-flex-align: center;           align-items: center;   bottom: 0;   display: -webkit-box;   display: -ms-flexbox;   display: flex;   left: 8px;   position: absolute;   top: -1px; } .mp-tag-selector-container .mp-tag-selector-top-input-wrapper .mp-tag-selector-input-wrapper .mp-tag-selector-mp-icon svg-icon {   display: inline-block;   height: 22px;   min-height: 22px;   min-width: 22px;   position: relative;   width: 22px; } .mp-tag-selector-container .mp-tag-selector-top-input-wrapper .mp-tag-selector-input-wrapper .mp-tag-selector-mp-icon svg-icon[icon=type-boolean] #left-dot {   color: #fff;   fill: #fff; } .mp-tag-selector-container .mp-tag-selector-top-input-wrapper .mp-tag-selector-input-wrapper .mp-tag-selector-mp-icon svg-icon[icon=type-boolean] #right-dot {   color: #4c6072;   fill: #4c6072; } .mp-tag-selector-container .mp-tag-selector-top-input-wrapper .mp-tag-selector-input-wrapper .mp-tag-selector-mp-icon svg-icon[icon=lightning-bolt] #bolt, .mp-tag-selector-container .mp-tag-selector-top-input-wrapper .mp-tag-selector-input-wrapper .mp-tag-selector-mp-icon svg-icon[icon=lighting-bolt] #bolt {   color: #fff;   fill: #fff; } .mp-tag-selector-container .mp-tag-selector-top-input-wrapper .mp-tag-selector-input-wrapper .mp-tag-selector-mp-icon svg-icon[icon=alert] #circle, .mp-tag-selector-container .mp-tag-selector-top-input-wrapper .mp-tag-selector-input-wrapper .mp-tag-selector-mp-icon svg-icon[icon=alert] #stem {   color: #fff;   fill: #fff; } .mp-tag-selector-container .mp-tag-selector-top-input-wrapper .mp-tag-selector-input-wrapper .mp-tag-selector-mp-icon svg-icon svg {   height: 22px;   left: 0;   min-height: 22px;   min-width: 22px;   position: absolute;   top: 0;   width: 22px; } .mp-tag-selector-container .mp-tag-selector-top-input-wrapper .mp-tag-selector-input-wrapper .mp-tag-selector-mp-icon svg-icon svg, .mp-tag-selector-container .mp-tag-selector-top-input-wrapper .mp-tag-selector-input-wrapper .mp-tag-selector-mp-icon svg-icon path {   color: #9bacbf;   fill: #9bacbf;   transition: 0.2s; } .mp-tag-selector-container .mp-tag-selector-top-input-wrapper .mp-tag-selector-input-wrapper mp-tag {   margin: 0 0 6px 4px; } .mp-tag-selector-container .mp-tag-selector-top-input-wrapper .mp-tag-selector-input-wrapper .mp-tag-selector-border {   border: 1px solid #d8e0ea;   border-radius: 5px;   height: 100%;   left: 0;   pointer-events: none;   position: absolute;   top: 0;   transition: border-color 0.25s;   width: 100%; } .mp-tag-selector-container .mp-tag-selector-top-input-wrapper .mp-tag-selector-input-wrapper .mp-tag-selector-border.mp-tag-selector-error {   border-color: #e4567b; } .mp-tag-selector-container .mp-tag-selector-top-input-wrapper .mp-tag-selector-input-wrapper:active .mp-tag-selector-border {   border-color: #3b99f0; } .mp-tag-selector-container .mp-tag-selector-top-input-wrapper .mp-tag-selector-input-wrapper .mp-tag-selector-search-input {   background-color: transparent;   border: 0;   font-family: 'Helvetica Neue', 'Helvetica', 'Tahoma', 'Geneva', 'Arial', sans-serif;   font-size: 13px;   font-style: normal;   font-weight: 400;   height: auto;   line-height: 1.5;   margin-bottom: 7px;   margin-left: 6px;   max-width: 100%;   min-width: 0;   padding: 0; } .mp-tag-selector-container .mp-tag-selector-top-input-wrapper .mp-tag-selector-input-wrapper .mp-tag-selector-search-input.mp-tag-selector-empty {   padding-left: 24px;   padding-top: 1px; } .mp-tag-selector-container .mp-tag-selector-top-input-wrapper .mp-tag-selector-input-wrapper .mp-tag-selector-search-input:focus + .mp-tag-selector-border:not(.mp-tag-selector-loaded-error) {   border-color: #3b99f0; } .mp-tag-selector-container .mp-tag-selector-empty {   font-style: italic; } .mp-tag-selector-container .mp-tag-selector-hr {   background-color: #e5eef4;   height: 1px;   width: 100%; } .mp-tag-selector-container .mp-tag-selector-tag-list {   margin-bottom: 8px;   max-height: 280px;   overflow-y: auto; } .mp-tag-selector-container .mp-tag-selector-tag-list mp-list-item {   margin-left: 12px;   margin-right: 12px; } .mp-tag-selector-container .mp-tag-selector-tag-list mp-list-item svg-icon {   display: inline-block;   height: 16px;   min-height: 16px;   min-width: 16px;   position: relative;   width: 16px; } .mp-tag-selector-container .mp-tag-selector-tag-list mp-list-item svg-icon[icon=type-boolean] #left-dot {   color: #fff;   fill: #fff; } .mp-tag-selector-container .mp-tag-selector-tag-list mp-list-item svg-icon[icon=type-boolean] #right-dot {   color: #4c6072;   fill: #4c6072; } .mp-tag-selector-container .mp-tag-selector-tag-list mp-list-item svg-icon[icon=lightning-bolt] #bolt, .mp-tag-selector-container .mp-tag-selector-tag-list mp-list-item svg-icon[icon=lighting-bolt] #bolt {   color: #fff;   fill: #fff; } .mp-tag-selector-container .mp-tag-selector-tag-list mp-list-item svg-icon[icon=alert] #circle, .mp-tag-selector-container .mp-tag-selector-tag-list mp-list-item svg-icon[icon=alert] #stem {   color: #fff;   fill: #fff; } .mp-tag-selector-container .mp-tag-selector-tag-list mp-list-item svg-icon svg {   height: 16px;   left: -3px;   min-height: 16px;   min-width: 16px;   position: absolute;   top: -1px;   width: 16px; } .mp-tag-selector-container .mp-tag-selector-tag-list mp-list-item svg-icon svg, .mp-tag-selector-container .mp-tag-selector-tag-list mp-list-item svg-icon path {   color: #6d859e;   fill: #6d859e;   transition: 0s; } .mp-tag-selector-container .mp-tag-selector-tag-list mp-list-item:last-child {   margin-bottom: 0; } .mp-tag-selector-container .mp-tag-selector-tag-list mp-list-item[active='true'] svg-icon, .mp-tag-selector-container .mp-tag-selector-tag-list mp-list-item:hover svg-icon {   display: inline-block;   height: 16px;   min-height: 16px;   min-width: 16px;   position: relative;   width: 16px; } .mp-tag-selector-container .mp-tag-selector-tag-list mp-list-item[active='true'] svg-icon[icon=type-boolean] #left-dot, .mp-tag-selector-container .mp-tag-selector-tag-list mp-list-item:hover svg-icon[icon=type-boolean] #left-dot {   color: #fff;   fill: #fff; } .mp-tag-selector-container .mp-tag-selector-tag-list mp-list-item[active='true'] svg-icon[icon=type-boolean] #right-dot, .mp-tag-selector-container .mp-tag-selector-tag-list mp-list-item:hover svg-icon[icon=type-boolean] #right-dot {   color: #4c6072;   fill: #4c6072; } .mp-tag-selector-container .mp-tag-selector-tag-list mp-list-item[active='true'] svg-icon[icon=lightning-bolt] #bolt, .mp-tag-selector-container .mp-tag-selector-tag-list mp-list-item:hover svg-icon[icon=lightning-bolt] #bolt, .mp-tag-selector-container .mp-tag-selector-tag-list mp-list-item[active='true'] svg-icon[icon=lighting-bolt] #bolt, .mp-tag-selector-container .mp-tag-selector-tag-list mp-list-item:hover svg-icon[icon=lighting-bolt] #bolt {   color: #fff;   fill: #fff; } .mp-tag-selector-container .mp-tag-selector-tag-list mp-list-item[active='true'] svg-icon[icon=alert] #circle, .mp-tag-selector-container .mp-tag-selector-tag-list mp-list-item:hover svg-icon[icon=alert] #circle, .mp-tag-selector-container .mp-tag-selector-tag-list mp-list-item[active='true'] svg-icon[icon=alert] #stem, .mp-tag-selector-container .mp-tag-selector-tag-list mp-list-item:hover svg-icon[icon=alert] #stem {   color: #fff;   fill: #fff; } .mp-tag-selector-container .mp-tag-selector-tag-list mp-list-item[active='true'] svg-icon svg, .mp-tag-selector-container .mp-tag-selector-tag-list mp-list-item:hover svg-icon svg {   height: 16px;   left: -3px;   min-height: 16px;   min-width: 16px;   position: absolute;   top: -1px;   width: 16px; } .mp-tag-selector-container .mp-tag-selector-tag-list mp-list-item[active='true'] svg-icon svg, .mp-tag-selector-container .mp-tag-selector-tag-list mp-list-item:hover svg-icon svg, .mp-tag-selector-container .mp-tag-selector-tag-list mp-list-item[active='true'] svg-icon path, .mp-tag-selector-container .mp-tag-selector-tag-list mp-list-item:hover svg-icon path {   color: #4ba8ff;   fill: #4ba8ff;   transition: 0s; } .mp-tag-selector-container .mp-tag-selector-tag-list mp-list-item .mp-tag-selector-tag-list-item {   display: block; } .mp-tag-selector-create-tag-btn {   display: -webkit-box;   display: -ms-flexbox;   display: flex;   max-width: 100%;   overflow: hidden;   white-space: nowrap; } .mp-tag-selector-create-tag-btn .mp-tag-selector-copy {   color: #4c6072;   -webkit-box-flex: 0;       -ms-flex: none;           flex: none;   margin-right: 4px; } .mp-tag-selector-create-tag-btn .mp-tag-selector-label-name {   color: #3391e9;   -webkit-box-flex: 1;       -ms-flex: 1;           flex: 1;   overflow: hidden;   text-overflow: ellipsis; } .mp-tag-selector-search-input-dummy {   font-family: 'Helvetica Neue', 'Helvetica', 'Tahoma', 'Geneva', 'Arial', sans-serif;   font-size: 13px;   font-weight: 400;   padding: 0;   position: absolute;   visibility: hidden;   white-space: nowrap; } ";
 
 
 /***/ },
-/* 554 */
+/* 559 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -51593,7 +51907,7 @@
 	module.exports = _jade_template_fn;
 
 /***/ },
-/* 555 */
+/* 560 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -51614,11 +51928,11 @@
 
 	var _timingJson2 = _interopRequireDefault(_timingJson);
 
-	var _index = __webpack_require__(556);
+	var _index = __webpack_require__(561);
 
 	var _index2 = _interopRequireDefault(_index);
 
-	var _index3 = __webpack_require__(557);
+	var _index3 = __webpack_require__(562);
 
 	var _index4 = _interopRequireDefault(_index3);
 
@@ -51694,7 +52008,7 @@
 	}(_panel.Component));
 
 /***/ },
-/* 556 */
+/* 561 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -51845,14 +52159,14 @@
 	module.exports = _jade_template_fn;
 
 /***/ },
-/* 557 */
+/* 562 */
 /***/ function(module, exports) {
 
 	module.exports = "* {   -webkit-font-smoothing: antialiased; } *:focus {   outline: 0; } *::-ms-clear {   height: 0;   width: 0; } body {   color: #6d859e;   font-family: 'Helvetica Neue', 'Helvetica', 'Tahoma', 'Geneva', 'Arial', sans-serif;   font-size: 13px;   font-stretch: normal;   font-weight: 400; } a, .mp-link {   cursor: pointer;   text-decoration: none; } a, .mp-link, a:visited, .mp-link:visited {   color: #3b99f0; } a:hover, .mp-link:hover {   color: #4ba8ff; } .mp-font-size-xl {   font-size: 18px; } .mp-font-size-large {   font-size: 16px; } .mp-font-size-medium {   font-size: 14px; } .mp-font-size-default {   font-size: 13px; } .mp-font-size-xs {   font-size: 11px;   text-transform: uppercase; } .mp-font-weight-bold {   font-weight: 600; } .mp-font-weight-medium {   font-weight: 500; } .mp-font-weight-regular {   font-weight: 400; } .mp-font-paragraph {   color: #6d859e;   font-size: 14px;   font-family: 'Helvetica Neue', 'Helvetica', 'Tahoma', 'Geneva', 'Arial', sans-serif;   font-stretch: normal;   font-weight: 500;   line-height: 18px; } input[type=text], textarea {   border: 1px solid #d8e0ea;   border-radius: 5px;   box-sizing: border-box;   color: #4c6072;   display: inline-block;   font-family: 'Helvetica Neue', 'Helvetica', 'Tahoma', 'Geneva', 'Arial', sans-serif;   font-size: 13px;   font-weight: 400;   padding: 8px;   transition: border-color 150ms ease-out; } input[type=text]::-webkit-input-placeholder, textarea::-webkit-input-placeholder {   color: #9bacbf !important;   font-weight: weight-normal !important; } input[type=text]::-moz-placeholder, textarea::-moz-placeholder {   color: #9bacbf !important;   font-weight: weight-normal !important; } input[type=text]:-ms-input-placeholder, textarea:-ms-input-placeholder {   color: #9bacbf !important;   font-weight: weight-normal !important; } input[type=text]::placeholder, textarea::placeholder {   color: #9bacbf !important;   font-weight: weight-normal !important; } input[type=text]:focus, textarea:focus, input[type=text]:active, textarea:active {   border-color: #3391e9;   transition: border-color 200ms ease-in; } input[type=text] {   height: 36px; } mp-truncated-text {   display: inline-block;   white-space: nowrap;   width: 100%; } svg-icon {   display: inline-block;   height: 22px;   min-height: 22px;   min-width: 22px;   position: relative;   width: 22px; } svg-icon[icon=type-boolean] #left-dot {   color: #fff;   fill: #fff; } svg-icon[icon=type-boolean] #right-dot {   color: #4c6072;   fill: #4c6072; } svg-icon[icon=lightning-bolt] #bolt, svg-icon[icon=lighting-bolt] #bolt {   color: #fff;   fill: #fff; } svg-icon[icon=alert] #circle, svg-icon[icon=alert] #stem {   color: #fff;   fill: #fff; } svg-icon svg {   height: 22px;   left: 0;   min-height: 22px;   min-width: 22px;   position: absolute;   top: 0;   width: 22px; } mp-tutorial-tooltip {   color: rgba(255,255,255,0.64);   cursor: default;   font-weight: 500;   height: 172px;   position: absolute;   width: 424px;   z-index: 6000;   bottom: calc(100% + 12px);   left: calc(50% - 212px); } :host {   color: rgba(255,255,255,0.64);   cursor: default;   font-weight: 500;   height: 172px;   position: absolute;   width: 424px;   z-index: 6000;   bottom: calc(100% + 12px);   left: calc(50% - 212px); } mp-tutorial-tooltip[hide=\"true\"] {   pointer-events: none; } :host([hide=\"true\"]) {   pointer-events: none; } mp-tutorial-tooltip[placement=\"bottom\"] {   bottom: initial;   left: calc(50% - 212px);   top: calc(100% + 12px); } :host([placement=\"bottom\"]) {   bottom: initial;   left: calc(50% - 212px);   top: calc(100% + 12px); } mp-tutorial-tooltip[placement=\"left\"] {   bottom: initial;   left: initial;   right: calc(100% + 12px);   top: calc(50% - 86px); } :host([placement=\"left\"]) {   bottom: initial;   left: initial;   right: calc(100% + 12px);   top: calc(50% - 86px); } mp-tutorial-tooltip[placement=\"right\"] {   bottom: initial;   left: calc(100% + 12px);   top: calc(50% - 86px); } :host([placement=\"right\"]) {   bottom: initial;   left: calc(100% + 12px);   top: calc(50% - 86px); } mp-tutorial-tooltip[placement=\"center\"] {   bottom: initial;   left: calc(50% - 212px);   top: calc(50% - 86px); } :host([placement=\"center\"]) {   bottom: initial;   left: calc(50% - 212px);   top: calc(50% - 86px); } mp-tutorial-tooltip[arrow-align=\"top\"] {   bottom: initial;   top: calc(50% - 31px); } :host([arrow-align=\"top\"]) {   bottom: initial;   top: calc(50% - 31px); } mp-tutorial-tooltip[arrow-align=\"bottom\"] {   bottom: calc(50% - 24px);   top: initial; } :host([arrow-align=\"bottom\"]) {   bottom: calc(50% - 24px);   top: initial; } mp-tutorial-tooltip[arrow-align=\"left\"] {   left: calc(50% - 32px);   right: initial; } :host([arrow-align=\"left\"]) {   left: calc(50% - 32px);   right: initial; } mp-tutorial-tooltip[arrow-align=\"right\"] {   left: initial;   right: calc(50% - 36px); } :host([arrow-align=\"right\"]) {   left: initial;   right: calc(50% - 36px); } .mp-tutorial-tooltip-stage {   height: inherit; } .mp-tutorial-tooltip-wrapper {   background: #3391e9;   border-radius: 8px;   box-shadow: 0 16px 41px 0 rgba(18,82,143,0.37);   height: inherit;   opacity: 0; } .mp-tutorial-tooltip-wrapper.mp-tutorial-tooltip-in {   opacity: 1;   transition: all 400ms cubic-bezier(0.165, 0.84, 0.44, 1); } .mp-tutorial-tooltip-wrapper.mp-tutorial-tooltip-out {   opacity: 0;   transition: all 400ms cubic-bezier(0.895, 0.03, 0.685, 0.22); } .mp-tutorial-tooltip-wrapper.mp-tutorial-tooltip-placement-bottom.mp-tutorial-tooltip-in, .mp-tutorial-tooltip-wrapper.mp-tutorial-tooltip-placement-top.mp-tutorial-tooltip-in, .mp-tutorial-tooltip-wrapper.mp-tutorial-tooltip-placement-left.mp-tutorial-tooltip-in, .mp-tutorial-tooltip-wrapper.mp-tutorial-tooltip-placement-right.mp-tutorial-tooltip-in {   -webkit-transform: translate(0);           transform: translate(0); } .mp-tutorial-tooltip-wrapper.mp-tutorial-tooltip-placement-top, .mp-tutorial-tooltip-wrapper.mp-tutorial-tooltip-placement-top.mp-tutorial-tooltip-out {   -webkit-transform: translateY(-20px);           transform: translateY(-20px); } .mp-tutorial-tooltip-wrapper.mp-tutorial-tooltip-placement-bottom, .mp-tutorial-tooltip-wrapper.mp-tutorial-tooltip-placement-bottom.mp-tutorial-tooltip-out {   -webkit-transform: translateY(20px);           transform: translateY(20px); } .mp-tutorial-tooltip-wrapper.mp-tutorial-tooltip-placement-left, .mp-tutorial-tooltip-wrapper.mp-tutorial-tooltip-placement-left.mp-tutorial-tooltip-out {   -webkit-transform: translateX(-20px);           transform: translateX(-20px); } .mp-tutorial-tooltip-wrapper.mp-tutorial-tooltip-placement-right, .mp-tutorial-tooltip-wrapper.mp-tutorial-tooltip-placement-right.mp-tutorial-tooltip-out {   -webkit-transform: translateX(20px);           transform: translateX(20px); } .mp-tutorial-tooltip-wrapper.mp-tutorial-tooltip-placement-center.mp-tutorial-tooltip-in {   -webkit-transform: scale(1);           transform: scale(1); } .mp-tutorial-tooltip-wrapper.mp-tutorial-tooltip-placement-center, .mp-tutorial-tooltip-wrapper.mp-tutorial-tooltip-placement-center.mp-tutorial-tooltip-out {   -webkit-transform: scale(0.95);           transform: scale(0.95); } .mp-tutorial-tooltip-wrapper::after {   border: 11px solid transparent;   content: '';   height: 0;   pointer-events: none;   position: absolute;   width: 0; } .mp-tutorial-tooltip-wrapper.mp-tutorial-tooltip-placement-top::after {   border-top-color: #2687e3;   left: 50%;   margin-left: -11px;   top: 100%; } .mp-tutorial-tooltip-wrapper.mp-tutorial-tooltip-placement-top.mp-tutorial-tooltip-hide-footer::after {   border-top-color: #3391e9; } .mp-tutorial-tooltip-wrapper.mp-tutorial-tooltip-placement-bottom::after {   border-bottom-color: #3391e9;   bottom: 100%;   left: 50%;   margin-left: -11px; } .mp-tutorial-tooltip-wrapper.mp-tutorial-tooltip-placement-left::after {   border-left-color: #3391e9;   left: 100%;   margin-top: -11px;   top: 50%; } .mp-tutorial-tooltip-wrapper.mp-tutorial-tooltip-placement-right::after {   border-right-color: #3391e9;   margin-top: -11px;   right: 100%;   top: 50%; } .mp-tutorial-tooltip-wrapper.mp-tutorial-tooltip-arrow-align-top.mp-tutorial-tooltip-placement-left::after, .mp-tutorial-tooltip-wrapper.mp-tutorial-tooltip-arrow-align-top.mp-tutorial-tooltip-placement-right::after {   bottom: initial;   top: 32px; } .mp-tutorial-tooltip-wrapper.mp-tutorial-tooltip-arrow-align-bottom.mp-tutorial-tooltip-placement-left::after, .mp-tutorial-tooltip-wrapper.mp-tutorial-tooltip-arrow-align-bottom.mp-tutorial-tooltip-placement-right::after {   bottom: 13px;   top: initial; } .mp-tutorial-tooltip-wrapper.mp-tutorial-tooltip-arrow-align-bottom.mp-tutorial-tooltip-placement-left:not(.mp-tutorial-tooltip-hide-footer)::after, .mp-tutorial-tooltip-wrapper.mp-tutorial-tooltip-arrow-align-bottom.mp-tutorial-tooltip-placement-right:not(.mp-tutorial-tooltip-hide-footer)::after {   border-right-color: #2687e3; } .mp-tutorial-tooltip-wrapper.mp-tutorial-tooltip-arrow-align-right.mp-tutorial-tooltip-placement-top::after, .mp-tutorial-tooltip-wrapper.mp-tutorial-tooltip-arrow-align-right.mp-tutorial-tooltip-placement-bottom::after {   left: initial;   right: 23px; } .mp-tutorial-tooltip-wrapper.mp-tutorial-tooltip-arrow-align-left.mp-tutorial-tooltip-placement-top::after, .mp-tutorial-tooltip-wrapper.mp-tutorial-tooltip-arrow-align-left.mp-tutorial-tooltip-placement-bottom::after {   left: 32px;   right: initial; } .mp-tutorial-tooltip-close-btn {   cursor: pointer;   position: absolute;   right: 10px;   top: 10px; } .mp-tutorial-tooltip-close-btn svg-icon {   display: inline-block;   height: 22px;   min-height: 22px;   min-width: 22px;   position: relative;   width: 22px; } .mp-tutorial-tooltip-close-btn svg-icon[icon=type-boolean] #left-dot {   color: #fff;   fill: #fff; } .mp-tutorial-tooltip-close-btn svg-icon[icon=type-boolean] #right-dot {   color: #4c6072;   fill: #4c6072; } .mp-tutorial-tooltip-close-btn svg-icon[icon=lightning-bolt] #bolt, .mp-tutorial-tooltip-close-btn svg-icon[icon=lighting-bolt] #bolt {   color: #fff;   fill: #fff; } .mp-tutorial-tooltip-close-btn svg-icon[icon=alert] #circle, .mp-tutorial-tooltip-close-btn svg-icon[icon=alert] #stem {   color: #fff;   fill: #fff; } .mp-tutorial-tooltip-close-btn svg-icon svg {   height: 22px;   left: 0;   min-height: 22px;   min-width: 22px;   position: absolute;   top: 0;   width: 22px; } .mp-tutorial-tooltip-close-btn svg-icon svg, .mp-tutorial-tooltip-close-btn svg-icon path {   color: #6cb8ff;   fill: #6cb8ff;   transition: 0.2s; } .mp-tutorial-tooltip-close-btn:hover svg-icon svg, .mp-tutorial-tooltip-close-btn:hover svg-icon path {   color: #fff;   fill: #fff; } .mp-tutorial-tooltip-content {   padding: 23px 30px; } .mp-tutorial-tooltip-footer {   background: #2687e3;   border-radius: 0 0 8px 8px;   border-top: 1px solid #2687e3;   bottom: 0;   display: -webkit-box;   display: -ms-flexbox;   display: flex;   -webkit-box-orient: horizontal;   -webkit-box-direction: normal;       -ms-flex-direction: row;           flex-direction: row;   height: 42px;   -webkit-box-pack: justify;       -ms-flex-pack: justify;           justify-content: space-between;   position: absolute;   width: 100%; } .mp-tutorial-tooltip-footer ul.mp-tutorial-tooltip-steps {   list-style: none;   margin: 0;   padding: 0;   padding-left: 30px; } .mp-tutorial-tooltip-footer ul.mp-tutorial-tooltip-steps li.mp-tutorial-tooltip-step {   background: #6cb8ff;   border-radius: 50%;   float: left;   height: 6px;   margin: 17px 14px 17px 0;   position: relative;   width: 6px; } .mp-tutorial-tooltip-footer ul.mp-tutorial-tooltip-steps li.mp-tutorial-tooltip-step.mp-tutorial-tooltip-active {   background: transparent; } .mp-tutorial-tooltip-footer ul.mp-tutorial-tooltip-steps li.mp-tutorial-tooltip-step.mp-tutorial-tooltip-active::after {   border: 4px solid #ffd209;   border-radius: 50%;   box-shadow: 0 2px 3px 0 rgba(19,102,179,0.66);   content: '';   height: 4px;   left: -3px;   position: absolute;   top: -3px;   width: 4px; } .mp-tutorial-tooltip-footer .mp-tutorial-tooltip-next, .mp-tutorial-tooltip-footer .mp-tutorial-tooltip-done {   color: #6cb8ff;   cursor: pointer;   font-size: 12px;   font-weight: bold;   padding: 13px 25px 17px 0;   text-transform: uppercase; } .mp-tutorial-tooltip-footer .mp-tutorial-tooltip-next:hover, .mp-tutorial-tooltip-footer .mp-tutorial-tooltip-done:hover {   color: #fff; } ";
 
 
 /***/ },
-/* 558 */
+/* 563 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -51867,11 +52181,11 @@
 
 	var _registerElement = __webpack_require__(320);
 
-	var _index = __webpack_require__(559);
+	var _index = __webpack_require__(564);
 
 	var _index2 = _interopRequireDefault(_index);
 
-	var _index3 = __webpack_require__(560);
+	var _index3 = __webpack_require__(565);
 
 	var _index4 = _interopRequireDefault(_index3);
 
@@ -51907,7 +52221,7 @@
 	}(_panel.Component));
 
 /***/ },
-/* 559 */
+/* 564 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -52151,14 +52465,14 @@
 	module.exports = _jade_template_fn;
 
 /***/ },
-/* 560 */
+/* 565 */
 /***/ function(module, exports) {
 
 	module.exports = "* {   -webkit-font-smoothing: antialiased; } *:focus {   outline: 0; } *::-ms-clear {   height: 0;   width: 0; } body {   color: #6d859e;   font-family: 'Helvetica Neue', 'Helvetica', 'Tahoma', 'Geneva', 'Arial', sans-serif;   font-size: 13px;   font-stretch: normal;   font-weight: 400; } a, .mp-link {   cursor: pointer;   text-decoration: none; } a, .mp-link, a:visited, .mp-link:visited {   color: #3b99f0; } a:hover, .mp-link:hover {   color: #4ba8ff; } .mp-font-size-xl {   font-size: 18px; } .mp-font-size-large {   font-size: 16px; } .mp-font-size-medium {   font-size: 14px; } .mp-font-size-default {   font-size: 13px; } .mp-font-size-xs {   font-size: 11px;   text-transform: uppercase; } .mp-font-weight-bold {   font-weight: 600; } .mp-font-weight-medium {   font-weight: 500; } .mp-font-weight-regular {   font-weight: 400; } .mp-font-paragraph {   color: #6d859e;   font-size: 14px;   font-family: 'Helvetica Neue', 'Helvetica', 'Tahoma', 'Geneva', 'Arial', sans-serif;   font-stretch: normal;   font-weight: 500;   line-height: 18px; } input[type=text], textarea {   border: 1px solid #d8e0ea;   border-radius: 5px;   box-sizing: border-box;   color: #4c6072;   display: inline-block;   font-family: 'Helvetica Neue', 'Helvetica', 'Tahoma', 'Geneva', 'Arial', sans-serif;   font-size: 13px;   font-weight: 400;   padding: 8px;   transition: border-color 150ms ease-out; } input[type=text]::-webkit-input-placeholder, textarea::-webkit-input-placeholder {   color: #9bacbf !important;   font-weight: weight-normal !important; } input[type=text]::-moz-placeholder, textarea::-moz-placeholder {   color: #9bacbf !important;   font-weight: weight-normal !important; } input[type=text]:-ms-input-placeholder, textarea:-ms-input-placeholder {   color: #9bacbf !important;   font-weight: weight-normal !important; } input[type=text]::placeholder, textarea::placeholder {   color: #9bacbf !important;   font-weight: weight-normal !important; } input[type=text]:focus, textarea:focus, input[type=text]:active, textarea:active {   border-color: #3391e9;   transition: border-color 200ms ease-in; } input[type=text] {   height: 36px; } mp-truncated-text {   display: inline-block;   white-space: nowrap;   width: 100%; } svg-icon {   display: inline-block;   height: 22px;   min-height: 22px;   min-width: 22px;   position: relative;   width: 22px; } svg-icon[icon=type-boolean] #left-dot {   color: #fff;   fill: #fff; } svg-icon[icon=type-boolean] #right-dot {   color: #4c6072;   fill: #4c6072; } svg-icon[icon=lightning-bolt] #bolt, svg-icon[icon=lighting-bolt] #bolt {   color: #fff;   fill: #fff; } svg-icon[icon=alert] #circle, svg-icon[icon=alert] #stem {   color: #fff;   fill: #fff; } svg-icon svg {   height: 22px;   left: 0;   min-height: 22px;   min-width: 22px;   position: absolute;   top: 0;   width: 22px; } mp-modal {   width: 285px; } .mp-upsell-popup-content {   box-shadow: 0 1px 30px 0 rgba(0,0,0,0.19);   display: -webkit-box;   display: -ms-flexbox;   display: flex;   padding: 20px; } .mp-upsell-popup-content .mp-upsell-popup-icon {   margin-right: 10px; } .mp-upsell-popup-content .mp-upsell-popup-icon svg {   height: 42px;   width: 53px; } .mp-upsell-popup-content .mp-upsell-popup-text {   color: #6d859e;   font-family: 'Helvetica Neue', 'Helvetica', 'Tahoma', 'Geneva', 'Arial', sans-serif;   font-size: 14px;   font-weight: 400;   line-height: 18px;   margin: 3px 20px 0 0;   max-width: 180px;   text-shadow: 0 1px 0 rgba(255,255,255,0.5); } .mp-upsell-popup-content .mp-upsell-popup-text .mp-upsell-popup-upgrade-link {   color: #2687e3;   cursor: pointer;   font-weight: 600;   text-decoration: none; } .mp-upsell-popup-content .mp-upsell-popup-text .mp-upsell-popup-upgrade-link:hover {   color: #4ba8ff; } ";
 
 
 /***/ },
-/* 561 */
+/* 566 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -52177,11 +52491,11 @@
 
 	var _string = __webpack_require__(492);
 
-	var _index = __webpack_require__(562);
+	var _index = __webpack_require__(567);
 
 	var _index2 = _interopRequireDefault(_index);
 
-	var _index3 = __webpack_require__(563);
+	var _index3 = __webpack_require__(568);
 
 	var _index4 = _interopRequireDefault(_index3);
 
@@ -52251,7 +52565,7 @@
 	}(_panel.Component));
 
 /***/ },
-/* 562 */
+/* 567 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -52294,14 +52608,14 @@
 	module.exports = _jade_template_fn;
 
 /***/ },
-/* 563 */
+/* 568 */
 /***/ function(module, exports) {
 
 	module.exports = "* {   -webkit-font-smoothing: antialiased; } *:focus {   outline: 0; } *::-ms-clear {   height: 0;   width: 0; } body {   color: #6d859e;   font-family: 'Helvetica Neue', 'Helvetica', 'Tahoma', 'Geneva', 'Arial', sans-serif;   font-size: 13px;   font-stretch: normal;   font-weight: 400; } a, .mp-link {   cursor: pointer;   text-decoration: none; } a, .mp-link, a:visited, .mp-link:visited {   color: #3b99f0; } a:hover, .mp-link:hover {   color: #4ba8ff; } .mp-font-size-xl {   font-size: 18px; } .mp-font-size-large {   font-size: 16px; } .mp-font-size-medium {   font-size: 14px; } .mp-font-size-default {   font-size: 13px; } .mp-font-size-xs {   font-size: 11px;   text-transform: uppercase; } .mp-font-weight-bold {   font-weight: 600; } .mp-font-weight-medium {   font-weight: 500; } .mp-font-weight-regular {   font-weight: 400; } .mp-font-paragraph {   color: #6d859e;   font-size: 14px;   font-family: 'Helvetica Neue', 'Helvetica', 'Tahoma', 'Geneva', 'Arial', sans-serif;   font-stretch: normal;   font-weight: 500;   line-height: 18px; } input[type=text], textarea {   border: 1px solid #d8e0ea;   border-radius: 5px;   box-sizing: border-box;   color: #4c6072;   display: inline-block;   font-family: 'Helvetica Neue', 'Helvetica', 'Tahoma', 'Geneva', 'Arial', sans-serif;   font-size: 13px;   font-weight: 400;   padding: 8px;   transition: border-color 150ms ease-out; } input[type=text]::-webkit-input-placeholder, textarea::-webkit-input-placeholder {   color: #9bacbf !important;   font-weight: weight-normal !important; } input[type=text]::-moz-placeholder, textarea::-moz-placeholder {   color: #9bacbf !important;   font-weight: weight-normal !important; } input[type=text]:-ms-input-placeholder, textarea:-ms-input-placeholder {   color: #9bacbf !important;   font-weight: weight-normal !important; } input[type=text]::placeholder, textarea::placeholder {   color: #9bacbf !important;   font-weight: weight-normal !important; } input[type=text]:focus, textarea:focus, input[type=text]:active, textarea:active {   border-color: #3391e9;   transition: border-color 200ms ease-in; } input[type=text] {   height: 36px; } mp-truncated-text {   display: inline-block;   white-space: nowrap;   width: 100%; } svg-icon {   display: inline-block;   height: 22px;   min-height: 22px;   min-width: 22px;   position: relative;   width: 22px; } svg-icon[icon=type-boolean] #left-dot {   color: #fff;   fill: #fff; } svg-icon[icon=type-boolean] #right-dot {   color: #4c6072;   fill: #4c6072; } svg-icon[icon=lightning-bolt] #bolt, svg-icon[icon=lighting-bolt] #bolt {   color: #fff;   fill: #fff; } svg-icon[icon=alert] #circle, svg-icon[icon=alert] #stem {   color: #fff;   fill: #fff; } svg-icon svg {   height: 22px;   left: 0;   min-height: 22px;   min-width: 22px;   position: absolute;   top: 0;   width: 22px; } mp-user-icon {   display: inline-block; } :host {   display: inline-block; } .mp-user-icon-container {   background-color: #1e7171;   border-radius: 50%;   color: #fff;   cursor: default;   font-family: 'Helvetica Neue', 'Helvetica', 'Tahoma', 'Geneva', 'Arial', sans-serif;   font-size: 11px;   text-transform: uppercase;   font-weight: 600;   height: 26px;   line-height: 26px;   overflow: hidden;   text-align: center;   text-transform: uppercase;   width: 26px; } .mp-user-icon-container mp-tooltip {   line-height: normal;   z-index: 6000; } .mp-user-icon-container .mp-user-icon-color-A {   background-color: #33bcbd; } .mp-user-icon-container .mp-user-icon-color-B {   background-color: #2da9aa; } .mp-user-icon-container .mp-user-icon-color-C {   background-color: #289697; } .mp-user-icon-container .mp-user-icon-color-D {   background-color: #238384; } .mp-user-icon-container .mp-user-icon-color-E {   background-color: #64ade8; } .mp-user-icon-container .mp-user-icon-color-F {   background-color: #5a9bd1; } .mp-user-icon-container .mp-user-icon-color-G {   background-color: #508bba; } .mp-user-icon-container .mp-user-icon-color-H {   background-color: #4679a2; } .mp-user-icon-container .mp-user-icon-color-I {   background-color: #3c688b; } .mp-user-icon-container .mp-user-icon-color-J {   background-color: #a28ccb; } .mp-user-icon-container .mp-user-icon-color-K {   background-color: #917db6; } .mp-user-icon-container .mp-user-icon-color-L {   background-color: #826fa2; } .mp-user-icon-container .mp-user-icon-color-M {   background-color: #71618d; } .mp-user-icon-container .mp-user-icon-color-N {   background-color: #61547a; } .mp-user-icon-container .mp-user-icon-color-O {   background-color: #d97b7f; } .mp-user-icon-container .mp-user-icon-color-P {   background-color: #c36e72; } .mp-user-icon-container .mp-user-icon-color-Q {   background-color: #ad6366; } .mp-user-icon-container .mp-user-icon-color-R {   background-color: #985559; } .mp-user-icon-container .mp-user-icon-color-S {   background-color: #e8bc65; } .mp-user-icon-container .mp-user-icon-color-T {   background-color: #d0a95b; } .mp-user-icon-container .mp-user-icon-color-U {   background-color: #b99651; } .mp-user-icon-container .mp-user-icon-color-V {   background-color: #a28347; } .mp-user-icon-container .mp-user-icon-color-W {   background-color: #f6893b; } .mp-user-icon-container .mp-user-icon-color-X {   background-color: #dd7b35; } .mp-user-icon-container .mp-user-icon-color-Y {   background-color: #c46e30; } ";
 
 
 /***/ },
-/* 564 */
+/* 569 */
 /***/ function(module, exports) {
 
 	module.exports = {
@@ -52354,7 +52668,7 @@
 	};
 
 /***/ },
-/* 565 */
+/* 570 */
 /***/ function(module, exports) {
 
 	module.exports = {
@@ -52732,7 +53046,7 @@
 	};
 
 /***/ },
-/* 566 */
+/* 571 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -52741,15 +53055,15 @@
 
 	var _panel = __webpack_require__(299);
 
-	var _buttonSearchTerms = __webpack_require__(567);
+	var _buttonSearchTerms = __webpack_require__(572);
 
 	var _buttonSearchTerms2 = _interopRequireDefault(_buttonSearchTerms);
 
-	var _index = __webpack_require__(568);
+	var _index = __webpack_require__(573);
 
 	var _index2 = _interopRequireDefault(_index);
 
-	__webpack_require__(569);
+	__webpack_require__(574);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -52812,7 +53126,7 @@
 	}(_panel.Component));
 
 /***/ },
-/* 567 */
+/* 572 */
 /***/ function(module, exports) {
 
 	module.exports = {
@@ -52938,7 +53252,7 @@
 	};
 
 /***/ },
-/* 568 */
+/* 573 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -55517,16 +55831,16 @@
 	module.exports = _jade_template_fn;
 
 /***/ },
-/* 569 */
+/* 574 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// style-loader: Adds some css to the DOM by adding a <style> tag
 
 	// load the styles
-	var content = __webpack_require__(570);
+	var content = __webpack_require__(575);
 	if(typeof content === 'string') content = [[module.id, content, '']];
 	// add the styles to the DOM
-	var update = __webpack_require__(573)(content, {});
+	var update = __webpack_require__(578)(content, {});
 	if(content.locals) module.exports = content.locals;
 	// Hot Module Replacement
 	if(false) {
@@ -55543,12 +55857,12 @@
 	}
 
 /***/ },
-/* 570 */
+/* 575 */
 /***/ function(module, exports, __webpack_require__) {
 
-	exports = module.exports = __webpack_require__(571)();
+	exports = module.exports = __webpack_require__(576)();
 	// imports
-	exports.i(__webpack_require__(572), "");
+	exports.i(__webpack_require__(577), "");
 
 	// module
 	exports.push([module.id, ".button-types {\n  display: -webkit-box;\n  display: -ms-flexbox;\n  display: flex;\n  -webkit-box-orient: horizontal;\n  -webkit-box-direction: normal;\n      -ms-flex-direction: row;\n          flex-direction: row;\n  -ms-flex-wrap: wrap;\n      flex-wrap: wrap;\n  -webkit-box-pack: start;\n      -ms-flex-pack: start;\n          justify-content: flex-start;\n}\n.common-example {\n  padding: 15px;\n  margin: 15px 0 0 0;\n}\n.common-example :last-child {\n  margin-right: 0px;\n}\n.common-example mp-button {\n  margin-right: 15px;\n}\n.common-example .drop-menu-container {\n  left: -20px;\n  position: relative;\n  top: 7px;\n}\n.common-example .drop-menu-container .text-container {\n  width: 150px;\n}\n.drop-menu-button,\n.overflow-menu-button {\n  color: #6d859e;\n}\n.drop-menu-button svg-icon,\n.overflow-menu-button svg-icon {\n  display: inline-block;\n  height: 22px;\n  min-height: 22px;\n  min-width: 22px;\n  position: relative;\n  width: 22px;\n}\n.drop-menu-button svg-icon[icon=type-boolean] #left-dot,\n.overflow-menu-button svg-icon[icon=type-boolean] #left-dot {\n  color: #fff;\n  fill: #fff;\n}\n.drop-menu-button svg-icon[icon=type-boolean] #right-dot,\n.overflow-menu-button svg-icon[icon=type-boolean] #right-dot {\n  color: #4c6072;\n  fill: #4c6072;\n}\n.drop-menu-button svg-icon[icon=lightning-bolt] #bolt,\n.overflow-menu-button svg-icon[icon=lightning-bolt] #bolt,\n.drop-menu-button svg-icon[icon=lighting-bolt] #bolt,\n.overflow-menu-button svg-icon[icon=lighting-bolt] #bolt {\n  color: #fff;\n  fill: #fff;\n}\n.drop-menu-button svg-icon[icon=alert] #circle,\n.overflow-menu-button svg-icon[icon=alert] #circle,\n.drop-menu-button svg-icon[icon=alert] #stem,\n.overflow-menu-button svg-icon[icon=alert] #stem {\n  color: #fff;\n  fill: #fff;\n}\n.drop-menu-button svg-icon svg,\n.overflow-menu-button svg-icon svg {\n  height: 22px;\n  left: 0;\n  min-height: 22px;\n  min-width: 22px;\n  position: absolute;\n  top: 0;\n  width: 22px;\n}\n.drop-menu-button svg-icon svg,\n.overflow-menu-button svg-icon svg,\n.drop-menu-button svg-icon path,\n.overflow-menu-button svg-icon path {\n  color: #6d859e;\n  fill: #6d859e;\n  transition: 0.2s;\n}\n.drop-menu-button:hover svg-icon svg,\n.overflow-menu-button:hover svg-icon svg,\n.drop-menu-button:hover svg-icon path,\n.overflow-menu-button:hover svg-icon path {\n  color: #6cb8ff;\n  fill: #6cb8ff;\n}\n.drop-menu-button a,\n.overflow-menu-button a {\n  vertical-align: super;\n  margin-right: 10px;\n  font-weight: 500;\n}\n.example-card mp-button-bar {\n  margin-bottom: -1px;\n}\nmp-toggle.inline-toggle {\n  min-width: 350px;\n}\nmp-toggle.max-width-toggle {\n  min-width: 600px;\n}\nmp-toggle.full-width-toggle {\n  min-width: 100%;\n}\n.example-block.full-width {\n  width: 100%;\n  display: inline-block;\n}\n", ""]);
@@ -55557,7 +55871,7 @@
 
 
 /***/ },
-/* 571 */
+/* 576 */
 /***/ function(module, exports) {
 
 	/*
@@ -55613,10 +55927,10 @@
 
 
 /***/ },
-/* 572 */
+/* 577 */
 /***/ function(module, exports, __webpack_require__) {
 
-	exports = module.exports = __webpack_require__(571)();
+	exports = module.exports = __webpack_require__(576)();
 	// imports
 
 
@@ -55627,7 +55941,7 @@
 
 
 /***/ },
-/* 573 */
+/* 578 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/*
@@ -55879,7 +56193,7 @@
 
 
 /***/ },
-/* 574 */
+/* 579 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -55888,11 +56202,11 @@
 
 	var _panel = __webpack_require__(299);
 
-	var _index = __webpack_require__(575);
+	var _index = __webpack_require__(580);
 
 	var _index2 = _interopRequireDefault(_index);
 
-	__webpack_require__(576);
+	__webpack_require__(581);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -55985,7 +56299,7 @@
 	}(_panel.Component));
 
 /***/ },
-/* 575 */
+/* 580 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -56573,16 +56887,16 @@
 	module.exports = _jade_template_fn;
 
 /***/ },
-/* 576 */
+/* 581 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// style-loader: Adds some css to the DOM by adding a <style> tag
 
 	// load the styles
-	var content = __webpack_require__(577);
+	var content = __webpack_require__(582);
 	if(typeof content === 'string') content = [[module.id, content, '']];
 	// add the styles to the DOM
-	var update = __webpack_require__(573)(content, {});
+	var update = __webpack_require__(578)(content, {});
 	if(content.locals) module.exports = content.locals;
 	// Hot Module Replacement
 	if(false) {
@@ -56599,10 +56913,10 @@
 	}
 
 /***/ },
-/* 577 */
+/* 582 */
 /***/ function(module, exports, __webpack_require__) {
 
-	exports = module.exports = __webpack_require__(571)();
+	exports = module.exports = __webpack_require__(576)();
 	// imports
 
 
@@ -56613,7 +56927,7 @@
 
 
 /***/ },
-/* 578 */
+/* 583 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -56622,15 +56936,15 @@
 
 	var _panel = __webpack_require__(299);
 
-	var _componentSearchTerms = __webpack_require__(579);
+	var _componentSearchTerms = __webpack_require__(584);
 
 	var _componentSearchTerms2 = _interopRequireDefault(_componentSearchTerms);
 
-	var _index = __webpack_require__(580);
+	var _index = __webpack_require__(585);
 
 	var _index2 = _interopRequireDefault(_index);
 
-	__webpack_require__(581);
+	__webpack_require__(586);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -56702,7 +57016,7 @@
 	}(_panel.Component));
 
 /***/ },
-/* 579 */
+/* 584 */
 /***/ function(module, exports) {
 
 	module.exports = {
@@ -56781,7 +57095,7 @@
 	};
 
 /***/ },
-/* 580 */
+/* 585 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -59000,16 +59314,16 @@
 	module.exports = _jade_template_fn;
 
 /***/ },
-/* 581 */
+/* 586 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// style-loader: Adds some css to the DOM by adding a <style> tag
 
 	// load the styles
-	var content = __webpack_require__(582);
+	var content = __webpack_require__(587);
 	if(typeof content === 'string') content = [[module.id, content, '']];
 	// add the styles to the DOM
-	var update = __webpack_require__(573)(content, {});
+	var update = __webpack_require__(578)(content, {});
 	if(content.locals) module.exports = content.locals;
 	// Hot Module Replacement
 	if(false) {
@@ -59026,12 +59340,12 @@
 	}
 
 /***/ },
-/* 582 */
+/* 587 */
 /***/ function(module, exports, __webpack_require__) {
 
-	exports = module.exports = __webpack_require__(571)();
+	exports = module.exports = __webpack_require__(576)();
 	// imports
-	exports.i(__webpack_require__(572), "");
+	exports.i(__webpack_require__(577), "");
 
 	// module
 	exports.push([module.id, ".common-example mp-toast,\n.common-example mp-alert {\n  margin: 10px 10px 0 10px !important;\n}\n.example-block > p.desc {\n  margin: 25px 0 35px 0;\n  padding: 0;\n  font-size: 16px;\n}\n.spinner-zoom {\n  width: 75px;\n  height: 75px;\n}\n.spinner-zoom mp-spinner {\n  margin: 0 0 0 25px;\n  -webkit-transform: scale(3);\n          transform: scale(3);\n}\n.mp-icon-input {\n  -webkit-box-align: center;\n      -ms-flex-align: center;\n          align-items: center;\n  display: -webkit-inline-box;\n  display: -ms-inline-flexbox;\n  display: inline-flex;\n  position: relative;\n}\n.mp-icon-input input {\n  padding: 6px;\n  padding-left: 36px;\n  padding-right: 18px;\n  width: 100%;\n}\n.mp-icon-input input:focus + .mp-icon svg-icon {\n  display: inline-block;\n  height: 22px;\n  min-height: 22px;\n  min-width: 22px;\n  position: relative;\n  width: 22px;\n}\n.mp-icon-input input:focus + .mp-icon svg-icon[icon=type-boolean] #left-dot {\n  color: #fff;\n  fill: #fff;\n}\n.mp-icon-input input:focus + .mp-icon svg-icon[icon=type-boolean] #right-dot {\n  color: #4c6072;\n  fill: #4c6072;\n}\n.mp-icon-input input:focus + .mp-icon svg-icon[icon=lightning-bolt] #bolt,\n.mp-icon-input input:focus + .mp-icon svg-icon[icon=lighting-bolt] #bolt {\n  color: #fff;\n  fill: #fff;\n}\n.mp-icon-input input:focus + .mp-icon svg-icon[icon=alert] #circle,\n.mp-icon-input input:focus + .mp-icon svg-icon[icon=alert] #stem {\n  color: #fff;\n  fill: #fff;\n}\n.mp-icon-input input:focus + .mp-icon svg-icon svg {\n  height: 22px;\n  left: 0;\n  min-height: 22px;\n  min-width: 22px;\n  position: absolute;\n  top: 0;\n  width: 22px;\n}\n.mp-icon-input input:focus + .mp-icon svg-icon svg,\n.mp-icon-input input:focus + .mp-icon svg-icon path {\n  color: #6d859e;\n  fill: #6d859e;\n  transition: 0.2s;\n}\n.mp-icon-input .mp-icon {\n  -webkit-box-align: center;\n      -ms-flex-align: center;\n          align-items: center;\n  bottom: 0;\n  display: -webkit-box;\n  display: -ms-flexbox;\n  display: flex;\n  left: 8px;\n  position: absolute;\n  top: 0;\n}\n.mp-icon-input .mp-icon svg-icon {\n  display: inline-block;\n  height: 22px;\n  min-height: 22px;\n  min-width: 22px;\n  position: relative;\n  width: 22px;\n}\n.mp-icon-input .mp-icon svg-icon[icon=type-boolean] #left-dot {\n  color: #fff;\n  fill: #fff;\n}\n.mp-icon-input .mp-icon svg-icon[icon=type-boolean] #right-dot {\n  color: #4c6072;\n  fill: #4c6072;\n}\n.mp-icon-input .mp-icon svg-icon[icon=lightning-bolt] #bolt,\n.mp-icon-input .mp-icon svg-icon[icon=lighting-bolt] #bolt {\n  color: #fff;\n  fill: #fff;\n}\n.mp-icon-input .mp-icon svg-icon[icon=alert] #circle,\n.mp-icon-input .mp-icon svg-icon[icon=alert] #stem {\n  color: #fff;\n  fill: #fff;\n}\n.mp-icon-input .mp-icon svg-icon svg {\n  height: 22px;\n  left: 0;\n  min-height: 22px;\n  min-width: 22px;\n  position: absolute;\n  top: 0;\n  width: 22px;\n}\n.mp-icon-input .mp-icon svg-icon svg,\n.mp-icon-input .mp-icon svg-icon path {\n  color: #9bacbf;\n  fill: #9bacbf;\n  transition: 0.2s;\n}\nmp-tooltip.multiline span {\n  max-width: 200px;\n}\n.tooltip-example.placement-left {\n  margin-right: 15px;\n}\n.tooltip-example.placement-bottom {\n  margin-right: 15px;\n}\n.tutorial-tooltips-container {\n  position: relative;\n  display: -webkit-box;\n  display: -ms-flexbox;\n  display: flex;\n  -webkit-box-orient: horizontal;\n  -webkit-box-direction: normal;\n      -ms-flex-direction: row;\n          flex-direction: row;\n  flex-direction: column;\n  -webkit-box-pack: center;\n      -ms-flex-pack: center;\n          justify-content: center;\n  -webkit-box-align: center;\n      -ms-flex-align: center;\n          align-items: center;\n  height: 200px;\n  width: 450px;\n}\n.tutorial-tooltips-container .tutorial-tooltip-focus {\n  position: relative;\n}\n.mp-modal-content {\n  text-align: left;\n}\n.reminder {\n  background-color: #ecf3f8;\n  width: 75%;\n  color: #6d859e;\n}\n.tooltip-example {\n  -webkit-box-align: center;\n      -ms-flex-align: center;\n          align-items: center;\n  background-color: #4c6072;\n  border-radius: 3px;\n  box-shadow: 0 2px 4px 0 rgba(0,0,0,0.16);\n  color: #fff;\n  cursor: default;\n  display: -webkit-box;\n  display: -ms-flexbox;\n  display: flex;\n  font-family: 'Helvetica Neue', 'Helvetica', 'Tahoma', 'Geneva', 'Arial', sans-serif;\n  font-size: 13px;\n  font-weight: bold;\n  -webkit-box-pack: center;\n      -ms-flex-pack: center;\n          justify-content: center;\n  padding: 10px 18px;\n  pointer-events: auto;\n  position: relative;\n  text-transform: initial;\n}\n.tooltip-example::after {\n  border: 5px solid transparent;\n  content: '';\n  height: 0;\n  position: absolute;\n  width: 0;\n}\n.tooltip-example.placement-top::after {\n  border-top-color: #4c6072;\n  left: 50%;\n  margin-left: -5px;\n  top: 100%;\n}\n.tooltip-example.placement-bottom::after {\n  border-bottom-color: #4c6072;\n  bottom: 100%;\n  left: 50%;\n  margin-left: -5px;\n}\n.tooltip-example.placement-left::after {\n  border-left-color: #4c6072;\n  left: 100%;\n  margin-top: -5px;\n  top: 50%;\n}\n.tooltip-example.placement-right::after {\n  border-right-color: #4c6072;\n  margin-top: -5px;\n  right: 100%;\n  top: 50%;\n}\n.tooltips-container {\n  display: -webkit-inline-box !important;\n  display: -ms-inline-flexbox !important;\n  display: inline-flex !important;\n}\n.variation-tags {\n  color: #6d859e;\n  font-weight: 600;\n  display: -webkit-box;\n  display: -ms-flexbox;\n  display: flex;\n  -webkit-box-align: center;\n      -ms-flex-align: center;\n          align-items: center;\n  margin-bottom: 20px;\n}\n.variation-tags li {\n  background-color: #ecf3f8;\n  border-radius: 100px;\n  font-weight: 500;\n  padding: 5px 15px 6px 15px;\n  list-style-type: none;\n  margin-left: 15px;\n}\n", ""]);
@@ -59040,7 +59354,7 @@
 
 
 /***/ },
-/* 583 */
+/* 588 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -59049,11 +59363,11 @@
 
 	var _panel = __webpack_require__(299);
 
-	var _index = __webpack_require__(584);
+	var _index = __webpack_require__(589);
 
 	var _index2 = _interopRequireDefault(_index);
 
-	__webpack_require__(585);
+	__webpack_require__(590);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -59095,7 +59409,7 @@
 	}(_panel.Component));
 
 /***/ },
-/* 584 */
+/* 589 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -59499,16 +59813,16 @@
 	module.exports = _jade_template_fn;
 
 /***/ },
-/* 585 */
+/* 590 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// style-loader: Adds some css to the DOM by adding a <style> tag
 
 	// load the styles
-	var content = __webpack_require__(586);
+	var content = __webpack_require__(591);
 	if(typeof content === 'string') content = [[module.id, content, '']];
 	// add the styles to the DOM
-	var update = __webpack_require__(573)(content, {});
+	var update = __webpack_require__(578)(content, {});
 	if(content.locals) module.exports = content.locals;
 	// Hot Module Replacement
 	if(false) {
@@ -59525,10 +59839,10 @@
 	}
 
 /***/ },
-/* 586 */
+/* 591 */
 /***/ function(module, exports, __webpack_require__) {
 
-	exports = module.exports = __webpack_require__(571)();
+	exports = module.exports = __webpack_require__(576)();
 	// imports
 
 
@@ -59539,7 +59853,7 @@
 
 
 /***/ },
-/* 587 */
+/* 592 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -59548,11 +59862,11 @@
 
 	var _panel = __webpack_require__(299);
 
-	var _index = __webpack_require__(588);
+	var _index = __webpack_require__(593);
 
 	var _index2 = _interopRequireDefault(_index);
 
-	__webpack_require__(589);
+	__webpack_require__(594);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -59599,7 +59913,7 @@
 	}(_panel.Component));
 
 /***/ },
-/* 588 */
+/* 593 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -60341,16 +60655,16 @@
 	module.exports = _jade_template_fn;
 
 /***/ },
-/* 589 */
+/* 594 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// style-loader: Adds some css to the DOM by adding a <style> tag
 
 	// load the styles
-	var content = __webpack_require__(590);
+	var content = __webpack_require__(595);
 	if(typeof content === 'string') content = [[module.id, content, '']];
 	// add the styles to the DOM
-	var update = __webpack_require__(573)(content, {});
+	var update = __webpack_require__(578)(content, {});
 	if(content.locals) module.exports = content.locals;
 	// Hot Module Replacement
 	if(false) {
@@ -60367,10 +60681,10 @@
 	}
 
 /***/ },
-/* 590 */
+/* 595 */
 /***/ function(module, exports, __webpack_require__) {
 
-	exports = module.exports = __webpack_require__(571)();
+	exports = module.exports = __webpack_require__(576)();
 	// imports
 
 
@@ -60381,7 +60695,7 @@
 
 
 /***/ },
-/* 591 */
+/* 596 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -60392,11 +60706,11 @@
 
 	var _panel = __webpack_require__(299);
 
-	var _index = __webpack_require__(592);
+	var _index = __webpack_require__(597);
 
 	var _index2 = _interopRequireDefault(_index);
 
-	__webpack_require__(593);
+	__webpack_require__(598);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -60464,7 +60778,7 @@
 	}(_panel.Component));
 
 /***/ },
-/* 592 */
+/* 597 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -60513,16 +60827,16 @@
 	module.exports = _jade_template_fn;
 
 /***/ },
-/* 593 */
+/* 598 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// style-loader: Adds some css to the DOM by adding a <style> tag
 
 	// load the styles
-	var content = __webpack_require__(594);
+	var content = __webpack_require__(599);
 	if(typeof content === 'string') content = [[module.id, content, '']];
 	// add the styles to the DOM
-	var update = __webpack_require__(573)(content, {});
+	var update = __webpack_require__(578)(content, {});
 	if(content.locals) module.exports = content.locals;
 	// Hot Module Replacement
 	if(false) {
@@ -60539,12 +60853,12 @@
 	}
 
 /***/ },
-/* 594 */
+/* 599 */
 /***/ function(module, exports, __webpack_require__) {
 
-	exports = module.exports = __webpack_require__(571)();
+	exports = module.exports = __webpack_require__(576)();
 	// imports
-	exports.i(__webpack_require__(572), "");
+	exports.i(__webpack_require__(577), "");
 
 	// module
 	exports.push([module.id, "input {\n  border: none;\n  background-color: #fcfcfc;\n}\n.search-page .section-title input {\n  font-weight: bold;\n}\n", ""]);
@@ -60553,7 +60867,7 @@
 
 
 /***/ },
-/* 595 */
+/* 600 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -60562,11 +60876,11 @@
 
 	var _panel = __webpack_require__(299);
 
-	var _index = __webpack_require__(596);
+	var _index = __webpack_require__(601);
 
 	var _index2 = _interopRequireDefault(_index);
 
-	__webpack_require__(597);
+	__webpack_require__(602);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -60598,7 +60912,7 @@
 	}(_panel.Component));
 
 /***/ },
-/* 596 */
+/* 601 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -61782,16 +62096,16 @@
 	module.exports = _jade_template_fn;
 
 /***/ },
-/* 597 */
+/* 602 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// style-loader: Adds some css to the DOM by adding a <style> tag
 
 	// load the styles
-	var content = __webpack_require__(598);
+	var content = __webpack_require__(603);
 	if(typeof content === 'string') content = [[module.id, content, '']];
 	// add the styles to the DOM
-	var update = __webpack_require__(573)(content, {});
+	var update = __webpack_require__(578)(content, {});
 	if(content.locals) module.exports = content.locals;
 	// Hot Module Replacement
 	if(false) {
@@ -61808,10 +62122,10 @@
 	}
 
 /***/ },
-/* 598 */
+/* 603 */
 /***/ function(module, exports, __webpack_require__) {
 
-	exports = module.exports = __webpack_require__(571)();
+	exports = module.exports = __webpack_require__(576)();
 	// imports
 
 
@@ -61822,7 +62136,7 @@
 
 
 /***/ },
-/* 599 */
+/* 604 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -61831,19 +62145,19 @@
 
 	var _panel = __webpack_require__(299);
 
-	var _alertData = __webpack_require__(600);
+	var _smartHubAlertsData = __webpack_require__(605);
 
-	var _alertData2 = _interopRequireDefault(_alertData);
+	var _smartHubAlertsData2 = _interopRequireDefault(_smartHubAlertsData);
 
-	var _bookmarkData = __webpack_require__(601);
+	var _bookmarkData = __webpack_require__(606);
 
 	var _bookmarkData2 = _interopRequireDefault(_bookmarkData);
 
-	var _index = __webpack_require__(602);
+	var _index = __webpack_require__(607);
 
 	var _index2 = _interopRequireDefault(_index);
 
-	__webpack_require__(603);
+	__webpack_require__(608);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -61878,8 +62192,9 @@
 
 	      return {
 	        defaultState: {
-	          alerts: _alertData2.default,
-	          alertDropdownOpen: false,
+	          smartHubAlerts: _smartHubAlertsData2.default,
+	          smartHubDropdownOpen: false,
+	          smartHubTooltip: null,
 	          currentBookmark: 'default',
 	          bookmarks: _bookmarkData2.default,
 	          itemsMenuOpen: false,
@@ -62137,8 +62452,29 @@
 	            // Duplicate the menu to make it longer to trigger pagination
 	            return [].concat(sections, sections, sections, sections);
 	          },
-	          toggleAlertDropdown: function toggleAlertDropdown() {
-	            return _this2.update({ alertDropdownOpen: !_this2.state.alertDropdownOpen });
+	          toggleSmartHubDropdown: function toggleSmartHubDropdown() {
+	            return _this2.update({ smartHubDropdownOpen: !_this2.state.smartHubDropdownOpen });
+	          },
+	          handleClickAnomalyUp: function handleClickAnomalyUp(ev) {
+	            var offsetElRect = ev.target.getBoundingClientRect();
+	            _this2.update({ smartHubTooltip: {
+	                placement: 'top',
+	                offsetLeft: document.body.scrollLeft + offsetElRect.left + offsetElRect.width / 2,
+	                offsetTop: document.body.scrollTop + offsetElRect.top,
+	                alert: _this2.state.smartHubAlerts[0].alert
+	              } });
+	          },
+	          handleClickAnomalyDown: function handleClickAnomalyDown(ev) {
+	            var offsetElRect = ev.target.getBoundingClientRect();
+	            _this2.update({ smartHubTooltip: {
+	                placement: 'bottom',
+	                offsetLeft: document.body.scrollLeft + offsetElRect.left + offsetElRect.width / 2,
+	                offsetTop: document.body.scrollTop + offsetElRect.top + offsetElRect.height,
+	                alert: _this2.state.smartHubAlerts[1].alert
+	              } });
+	          },
+	          handleRemovedTooltipAlert: function handleRemovedTooltipAlert() {
+	            _this2.update({ smartHubTooltip: null });
 	          }
 	        },
 	        template: _index2.default
@@ -62150,193 +62486,152 @@
 	}(_panel.Component));
 
 /***/ },
-/* 600 */
+/* 605 */
 /***/ function(module, exports) {
 
 	module.exports = [
 		{
 			"alert": {
-				"alertContentId": "alert-content-id-insights1",
+				"alertContentId": "insights-basic",
+				"alertId": "insights-alert-id1",
 				"alertMetadata": {
 					"type": "ANOMALY",
-					"message": "spontaneous suppuration",
+					"message": "Insights: basic with single event time series",
 					"readAtMs": "1490908189900",
 					"ingestedAtMs": "1490908189900",
 					"markedUsefulAtMs": "1490908189900"
 				},
 				"insightsQuery": {
-					"propertyFilters": [
-						{
-							"property": {
-								"source": "EVENTS",
-								"type": "STRING",
-								"name": "special-prop"
-							},
-							"stringFilter": {
-								"operator": "CONTAINS",
-								"operands": [
-									"retinoblastoma"
-								]
-							}
-						}
-					],
+					"propertyFilters": [],
 					"dateRange": {
-						"to": "2016-09-01",
-						"from": "2016-01-02"
+						"from": "2016-09-01",
+						"to": "2016-09-25"
 					},
-					"propertyFiltersOperator": "AND",
-					"groupByProperties": [
-						{
-							"property": {
-								"source": "EVENTS",
-								"type": "STRING",
-								"name": "special-prop"
-							}
-						}
-					],
 					"timeUnit": "DAY",
 					"showClauses": [
 						{
 							"showEvent": {
 								"action": "TOTAL",
-								"event": "eventthing"
-							}
-						},
-						{
-							"showPeopleProperty": {
-								"action": "AVERAGE",
-								"property": {
-									"source": "PEOPLE",
-									"type": "STRING",
-									"name": "special-prop"
-								}
+								"event": "Viewed report"
 							}
 						}
-					]
+					],
+					"groupByProperties": []
 				},
-				"alertId": "insights-alert-id1",
 				"anomaly": {
 					"insightsDetails": {
-						"showClauseIdx": "4",
-						"propertyVals": [
-							"prop1",
-							"prop2"
-						]
+						"showClauseIdx": 0,
+						"propertyVals": []
 					},
 					"direction": "POSITIVE",
-					"valueAtTimestamp": 900,
+					"valueAtTimestamp": 105954,
 					"anomalyId": "anomaly-id-insights1",
-					"anomalyTimestamp": "2017-09-02"
+					"anomalyTimestamp": "2016-09-06"
 				}
 			}
 		},
 		{
 			"alert": {
-				"alertContentId": "alert-content-id-retention1",
+				"alertContentId": "insights-group-by",
+				"alertId": "insights-alert-id1",
 				"alertMetadata": {
 					"type": "ANOMALY",
-					"message": "spontaneous suppuration",
+					"message": "Insights: single time series with two group by",
 					"readAtMs": "1490908189900",
 					"ingestedAtMs": "1490908189900",
 					"markedUsefulAtMs": "1490908189900"
 				},
-				"retentionQuery": {
-					"bornEvent": "ras",
-					"propertyFilters": [
-						{
-							"property": {
-								"source": "EVENTS",
-								"type": "STRING",
-								"name": "special-prop"
-							},
-							"stringFilter": {
-								"operator": "CONTAINS",
-								"operands": [
-									"retinoblastoma"
-								]
-							}
-						}
-					],
-					"bornPropertyFilters": [
-						{
-							"property": {
-								"source": "EVENTS",
-								"type": "STRING",
-								"name": "special-prop"
-							},
-							"stringFilter": {
-								"operator": "CONTAINS",
-								"operands": [
-									"retinoblastoma"
-								]
-							}
-						}
-					],
+				"insightsQuery": {
+					"propertyFilters": [],
 					"dateRange": {
-						"to": "2017-04-09",
-						"from": "2017-01-04"
+						"from": "2016-09-01",
+						"to": "2016-09-25"
 					},
-					"retentionType": "BIRTH",
-					"countType": "PERCENT",
 					"timeUnit": "DAY",
-					"event": "src"
+					"showClauses": [
+						{
+							"showEvent": {
+								"action": "TOTAL",
+								"event": "Viewed report"
+							}
+						}
+					],
+					"groupByProperties": [
+						{
+							"property": {
+								"source": "EVENTS",
+								"type": "STRING",
+								"name": "$os"
+							}
+						},
+						{
+							"property": {
+								"source": "EVENTS",
+								"type": "STRING",
+								"name": "has_integrated_engage"
+							}
+						}
+					]
 				},
-				"alertId": "retention-alert-id1",
 				"anomaly": {
-					"retentionDetails": {
-						"interval": "4"
+					"insightsDetails": {
+						"showClauseIdx": 0,
+						"propertyVals": [
+							"Mac OS X",
+							"true"
+						]
 					},
-					"direction": "NEGATIVE",
-					"valueAtTimestamp": 0.93,
-					"anomalyId": "anomaly-id-retention1",
-					"anomalyTimestamp": "2017-09-02"
+					"direction": "POSITIVE",
+					"valueAtTimestamp": 66814,
+					"anomalyId": "anomaly-id-insights1",
+					"anomalyTimestamp": "2016-09-06"
 				}
 			}
 		},
 		{
 			"alert": {
-				"alertContentId": "alert-content-id-funnel1",
+				"alertContentId": "funnels-basic",
 				"alertMetadata": {
 					"type": "ANOMALY",
-					"message": "spontaneous suppuration",
+					"message": "Funnels: single anomaly",
 					"readAtMs": "1490908189900",
 					"ingestedAtMs": "1490908189900",
 					"markedUsefulAtMs": "1490908189900"
 				},
 				"anomaly": {
 					"funnelsDetails": {
-						"isOverallConversion": true
+						"startStepIdx": 0,
+						"isOverallConversion": false
 					},
-					"direction": "POSITIVE",
-					"valueAtTimestamp": 0.67,
+					"direction": "NEGATIVE",
+					"valueAtTimestamp": 71.62,
 					"anomalyId": "anomaly-id-funnels1",
-					"anomalyTimestamp": "2017-09-02"
+					"anomalyTimestamp": "2017-05-20"
 				},
 				"funnelsQuery": {
-					"timeUnit": "HOUR",
+					"timeUnit": "DAY",
 					"dateRange": {
-						"from": "2017-05-10",
-						"to": "2017-05-15"
+						"from": "2017-05-05",
+						"to": "2017-05-25"
 					},
-					"bookmarkId": 2263164,
+					"bookmarkId": 2540095,
 					"groupByProperty": {
 						"source": "EVENTS",
-						"name": "special-prop",
-						"type": "NUMBER",
-						"typecast": "STRING"
+						"name": "$os",
+						"type": "STRING"
 					},
 					"propertyFilters": [
 						{
 							"property": {
 								"source": "EVENTS",
-								"name": "special-prop",
-								"type": "NUMBER",
-								"typecast": "STRING"
+								"name": "$browser",
+								"type": "STRING"
 							},
 							"stringFilter": {
-								"operator": "CONTAINS",
+								"operator": "EQUALS",
 								"operands": [
-									"retinoblastoma"
+									"Chrome",
+									"Firefox"
 								]
 							}
 						}
@@ -62346,614 +62641,145 @@
 			}
 		},
 		{
-			"alert": {
-				"alertContentId": "alert-content-id-insights2",
-				"alertMetadata": {
-					"type": "ANOMALY",
-					"message": "spontaneous suppuration",
-					"readAtMs": "1490908189900",
-					"ingestedAtMs": "1490908189900",
-					"markedUsefulAtMs": "1490908189900"
-				},
-				"insightsQuery": {
-					"propertyFilters": [
-						{
-							"property": {
-								"source": "EVENTS",
-								"type": "STRING",
-								"name": "special-prop"
-							},
-							"stringFilter": {
-								"operator": "CONTAINS",
-								"operands": [
-									"retinoblastoma"
-								]
-							}
-						}
-					],
-					"dateRange": {
-						"to": "2016-09-01",
-						"from": "2016-01-02"
-					},
-					"propertyFiltersOperator": "AND",
-					"groupByProperties": [
-						{
-							"property": {
-								"source": "EVENTS",
-								"type": "STRING",
-								"name": "special-prop"
-							}
-						}
-					],
-					"timeUnit": "DAY",
-					"showClauses": [
-						{
-							"showEvent": {
-								"action": "TOTAL",
-								"event": "eventthing"
-							}
-						},
-						{
-							"showPeopleProperty": {
-								"action": "AVERAGE",
-								"property": {
-									"source": "PEOPLE",
-									"type": "STRING",
-									"name": "special-prop"
-								}
-							}
-						}
-					]
-				},
-				"alertId": "insights-alert-id2",
-				"anomaly": {
-					"insightsDetails": {
-						"showClauseIdx": "4",
-						"propertyVals": [
-							"prop1",
-							"prop2"
-						]
-					},
-					"direction": "POSITIVE",
-					"valueAtTimestamp": 875,
-					"anomalyId": "anomaly-id-insights2",
-					"anomalyTimestamp": "2017-09-02"
-				}
-			}
-		},
-		{
-			"alert": {
-				"alertContentId": "alert-content-id-retention2",
-				"alertMetadata": {
-					"type": "ANOMALY",
-					"message": "spontaneous suppuration",
-					"readAtMs": "1490908189900",
-					"ingestedAtMs": "1490908189900",
-					"markedUsefulAtMs": "1490908189900"
-				},
-				"retentionQuery": {
-					"bornEvent": "ras",
-					"propertyFilters": [
-						{
-							"property": {
-								"source": "EVENTS",
-								"type": "STRING",
-								"name": "special-prop"
-							},
-							"stringFilter": {
-								"operator": "CONTAINS",
-								"operands": [
-									"retinoblastoma"
-								]
-							}
-						}
-					],
-					"bornPropertyFilters": [
-						{
-							"property": {
-								"source": "EVENTS",
-								"type": "STRING",
-								"name": "special-prop"
-							},
-							"stringFilter": {
-								"operator": "CONTAINS",
-								"operands": [
-									"retinoblastoma"
-								]
-							}
-						}
-					],
-					"dateRange": {
-						"to": "2017-04-09",
-						"from": "2017-01-04"
-					},
-					"retentionType": "BIRTH",
-					"countType": "PERCENT",
-					"timeUnit": "DAY",
-					"event": "src"
-				},
-				"alertId": "retention-alert-id2",
-				"anomaly": {
-					"retentionDetails": {
-						"interval": "2"
-					},
-					"direction": "POSITIVE",
-					"valueAtTimestamp": 0.7,
-					"anomalyId": "anomaly-id-retention2",
-					"anomalyTimestamp": "2017-09-02"
-				}
-			}
-		},
-		{
-			"alert": {
-				"alertContentId": "alert-content-id-funnel2",
-				"alertMetadata": {
-					"type": "ANOMALY",
-					"message": "spontaneous suppuration",
-					"readAtMs": "1490908189900",
-					"ingestedAtMs": "1490908189900",
-					"markedUsefulAtMs": "1490908189900"
-				},
-				"anomaly": {
-					"funnelsDetails": {
-						"isOverallConversion": false,
-						"startStepIdx": "3"
-					},
-					"direction": "POSITIVE",
-					"valueAtTimestamp": 0.86,
-					"anomalyId": "anomaly-id-funnels2",
-					"anomalyTimestamp": "2017-09-02"
-				},
-				"funnelsQuery": {
-					"timeUnit": "HOUR",
-					"dateRange": {
-						"from": "2017-05-10",
-						"to": "2017-05-15"
-					},
-					"bookmarkId": 2263164,
-					"groupByProperty": {
-						"source": "EVENTS",
-						"name": "special-prop",
-						"type": "NUMBER",
-						"typecast": "STRING"
-					},
-					"propertyFilters": [
-						{
-							"property": {
-								"source": "EVENTS",
-								"name": "special-prop",
-								"type": "NUMBER",
-								"typecast": "STRING"
-							},
-							"stringFilter": {
-								"operator": "CONTAINS",
-								"operands": [
-									"retinoblastoma"
-								]
-							}
-						}
-					]
-				},
-				"alertId": "funnel-alert-id2"
-			}
-		},
-		{
 			"groupedAlert": {
-				"groupedAlertId": "group-alert-id-retention",
+				"groupedAlertId": "retention-two-intervals",
+				"alertMetadata": {
+					"type": "ANOMALY",
+					"message": "Retention: two intervals",
+					"readAtMs": "1490908189900",
+					"ingestedAtMs": "1490908189900",
+					"markedUsefulAtMs": "1490908189900"
+				},
 				"alerts": [
 					{
-						"alertContentId": "alert-content-id-retention1",
+						"alertContentId": "retention-single-interval-1",
 						"alertMetadata": {
 							"type": "ANOMALY",
-							"message": "spontaneous suppuration",
+							"message": "Retention: single interval 1",
 							"readAtMs": "1490908189900",
 							"ingestedAtMs": "1490908189900",
 							"markedUsefulAtMs": "1490908189900"
 						},
 						"retentionQuery": {
-							"bornEvent": "ras",
-							"propertyFilters": [
-								{
-									"property": {
-										"source": "EVENTS",
-										"type": "STRING",
-										"name": "special-prop"
-									},
-									"stringFilter": {
-										"operator": "CONTAINS",
-										"operands": [
-											"retinoblastoma"
-										]
-									}
-								}
-							],
+							"bornEvent": "$signup",
 							"bornPropertyFilters": [
 								{
 									"property": {
 										"source": "EVENTS",
 										"type": "STRING",
-										"name": "special-prop"
+										"name": "$os"
 									},
 									"stringFilter": {
 										"operator": "CONTAINS",
 										"operands": [
-											"retinoblastoma"
+											"Mac OS X"
+										]
+									}
+								}
+							],
+							"event": "Viewed report",
+							"propertyFilters": [
+								{
+									"property": {
+										"source": "EVENTS",
+										"type": "STRING",
+										"name": "$browser"
+									},
+									"stringFilter": {
+										"operator": "EQUALS",
+										"operands": [
+											"Chrome"
 										]
 									}
 								}
 							],
 							"dateRange": {
-								"to": "2017-04-09",
-								"from": "2017-01-04"
+								"from": "2016-09-01",
+								"to": "2016-09-25"
 							},
 							"retentionType": "BIRTH",
 							"countType": "PERCENT",
-							"timeUnit": "DAY",
-							"event": "src"
+							"timeUnit": "DAY"
 						},
 						"alertId": "retention-alert-id1",
 						"anomaly": {
 							"retentionDetails": {
-								"interval": "4"
+								"interval": 6
 							},
 							"direction": "POSITIVE",
-							"valueAtTimestamp": 0.93,
+							"valueAtTimestamp": 19.13,
 							"anomalyId": "anomaly-id-retention1",
-							"anomalyTimestamp": "2017-09-02"
+							"anomalyTimestamp": "2016-09-08"
 						}
 					},
 					{
-						"alertContentId": "alert-content-id-retention2",
+						"alertContentId": "retention-single-interval-2",
 						"alertMetadata": {
 							"type": "ANOMALY",
-							"message": "spontaneous suppuration",
+							"message": "Retention: single interval 2",
 							"readAtMs": "1490908189900",
 							"ingestedAtMs": "1490908189900",
 							"markedUsefulAtMs": "1490908189900"
 						},
 						"retentionQuery": {
-							"bornEvent": "ras",
-							"propertyFilters": [
-								{
-									"property": {
-										"source": "EVENTS",
-										"type": "STRING",
-										"name": "special-prop"
-									},
-									"stringFilter": {
-										"operator": "CONTAINS",
-										"operands": [
-											"retinoblastoma"
-										]
-									}
-								}
-							],
+							"bornEvent": "$signup",
 							"bornPropertyFilters": [
 								{
 									"property": {
 										"source": "EVENTS",
 										"type": "STRING",
-										"name": "special-prop"
+										"name": "$os"
 									},
 									"stringFilter": {
 										"operator": "CONTAINS",
 										"operands": [
-											"retinoblastoma"
+											"Mac OS X"
+										]
+									}
+								}
+							],
+							"event": "Viewed report",
+							"propertyFilters": [
+								{
+									"property": {
+										"source": "EVENTS",
+										"type": "STRING",
+										"name": "$browser"
+									},
+									"stringFilter": {
+										"operator": "EQUALS",
+										"operands": [
+											"Chrome"
 										]
 									}
 								}
 							],
 							"dateRange": {
-								"to": "2017-04-09",
-								"from": "2017-01-04"
+								"from": "2016-09-01",
+								"to": "2016-09-25"
 							},
 							"retentionType": "BIRTH",
 							"countType": "PERCENT",
-							"timeUnit": "DAY",
-							"event": "src"
+							"timeUnit": "DAY"
 						},
-						"alertId": "retention-alert-id2",
+						"alertId": "retention-alert-id1",
 						"anomaly": {
 							"retentionDetails": {
-								"interval": "2"
+								"interval": 13
 							},
 							"direction": "POSITIVE",
-							"valueAtTimestamp": 0.7,
-							"anomalyId": "anomaly-id-retention2",
-							"anomalyTimestamp": "2017-09-02"
+							"valueAtTimestamp": 11.74,
+							"anomalyId": "anomaly-id-retention1",
+							"anomalyTimestamp": "2016-09-08"
 						}
 					}
-				],
-				"alertMetadata": {
-					"type": "ANOMALY",
-					"message": "spontaneous suppuration",
-					"readAtMs": "1490908189900",
-					"ingestedAtMs": "1490908189900",
-					"markedUsefulAtMs": "1490908189900"
-				}
-			}
-		},
-		{
-			"groupedAlert": {
-				"groupedAlertId": "group-alert-id-funnel",
-				"alerts": [
-					{
-						"alertContentId": "alert-content-id-funnel1",
-						"alertMetadata": {
-							"type": "ANOMALY",
-							"message": "spontaneous suppuration",
-							"readAtMs": "1490908189900",
-							"ingestedAtMs": "1490908189900",
-							"markedUsefulAtMs": "1490908189900"
-						},
-						"anomaly": {
-							"funnelsDetails": {
-								"isOverallConversion": true
-							},
-							"direction": "POSITIVE",
-							"valueAtTimestamp": 0.67,
-							"anomalyId": "anomaly-id-funnels1",
-							"anomalyTimestamp": "2017-09-02"
-						},
-						"funnelsQuery": {
-							"timeUnit": "HOUR",
-							"dateRange": {
-								"from": "2017-05-10",
-								"to": "2017-05-15"
-							},
-							"bookmarkId": 2263164,
-							"groupByProperty": {
-								"source": "EVENTS",
-								"name": "special-prop",
-								"type": "NUMBER",
-								"typecast": "STRING"
-							},
-							"propertyFilters": [
-								{
-									"property": {
-										"source": "EVENTS",
-										"name": "special-prop",
-										"type": "NUMBER",
-										"typecast": "STRING"
-									},
-									"stringFilter": {
-										"operator": "CONTAINS",
-										"operands": [
-											"retinoblastoma"
-										]
-									}
-								}
-							]
-						},
-						"alertId": "funnel-alert-id1"
-					},
-					{
-						"alertContentId": "alert-content-id-funnel2",
-						"alertMetadata": {
-							"type": "ANOMALY",
-							"message": "spontaneous suppuration",
-							"readAtMs": "1490908189900",
-							"ingestedAtMs": "1490908189900",
-							"markedUsefulAtMs": "1490908189900"
-						},
-						"anomaly": {
-							"funnelsDetails": {
-								"isOverallConversion": false,
-								"startStepIdx": "3"
-							},
-							"direction": "POSITIVE",
-							"valueAtTimestamp": 0.86,
-							"anomalyId": "anomaly-id-funnels2",
-							"anomalyTimestamp": "2017-09-02"
-						},
-						"funnelsQuery": {
-							"timeUnit": "HOUR",
-							"dateRange": {
-								"from": "2017-05-10",
-								"to": "2017-05-15"
-							},
-							"bookmarkId": 2263164,
-							"groupByProperty": {
-								"source": "EVENTS",
-								"name": "special-prop",
-								"type": "NUMBER",
-								"typecast": "STRING"
-							},
-							"propertyFilters": [
-								{
-									"property": {
-										"source": "EVENTS",
-										"name": "special-prop",
-										"type": "NUMBER",
-										"typecast": "STRING"
-									},
-									"stringFilter": {
-										"operator": "CONTAINS",
-										"operands": [
-											"retinoblastoma"
-										]
-									}
-								}
-							]
-						},
-						"alertId": "funnel-alert-id2"
-					}
-				],
-				"alertMetadata": {
-					"type": "ANOMALY",
-					"message": "spontaneous suppuration",
-					"readAtMs": "1490908189900",
-					"ingestedAtMs": "1490908189900",
-					"markedUsefulAtMs": "1490908189900"
-				}
-			}
-		},
-		{
-			"groupedAlert": {
-				"groupedAlertId": "group-alert-id-insights",
-				"alerts": [
-					{
-						"alertContentId": "alert-content-id-insights1",
-						"alertMetadata": {
-							"type": "ANOMALY",
-							"message": "spontaneous suppuration",
-							"readAtMs": "1490908189900",
-							"ingestedAtMs": "1490908189900",
-							"markedUsefulAtMs": "1490908189900"
-						},
-						"insightsQuery": {
-							"propertyFilters": [
-								{
-									"property": {
-										"source": "EVENTS",
-										"type": "STRING",
-										"name": "special-prop"
-									},
-									"stringFilter": {
-										"operator": "CONTAINS",
-										"operands": [
-											"retinoblastoma"
-										]
-									}
-								}
-							],
-							"dateRange": {
-								"to": "2016-09-01",
-								"from": "2016-01-02"
-							},
-							"propertyFiltersOperator": "AND",
-							"groupByProperties": [
-								{
-									"property": {
-										"source": "EVENTS",
-										"type": "STRING",
-										"name": "special-prop"
-									}
-								}
-							],
-							"timeUnit": "DAY",
-							"showClauses": [
-								{
-									"showEvent": {
-										"action": "TOTAL",
-										"event": "eventthing"
-									}
-								},
-								{
-									"showPeopleProperty": {
-										"action": "AVERAGE",
-										"property": {
-											"source": "PEOPLE",
-											"type": "STRING",
-											"name": "special-prop"
-										}
-									}
-								}
-							]
-						},
-						"alertId": "insights-alert-id1",
-						"anomaly": {
-							"insightsDetails": {
-								"showClauseIdx": "4",
-								"propertyVals": [
-									"prop1",
-									"prop2"
-								]
-							},
-							"direction": "POSITIVE",
-							"valueAtTimestamp": 900,
-							"anomalyId": "anomaly-id-insights1",
-							"anomalyTimestamp": "2017-09-02"
-						}
-					},
-					{
-						"alertContentId": "alert-content-id-insights2",
-						"alertMetadata": {
-							"type": "ANOMALY",
-							"message": "spontaneous suppuration",
-							"readAtMs": "1490908189900",
-							"ingestedAtMs": "1490908189900",
-							"markedUsefulAtMs": "1490908189900"
-						},
-						"insightsQuery": {
-							"propertyFilters": [
-								{
-									"property": {
-										"source": "EVENTS",
-										"type": "STRING",
-										"name": "special-prop"
-									},
-									"stringFilter": {
-										"operator": "CONTAINS",
-										"operands": [
-											"retinoblastoma"
-										]
-									}
-								}
-							],
-							"dateRange": {
-								"to": "2016-09-01",
-								"from": "2016-01-02"
-							},
-							"propertyFiltersOperator": "AND",
-							"groupByProperties": [
-								{
-									"property": {
-										"source": "EVENTS",
-										"type": "STRING",
-										"name": "special-prop"
-									}
-								}
-							],
-							"timeUnit": "DAY",
-							"showClauses": [
-								{
-									"showEvent": {
-										"action": "TOTAL",
-										"event": "eventthing"
-									}
-								},
-								{
-									"showPeopleProperty": {
-										"action": "AVERAGE",
-										"property": {
-											"source": "PEOPLE",
-											"type": "STRING",
-											"name": "special-prop"
-										}
-									}
-								}
-							]
-						},
-						"alertId": "insights-alert-id2",
-						"anomaly": {
-							"insightsDetails": {
-								"showClauseIdx": "4",
-								"propertyVals": [
-									"prop1",
-									"prop2"
-								]
-							},
-							"direction": "POSITIVE",
-							"valueAtTimestamp": 875,
-							"anomalyId": "anomaly-id-insights2",
-							"anomalyTimestamp": "2017-09-02"
-						}
-					}
-				],
-				"alertMetadata": {
-					"type": "ANOMALY",
-					"message": "spontaneous suppuration",
-					"readAtMs": "1490908189900",
-					"ingestedAtMs": "1490908189900",
-					"markedUsefulAtMs": "1490908189900"
-				}
+				]
 			}
 		}
 	];
 
 /***/ },
-/* 601 */
+/* 606 */
 /***/ function(module, exports) {
 
 	module.exports = [
@@ -63058,14 +62884,14 @@
 	];
 
 /***/ },
-/* 602 */
+/* 607 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
 
 	function _jade_template_fn(locals) {
 	  locals = locals || {};;;
-	  var result_of_with = function ($helpers, JSON, alertDropdownOpen, alerts, bookmarks, currentBookmark, eventDefinition, itemsMenuOpen, itemsMenuSearchFilter, open, savingBookmark, searchSections, sectionOpen, selectedBookmarkId, tagSelectorData) {
+	  var result_of_with = function ($helpers, JSON, bookmarks, currentBookmark, eventDefinition, itemsMenuOpen, itemsMenuSearchFilter, open, savingBookmark, searchSections, sectionOpen, selectedBookmarkId, smartHubAlerts, smartHubDropdownOpen, smartHubTooltip, tagSelectorData) {
 	    var h = __webpack_require__(299).h;
 	    return {
 	      value: h("div", {
@@ -64512,7 +64338,7 @@
 	                    var __jade_nodes = [];
 	                    __jade_nodes = __jade_nodes.concat(h("div", {
 	                      "on": {
-	                        click: $helpers.toggleAlertDropdown
+	                        click: $helpers.toggleSmartHubDropdown
 	                      },
 	                      "class": {
 	                        'alert-button': true
@@ -64526,8 +64352,8 @@
 	                      }));
 	                      __jade_nodes = __jade_nodes.concat(h("mp-smart-hub-dropdown", {
 	                        "attrs": {
-	                          'open': alertDropdownOpen,
-	                          'alerts': JSON.stringify(alerts),
+	                          'open': smartHubDropdownOpen,
+	                          'smart-hub-alerts': JSON.stringify(smartHubAlerts),
 	                          'mixpanel-host': "https://mixpanel.com",
 	                          'project-id': 3
 	                        }
@@ -64617,6 +64443,93 @@
 	                    return __jade_nodes;
 	                  }.call(this).filter(Boolean)));;
 	                  return __jade_nodes;
+	                }.call(this).filter(Boolean)));
+	                __jade_nodes = __jade_nodes.concat(h("div", {
+	                  "class": {
+	                    'example-block': true
+	                  }
+	                }, function () {
+	                  var __jade_nodes = [];
+	                  __jade_nodes = __jade_nodes.concat(h("div", {
+	                    "class": {
+	                      'call-out': true,
+	                      'first-call-out': true
+	                    }
+	                  }, function () {
+	                    var __jade_nodes = [];
+	                    __jade_nodes = __jade_nodes.concat(h("strong", {
+	                      "class": {
+	                        'icon': true
+	                      }
+	                    }, function () {
+	                      var __jade_nodes = [];
+	                      __jade_nodes = __jade_nodes.concat("+");;
+	                      return __jade_nodes;
+	                    }.call(this).filter(Boolean)));
+	                    __jade_nodes = __jade_nodes.concat(h("strong", function () {
+	                      var __jade_nodes = [];
+	                      __jade_nodes = __jade_nodes.concat("mp-smart-hub-tooltip");;
+	                      return __jade_nodes;
+	                    }.call(this).filter(Boolean)));;
+	                    return __jade_nodes;
+	                  }.call(this).filter(Boolean)));
+	                  __jade_nodes = __jade_nodes.concat(h("div", {
+	                    "class": {
+	                      'floating-example-bar': true,
+	                      'alerts-example': true
+	                    }
+	                  }, function () {
+	                    var __jade_nodes = [];
+	                    __jade_nodes = __jade_nodes.concat(h("div", {
+	                      "on": {
+	                        click: $helpers.handleClickAnomalyUp
+	                      },
+	                      "class": {
+	                        'anomaly-up': true
+	                      }
+	                    }, function () {
+	                      var __jade_nodes = [];
+	                      __jade_nodes = __jade_nodes.concat(h('div', {
+	                        props: {
+	                          innerHTML: '<?xml version="1.0" encoding="UTF-8"?><svg width="22px" height="22px" viewBox="0 0 22 22" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">    <title>anomaly-down</title>    <desc>Anomaly Down Icon</desc>    <defs></defs>    <g id="anomaly-down" stroke="none" stroke-width="1" fill-rule="evenodd">        <g id="16-x-16" transform="translate(3.000000, 3.000000)">            <circle id="circle" fill="#FFC529" cx="8" cy="8" r="8"></circle>            <path d="M10.9122456,7.33950855 L8.42452122,4.92105894 C8.1899095,4.69298035 7.81009051,4.69298035 7.57547877,4.92105894 L5.08775439,7.33950855 C4.97074854,7.45325618 4.97074854,7.638169 5.08775439,7.75191663 L5.5119756,8.1643247 C5.62898145,8.27807233 5.81919096,8.27807233 5.93619681,8.1643247 L7.39966998,6.74160434 L7.39966998,11.4583394 C7.39966998,11.6193361 7.5340767,11.75 7.69968499,11.75 L8.29971498,11.75 C8.46592329,11.75 8.59972998,11.6193361 8.59972998,11.4583394 L8.59972998,6.74160434 L10.0638032,8.1643247 C10.180809,8.27807233 10.3710186,8.27807233 10.4880244,8.1643247 L10.9122456,7.75191663 C11.0292515,7.638169 11.0292515,7.45325618 10.9122456,7.33950855" id="arrow-up" fill="#FFFFFF"></path>        </g>    </g></svg>'
+	                        }
+	                      }));;
+	                      return __jade_nodes;
+	                    }.call(this).filter(Boolean)));
+	                    __jade_nodes = __jade_nodes.concat(h("div", {
+	                      "on": {
+	                        click: $helpers.handleClickAnomalyDown
+	                      },
+	                      "class": {
+	                        'anomaly-down': true
+	                      }
+	                    }, function () {
+	                      var __jade_nodes = [];
+	                      __jade_nodes = __jade_nodes.concat(h('div', {
+	                        props: {
+	                          innerHTML: '<?xml version="1.0" encoding="UTF-8"?><svg width="22px" height="22px" viewBox="0 0 22 22" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">    <title>anomaly-down</title>    <desc>Created with Sketch.</desc>    <defs></defs>    <g id="anomaly-down" stroke="none" stroke-width="1" fill-rule="evenodd">        <g id="16-x-16" transform="translate(3.000000, 3.000000)">            <circle id="circle" fill="#FFC529" cx="8" cy="8" r="8"></circle>            <path d="M10.9122456,7.33950855 L8.42452122,4.92105894 C8.1899095,4.69298035 7.81009051,4.69298035 7.57547877,4.92105894 L5.08775439,7.33950855 C4.97074854,7.45325618 4.97074854,7.638169 5.08775439,7.75191663 L5.5119756,8.1643247 C5.62898145,8.27807233 5.81919096,8.27807233 5.93619681,8.1643247 L7.39966998,6.74160434 L7.39966998,11.4583394 C7.39966998,11.6193361 7.5340767,11.75 7.69968499,11.75 L8.29971498,11.75 C8.46592329,11.75 8.59972998,11.6193361 8.59972998,11.4583394 L8.59972998,6.74160434 L10.0638032,8.1643247 C10.180809,8.27807233 10.3710186,8.27807233 10.4880244,8.1643247 L10.9122456,7.75191663 C11.0292515,7.638169 11.0292515,7.45325618 10.9122456,7.33950855" id="arrow-up" fill="#FFFFFF" transform="translate(8.000000, 8.250000) rotate(180.000000) translate(-8.000000, -8.250000) "></path>        </g>    </g></svg>'
+	                        }
+	                      }));;
+	                      return __jade_nodes;
+	                    }.call(this).filter(Boolean)));
+	                    __jade_nodes = __jade_nodes.concat(smartHubTooltip ? function () {
+	                      var __jade_nodes = [];
+	                      __jade_nodes = __jade_nodes.concat(h("mp-smart-hub-tooltip", {
+	                        "attrs": {
+	                          'placement': smartHubTooltip.placement,
+	                          'offset-left': "" + smartHubTooltip.offsetLeft,
+	                          'offset-top': "" + smartHubTooltip.offsetTop,
+	                          'alert': JSON.stringify(smartHubTooltip.alert)
+	                        },
+	                        "on": {
+	                          removedAlert: $helpers.handleRemovedTooltipAlert
+	                        }
+	                      }));;
+	                      return __jade_nodes;
+	                    }.call(this) : undefined);;
+	                    return __jade_nodes;
+	                  }.call(this).filter(Boolean)));;
+	                  return __jade_nodes;
 	                }.call(this).filter(Boolean)));;
 	                return __jade_nodes;
 	              }.call(this).filter(Boolean)));;
@@ -64629,22 +64542,22 @@
 	        return __jade_nodes;
 	      }.call(this).filter(Boolean))
 	    };
-	  }.call(this, "$helpers" in locals ? locals.$helpers : typeof $helpers !== "undefined" ? $helpers : undefined, "JSON" in locals ? locals.JSON : typeof JSON !== "undefined" ? JSON : undefined, "alertDropdownOpen" in locals ? locals.alertDropdownOpen : typeof alertDropdownOpen !== "undefined" ? alertDropdownOpen : undefined, "alerts" in locals ? locals.alerts : typeof alerts !== "undefined" ? alerts : undefined, "bookmarks" in locals ? locals.bookmarks : typeof bookmarks !== "undefined" ? bookmarks : undefined, "currentBookmark" in locals ? locals.currentBookmark : typeof currentBookmark !== "undefined" ? currentBookmark : undefined, "eventDefinition" in locals ? locals.eventDefinition : typeof eventDefinition !== "undefined" ? eventDefinition : undefined, "itemsMenuOpen" in locals ? locals.itemsMenuOpen : typeof itemsMenuOpen !== "undefined" ? itemsMenuOpen : undefined, "itemsMenuSearchFilter" in locals ? locals.itemsMenuSearchFilter : typeof itemsMenuSearchFilter !== "undefined" ? itemsMenuSearchFilter : undefined, "open" in locals ? locals.open : typeof open !== "undefined" ? open : undefined, "savingBookmark" in locals ? locals.savingBookmark : typeof savingBookmark !== "undefined" ? savingBookmark : undefined, "searchSections" in locals ? locals.searchSections : typeof searchSections !== "undefined" ? searchSections : undefined, "sectionOpen" in locals ? locals.sectionOpen : typeof sectionOpen !== "undefined" ? sectionOpen : undefined, "selectedBookmarkId" in locals ? locals.selectedBookmarkId : typeof selectedBookmarkId !== "undefined" ? selectedBookmarkId : undefined, "tagSelectorData" in locals ? locals.tagSelectorData : typeof tagSelectorData !== "undefined" ? tagSelectorData : undefined);
+	  }.call(this, "$helpers" in locals ? locals.$helpers : typeof $helpers !== "undefined" ? $helpers : undefined, "JSON" in locals ? locals.JSON : typeof JSON !== "undefined" ? JSON : undefined, "bookmarks" in locals ? locals.bookmarks : typeof bookmarks !== "undefined" ? bookmarks : undefined, "currentBookmark" in locals ? locals.currentBookmark : typeof currentBookmark !== "undefined" ? currentBookmark : undefined, "eventDefinition" in locals ? locals.eventDefinition : typeof eventDefinition !== "undefined" ? eventDefinition : undefined, "itemsMenuOpen" in locals ? locals.itemsMenuOpen : typeof itemsMenuOpen !== "undefined" ? itemsMenuOpen : undefined, "itemsMenuSearchFilter" in locals ? locals.itemsMenuSearchFilter : typeof itemsMenuSearchFilter !== "undefined" ? itemsMenuSearchFilter : undefined, "open" in locals ? locals.open : typeof open !== "undefined" ? open : undefined, "savingBookmark" in locals ? locals.savingBookmark : typeof savingBookmark !== "undefined" ? savingBookmark : undefined, "searchSections" in locals ? locals.searchSections : typeof searchSections !== "undefined" ? searchSections : undefined, "sectionOpen" in locals ? locals.sectionOpen : typeof sectionOpen !== "undefined" ? sectionOpen : undefined, "selectedBookmarkId" in locals ? locals.selectedBookmarkId : typeof selectedBookmarkId !== "undefined" ? selectedBookmarkId : undefined, "smartHubAlerts" in locals ? locals.smartHubAlerts : typeof smartHubAlerts !== "undefined" ? smartHubAlerts : undefined, "smartHubDropdownOpen" in locals ? locals.smartHubDropdownOpen : typeof smartHubDropdownOpen !== "undefined" ? smartHubDropdownOpen : undefined, "smartHubTooltip" in locals ? locals.smartHubTooltip : typeof smartHubTooltip !== "undefined" ? smartHubTooltip : undefined, "tagSelectorData" in locals ? locals.tagSelectorData : typeof tagSelectorData !== "undefined" ? tagSelectorData : undefined);
 	  if (result_of_with) return result_of_with.value;
 	}
 	module.exports = _jade_template_fn;
 
 /***/ },
-/* 603 */
+/* 608 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// style-loader: Adds some css to the DOM by adding a <style> tag
 
 	// load the styles
-	var content = __webpack_require__(604);
+	var content = __webpack_require__(609);
 	if(typeof content === 'string') content = [[module.id, content, '']];
 	// add the styles to the DOM
-	var update = __webpack_require__(573)(content, {});
+	var update = __webpack_require__(578)(content, {});
 	if(content.locals) module.exports = content.locals;
 	// Hot Module Replacement
 	if(false) {
@@ -64661,12 +64574,12 @@
 	}
 
 /***/ },
-/* 604 */
+/* 609 */
 /***/ function(module, exports, __webpack_require__) {
 
-	exports = module.exports = __webpack_require__(571)();
+	exports = module.exports = __webpack_require__(576)();
 	// imports
-	exports.i(__webpack_require__(572), "");
+	exports.i(__webpack_require__(577), "");
 
 	// module
 	exports.push([module.id, ".bookmarks-widget {\n  display: -webkit-box;\n  display: -ms-flexbox;\n  display: flex;\n  -webkit-box-orient: horizontal;\n  -webkit-box-direction: normal;\n      -ms-flex-direction: row;\n          flex-direction: row;\n  height: 54px;\n  -webkit-box-pack: end;\n      -ms-flex-pack: end;\n          justify-content: flex-end;\n  margin-bottom: 500px;\n  min-width: 740px;\n  width: 80%;\n  border: 1px solid #d8e0ea;\n}\n.bookmarks-widget mp-bookmarks-widget {\n  border-left: 1px solid #d8e0ea;\n  border-right: 1px solid #d8e0ea;\n  margin-right: 20px;\n}\n.tag-selector-container {\n  position: relative;\n  margin-bottom: 120px;\n}\n.tag-selector-container mp-drop-menu {\n  top: 40px;\n}\n.items-menu-container {\n  position: relative;\n  margin-bottom: 120px;\n}\n.items-menu-container .title {\n  padding-top: 20px;\n}\n.items-menu-container .title .header {\n  display: -webkit-box;\n  display: -ms-flexbox;\n  display: flex;\n  margin-left: 18px;\n}\n.items-menu-container .title .header svg-icon {\n  display: inline-block;\n  height: 22px;\n  min-height: 22px;\n  min-width: 22px;\n  position: relative;\n  width: 22px;\n}\n.items-menu-container .title .header svg-icon[icon=type-boolean] #left-dot {\n  color: #fff;\n  fill: #fff;\n}\n.items-menu-container .title .header svg-icon[icon=type-boolean] #right-dot {\n  color: #4c6072;\n  fill: #4c6072;\n}\n.items-menu-container .title .header svg-icon[icon=lightning-bolt] #bolt,\n.items-menu-container .title .header svg-icon[icon=lighting-bolt] #bolt {\n  color: #fff;\n  fill: #fff;\n}\n.items-menu-container .title .header svg-icon[icon=alert] #circle,\n.items-menu-container .title .header svg-icon[icon=alert] #stem {\n  color: #fff;\n  fill: #fff;\n}\n.items-menu-container .title .header svg-icon svg {\n  height: 22px;\n  left: 0;\n  min-height: 22px;\n  min-width: 22px;\n  position: absolute;\n  top: 0;\n  width: 22px;\n}\n.items-menu-container .title .header svg-icon svg,\n.items-menu-container .title .header svg-icon path {\n  color: #39d183;\n  fill: #39d183;\n  transition: 0.2s;\n}\n.items-menu-container .title .header .header-text {\n  color: #4c6072;\n  display: inline-block;\n  font-size: 16px;\n  font-weight: 600;\n  line-height: 1.12;\n  margin: auto 0;\n  padding-left: 10px;\n}\n.items-menu-container .title .subtext {\n  color: #9bacbf;\n  font-size: 13px;\n  font-weight: 500;\n  line-height: 1.5;\n  margin: 0 0 20px 50px;\n}\n.items-menu-container .mp-icon-input {\n  margin-bottom: 20px;\n}\n.items-menu-container .drop-menu-container {\n  position: relative;\n}\n.items-menu-container .drop-menu-container mp-items-menu {\n  width: 320px;\n  height: 300px;\n}\n.alerts-example {\n  display: -webkit-box;\n  display: -ms-flexbox;\n  display: flex;\n  -webkit-box-pack: end;\n      -ms-flex-pack: end;\n          justify-content: flex-end;\n  padding-right: 50px;\n  margin-bottom: 320px;\n}\n.alerts-example .alert-button {\n  position: relative;\n}\n.alerts-example .alert-button svg-icon {\n  display: inline-block;\n  height: 22px;\n  min-height: 22px;\n  min-width: 22px;\n  position: relative;\n  width: 22px;\n}\n.alerts-example .alert-button svg-icon[icon=type-boolean] #left-dot {\n  color: #fff;\n  fill: #fff;\n}\n.alerts-example .alert-button svg-icon[icon=type-boolean] #right-dot {\n  color: #4c6072;\n  fill: #4c6072;\n}\n.alerts-example .alert-button svg-icon[icon=lightning-bolt] #bolt,\n.alerts-example .alert-button svg-icon[icon=lighting-bolt] #bolt {\n  color: #fff;\n  fill: #fff;\n}\n.alerts-example .alert-button svg-icon[icon=alert] #circle,\n.alerts-example .alert-button svg-icon[icon=alert] #stem {\n  color: #fff;\n  fill: #fff;\n}\n.alerts-example .alert-button svg-icon svg {\n  height: 22px;\n  left: 0;\n  min-height: 22px;\n  min-width: 22px;\n  position: absolute;\n  top: 0;\n  width: 22px;\n}\n.alerts-example .alert-button svg-icon svg,\n.alerts-example .alert-button svg-icon path {\n  color: #4ba8ff;\n  fill: #4ba8ff;\n  transition: 0.2s;\n}\n.alerts-example .alert-button:hover svg-icon svg,\n.alerts-example .alert-button:hover svg-icon path {\n  color: #2687e3;\n  fill: #2687e3;\n}\n", ""]);
@@ -64675,7 +64588,7 @@
 
 
 /***/ },
-/* 605 */
+/* 610 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -64782,16 +64695,16 @@
 	module.exports = _jade_template_fn;
 
 /***/ },
-/* 606 */
+/* 611 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// style-loader: Adds some css to the DOM by adding a <style> tag
 
 	// load the styles
-	var content = __webpack_require__(607);
+	var content = __webpack_require__(612);
 	if(typeof content === 'string') content = [[module.id, content, '']];
 	// add the styles to the DOM
-	var update = __webpack_require__(573)(content, {});
+	var update = __webpack_require__(578)(content, {});
 	if(content.locals) module.exports = content.locals;
 	// Hot Module Replacement
 	if(false) {
@@ -64808,21 +64721,21 @@
 	}
 
 /***/ },
-/* 607 */
+/* 612 */
 /***/ function(module, exports, __webpack_require__) {
 
-	exports = module.exports = __webpack_require__(571)();
+	exports = module.exports = __webpack_require__(576)();
 	// imports
-	exports.i(__webpack_require__(572), "");
+	exports.i(__webpack_require__(577), "");
 
 	// module
-	exports.push([module.id, "* {\n  font-smoothing: antialiased;\n  -webkit-font-smoothing: antialiased;\n}\nbody {\n  background-color: #fcfcfc;\n  font-family: 'Helvetica Neue', 'Helvetica', 'Tahoma', 'Geneva', 'Arial', sans-serif;\n  color: #6d859e;\n  font-size: 13px;\n  font-stretch: normal;\n  font-weight: weight-default;\n}\nh1,\nstrong,\n.bold {\n  font-weight: 600;\n}\na {\n  color: #6d859e;\n}\na :hover {\n  color: #4ba8ff;\n}\n.style-guide-title {\n  color: #4c6072;\n  display: -webkit-box;\n  display: -ms-flexbox;\n  display: flex;\n  -webkit-box-orient: horizontal;\n  -webkit-box-direction: normal;\n      -ms-flex-direction: row;\n          flex-direction: row;\n  font-size: 24px;\n  -webkit-box-pack: center;\n      -ms-flex-pack: center;\n          justify-content: center;\n  left: 150px;\n  position: relative;\n  position: relative;\n  top: 100px;\n  width: calc(100% - 150px);\n}\n.version-bar {\n  background-color: #fff;\n  border-left: 1px solid #d8e0ea;\n  position: fixed;\n  top: 0;\n  right: 0;\n  bottom: 0;\n  width: 75px;\n  z-index: 1000;\n}\n.version-label {\n  color: #9bacbf;\n  font-size: 16px;\n  height: 75px;\n  width: 285px;\n  position: absolute;\n  top: 160px;\n  right: -75px;\n  -webkit-transform: rotate(90deg);\n          transform: rotate(90deg);\n}\n.version-label strong {\n  color: #4ba8ff;\n}\n.version-label * {\n  display: inline-block;\n}\n.logo {\n  background: url(" + __webpack_require__(608) + ") no-repeat top center;\n  background-size: contain;\n  height: 90px;\n  margin: 0 auto;\n  margin-left: -115px;\n  width: 100%;\n}\n.decoration {\n  height: 3px;\n  width: 40px;\n  background-color: #d8e0ea;\n  margin: 0 10px 3px 10px;\n}\n.section-content {\n  margin: 40px 0 0 0;\n}\n.section-container {\n  display: -webkit-box;\n  display: -ms-flexbox;\n  display: flex;\n  left: 345px;\n  position: relative;\n  top: 185px;\n  width: calc(100% - 350px);\n}\n.section-title {\n  display: -webkit-inline-box;\n  display: -ms-inline-flexbox;\n  display: inline-flex;\n  font-weight: 600;\n  padding: 0px 0px 15px 0px;\n  width: 100%;\n}\n.section-title .title-text {\n  color: #4c6072;\n  font-size: 64px;\n}\n.section-title .title-section {\n  color: #bdc9d6;\n  font-size: 24px;\n  height: 60px;\n  padding-left: 10px;\n  position: relative;\n  top: 16px;\n}\n.indent-container {\n  margin: 20px 0 60px 50px;\n}\n.divider {\n  border-top: 1px solid #d8e0ea;\n  margin: 0 30px 0x 0;\n  position: relative;\n  width: 90%;\n}\n.divider sup {\n  color: #9bacbf;\n  right: -30px;\n  position: absolute;\n  top: -10px;\n}\n.divider label {\n  color: #bdc9d6;\n  font-weight: 600;\n  position: absolute;\n  right: -30px;\n  top: -10px;\n}\n.section {\n  position: relative;\n  width: 70vw;\n  -webkit-animation: fadeContentIn 500ms forwards;\n          animation: fadeContentIn 500ms forwards;\n}\n.subsection-title {\n  color: #4c6072;\n  font-weight: 500;\n  font-size: 24px;\n}\n.subsection-description {\n  padding: 16px 0px 10px 0px;\n  font-size: 16px;\n  font-weight: weight-default;\n  max-width: 900px;\n  line-height: 24px;\n}\n.section-nav {\n  display: -webkit-box;\n  display: -ms-flexbox;\n  display: flex;\n  -webkit-box-orient: horizontal;\n  -webkit-box-direction: normal;\n      -ms-flex-direction: row;\n          flex-direction: row;\n  list-style-type: none;\n  overflow-x: scroll;\n  padding: 0 0 30px 0;\n  position: relative;\n  white-space: nowrap;\n  width: 100%;\n}\n.section-nav .nav-item {\n  color: #4c6072;\n  cursor: pointer;\n  font-size: 16px;\n  font-weight: 500;\n  margin: 30px 30px 0 0;\n  padding: 10px 30px;\n}\n.section-nav .nav-item:hover {\n  color: #4ba8ff;\n}\n.section-nav .nav-item.selected {\n  background-color: #4ba8ff;\n  border-radius: 30px;\n  color: #fff;\n}\n.code-snippet {\n  max-width: 90%;\n  left: -60px;\n  padding-left: 15px;\n  position: relative;\n  margin-left: 50px;\n}\n.code-snippet .first-call-out {\n  margin-left: -15px;\n}\n.call-out {\n  color: #9bacbf;\n  margin: 40px 0 20px 0;\n  font-size: 16px;\n}\n.call-out.extra {\n  margin-top: 30px;\n}\n.call-out label {\n  text-transform: none;\n}\n.call-out p {\n  line-height: 4px;\n  display: -webkit-inline-box;\n  display: -ms-inline-flexbox;\n  display: inline-flex;\n  text-transform: none;\n  margin: 0;\n}\n.call-out .icon {\n  font-size: 14pt;\n  position: relative;\n  top: -1px;\n  left: -20px;\n}\n.desc {\n  width: 80%;\n  padding-left: 14px;\n  margin-top: 6px;\n  line-height: 24px;\n}\n.first-call-out {\n  margin-left: -10px;\n}\n.snippet-container {\n  background-color: #f4f9fd;\n  border: 1px solid #d8e0ea;\n  border-radius: 6px;\n  font-size: 14px;\n  margin-top: 10px;\n  width: 90%;\n  display: -webkit-inline-box;\n  display: -ms-inline-flexbox;\n  display: inline-flex;\n  -webkit-box-orient: vertical;\n  -webkit-box-direction: normal;\n      -ms-flex-direction: column;\n          flex-direction: column;\n}\n.snippet-header {\n  color: #6d859e;\n  border-bottom: 1px solid #d8e0ea;\n  border-radius: 6px 6px 0px 0px;\n  padding: 15px;\n  margin-right: 0;\n}\n.snippet-header label {\n  text-transform: uppercase;\n  letter-spacing: 1.2px;\n}\n.code-field {\n  background-color: #fff;\n  border-left: 1px solid #d8e0ea;\n  border-radius: 0px 0px 6px 0px;\n  font-family: monospace;\n  font-weight: 500;\n  margin: 0 0 0 45px;\n  padding: 15px;\n  display: -webkit-inline-box;\n  display: -ms-inline-flexbox;\n  display: inline-flex;\n}\n.code-field pre {\n  color: #4c6072;\n  display: inline-block;\n  letter-spacing: 1.5px;\n  line-height: 20px;\n  margin: -2px 0 0 -45px;\n  white-space: pre-wrap;\n}\n.code-field pre:nth-child(2n) {\n  overflow-x: scroll;\n  white-space: pre;\n  margin-left: 40px;\n  width: 100%;\n}\npre span.mp-red {\n  color: #e4567b;\n}\npre span.mp-purple {\n  color: #9270e2;\n}\npre span.mp-green {\n  color: #2dc376;\n}\npre span.grey-500 {\n  color: #9bacbf;\n}\npre span.mp-orange {\n  color: #f1842b;\n}\n.common-example {\n  border: 1px dashed #bdc9d6;\n  border-radius: 4px;\n  min-height: 40px;\n  display: -webkit-inline-box;\n  display: -ms-inline-flexbox;\n  display: inline-flex;\n  -webkit-box-align: center;\n      -ms-flex-align: center;\n          align-items: center;\n  margin: 0;\n}\n.example-block {\n  display: -webkit-inline-box;\n  display: -ms-inline-flexbox;\n  display: inline-flex;\n  margin: 0 15px 10px 0;\n  -webkit-box-orient: vertical;\n  -webkit-box-direction: normal;\n      -ms-flex-direction: column;\n          flex-direction: column;\n}\n.example-block.half {\n  width: 40%;\n  display: inline-table;\n}\n.floating-example-bar {\n  background: #fff;\n  width: 80%;\n  box-shadow: 0px 8px 22px 0px rgba(0,0,0,0.23);\n  padding: 15px 20px;\n  min-width: 740px;\n  margin-top: 10px;\n}\n.floating-example-bar.align-right {\n  text-align: right;\n}\n.floating-example-bar.blue-bar {\n  background: #4ba8ff;\n}\n.floating-example-bar.grey-bar {\n  background: #f4f9fd;\n}\n.floating-example-bar .example-bar-divider {\n  margin: 0 15px;\n  border-bottom: 1px solid #e5eef4;\n  height: 1px;\n}\n.floating-example-bar .example-bar-line-item {\n  padding: 15px;\n  display: -webkit-inline-box;\n  display: -ms-inline-flexbox;\n  display: inline-flex;\n  -webkit-box-align: center;\n      -ms-flex-align: center;\n          align-items: center;\n  -webkit-box-pack: justify;\n      -ms-flex-pack: justify;\n          justify-content: space-between;\n  width: 96%;\n}\n.blue-vertical-seperator {\n  border-left: 1px solid rgba(255,255,255,0.15);\n  border-right: 1px solid #3391e9;\n  height: 48px;\n  display: inline-block;\n  vertical-align: middle;\n  margin-left: 30px;\n}\n.example-card {\n  background: #fff;\n  border-radius: 6px;\n  border: 1px solid #ecf3f8;\n  box-shadow: 0px 1px 2px 0px rgba(0,0,0,0.14);\n  display: inline-block;\n  margin: 0 30px 20px 0;\n  position: relative;\n  min-height: 200px;\n  box-sizing: border-box;\n}\n.example-card.narrow {\n  display: -webkit-inline-box;\n  display: -ms-inline-flexbox;\n  display: inline-flex;\n  width: auto;\n  max-width: 30%;\n  min-width: 365px;\n  -webkit-box-align: end;\n      -ms-flex-align: end;\n          align-items: flex-end;\n}\n.example-card.truncated {\n  height: 90px;\n  min-height: 90px;\n}\n.example-card.long {\n  min-width: 560px;\n  max-width: 40%;\n}\n.example-card-footer {\n  border-top: 1px solid #d8e0ea;\n  position: absolute;\n  bottom: 0;\n  left: 0;\n  right: 0;\n  padding: 10px 15px;\n  text-align: right;\n}\n.example-card-footer :last-child {\n  margin-left: 10px;\n}\n.example-card-header {\n  border-bottom: 1px solid #3b99f0;\n  border-radius: 6px 6px 0 0;\n  position: absolute;\n  top: 0;\n  left: -1px;\n  right: -1px;\n  background-color: #4ba8ff;\n  text-align: center;\n  color: #fff;\n  padding: 20px 0;\n}\n.example-card-header b {\n  font-size: 18px;\n}\n.example-card-header.grey {\n  background-color: #ecf3f8;\n  border-bottom: 1px solid #d8e0ea;\n  display: -webkit-box;\n  display: -ms-flexbox;\n  display: flex;\n  -webkit-box-pack: end;\n      -ms-flex-pack: end;\n          justify-content: flex-end;\n  padding-right: 20px;\n}\n.demo-divider {\n  border-bottom: 1px dashed #bdc9d6;\n  width: 80%;\n  text-align: right;\n  padding-bottom: 15px;\n}\n.demo-divider a {\n  margin-left: 45px;\n}\n.section-modifier {\n  margin-top: -45px;\n}\n@-webkit-keyframes fadeContentIn {\n  from {\n    -webkit-transform: translateY(30px);\n            transform: translateY(30px);\n    opacity: 0;\n  }\n  to {\n    opacity: 1;\n  }\n}\n@keyframes fadeContentIn {\n  from {\n    -webkit-transform: translateY(30px);\n            transform: translateY(30px);\n    opacity: 0;\n  }\n  to {\n    opacity: 1;\n  }\n}\n", ""]);
+	exports.push([module.id, "* {\n  font-smoothing: antialiased;\n  -webkit-font-smoothing: antialiased;\n}\nbody {\n  background-color: #fcfcfc;\n  font-family: 'Helvetica Neue', 'Helvetica', 'Tahoma', 'Geneva', 'Arial', sans-serif;\n  color: #6d859e;\n  font-size: 13px;\n  font-stretch: normal;\n  font-weight: weight-default;\n}\nh1,\nstrong,\n.bold {\n  font-weight: 600;\n}\na {\n  color: #6d859e;\n}\na :hover {\n  color: #4ba8ff;\n}\n.style-guide-title {\n  color: #4c6072;\n  display: -webkit-box;\n  display: -ms-flexbox;\n  display: flex;\n  -webkit-box-orient: horizontal;\n  -webkit-box-direction: normal;\n      -ms-flex-direction: row;\n          flex-direction: row;\n  font-size: 24px;\n  -webkit-box-pack: center;\n      -ms-flex-pack: center;\n          justify-content: center;\n  left: 150px;\n  position: relative;\n  position: relative;\n  top: 100px;\n  width: calc(100% - 150px);\n}\n.version-bar {\n  background-color: #fff;\n  border-left: 1px solid #d8e0ea;\n  position: fixed;\n  top: 0;\n  right: 0;\n  bottom: 0;\n  width: 75px;\n  z-index: 1000;\n}\n.version-label {\n  color: #9bacbf;\n  font-size: 16px;\n  height: 75px;\n  width: 285px;\n  position: absolute;\n  top: 160px;\n  right: -75px;\n  -webkit-transform: rotate(90deg);\n          transform: rotate(90deg);\n}\n.version-label strong {\n  color: #4ba8ff;\n}\n.version-label * {\n  display: inline-block;\n}\n.logo {\n  background: url(" + __webpack_require__(613) + ") no-repeat top center;\n  background-size: contain;\n  height: 90px;\n  margin: 0 auto;\n  margin-left: -115px;\n  width: 100%;\n}\n.decoration {\n  height: 3px;\n  width: 40px;\n  background-color: #d8e0ea;\n  margin: 0 10px 3px 10px;\n}\n.section-content {\n  margin: 40px 0 0 0;\n}\n.section-container {\n  display: -webkit-box;\n  display: -ms-flexbox;\n  display: flex;\n  left: 345px;\n  position: relative;\n  top: 185px;\n  width: calc(100% - 350px);\n}\n.section-title {\n  display: -webkit-inline-box;\n  display: -ms-inline-flexbox;\n  display: inline-flex;\n  font-weight: 600;\n  padding: 0px 0px 15px 0px;\n  width: 100%;\n}\n.section-title .title-text {\n  color: #4c6072;\n  font-size: 64px;\n}\n.section-title .title-section {\n  color: #bdc9d6;\n  font-size: 24px;\n  height: 60px;\n  padding-left: 10px;\n  position: relative;\n  top: 16px;\n}\n.indent-container {\n  margin: 20px 0 60px 50px;\n}\n.divider {\n  border-top: 1px solid #d8e0ea;\n  margin: 0 30px 0x 0;\n  position: relative;\n  width: 90%;\n}\n.divider sup {\n  color: #9bacbf;\n  right: -30px;\n  position: absolute;\n  top: -10px;\n}\n.divider label {\n  color: #bdc9d6;\n  font-weight: 600;\n  position: absolute;\n  right: -30px;\n  top: -10px;\n}\n.section {\n  position: relative;\n  width: 70vw;\n  -webkit-animation: fadeContentIn 500ms forwards;\n          animation: fadeContentIn 500ms forwards;\n}\n.subsection-title {\n  color: #4c6072;\n  font-weight: 500;\n  font-size: 24px;\n}\n.subsection-description {\n  padding: 16px 0px 10px 0px;\n  font-size: 16px;\n  font-weight: weight-default;\n  max-width: 900px;\n  line-height: 24px;\n}\n.section-nav {\n  display: -webkit-box;\n  display: -ms-flexbox;\n  display: flex;\n  -webkit-box-orient: horizontal;\n  -webkit-box-direction: normal;\n      -ms-flex-direction: row;\n          flex-direction: row;\n  list-style-type: none;\n  overflow-x: scroll;\n  padding: 0 0 30px 0;\n  position: relative;\n  white-space: nowrap;\n  width: 100%;\n}\n.section-nav .nav-item {\n  color: #4c6072;\n  cursor: pointer;\n  font-size: 16px;\n  font-weight: 500;\n  margin: 30px 30px 0 0;\n  padding: 10px 30px;\n}\n.section-nav .nav-item:hover {\n  color: #4ba8ff;\n}\n.section-nav .nav-item.selected {\n  background-color: #4ba8ff;\n  border-radius: 30px;\n  color: #fff;\n}\n.code-snippet {\n  max-width: 90%;\n  left: -60px;\n  padding-left: 15px;\n  position: relative;\n  margin-left: 50px;\n}\n.code-snippet .first-call-out {\n  margin-left: -15px;\n}\n.call-out {\n  color: #9bacbf;\n  margin: 40px 0 20px 0;\n  font-size: 16px;\n}\n.call-out.extra {\n  margin-top: 30px;\n}\n.call-out label {\n  text-transform: none;\n}\n.call-out p {\n  line-height: 4px;\n  display: -webkit-inline-box;\n  display: -ms-inline-flexbox;\n  display: inline-flex;\n  text-transform: none;\n  margin: 0;\n}\n.call-out .icon {\n  font-size: 14pt;\n  position: relative;\n  top: -1px;\n  left: -20px;\n}\n.desc {\n  width: 80%;\n  padding-left: 14px;\n  margin-top: 6px;\n  line-height: 24px;\n}\n.first-call-out {\n  margin-left: -10px;\n}\n.snippet-container {\n  background-color: #f4f9fd;\n  border: 1px solid #d8e0ea;\n  border-radius: 6px;\n  font-size: 14px;\n  margin-top: 10px;\n  width: 90%;\n  display: -webkit-inline-box;\n  display: -ms-inline-flexbox;\n  display: inline-flex;\n  -webkit-box-orient: vertical;\n  -webkit-box-direction: normal;\n      -ms-flex-direction: column;\n          flex-direction: column;\n}\n.snippet-header {\n  color: #6d859e;\n  border-bottom: 1px solid #d8e0ea;\n  border-radius: 6px 6px 0px 0px;\n  padding: 15px;\n  margin-right: 0;\n}\n.snippet-header label {\n  text-transform: uppercase;\n  letter-spacing: 1.2px;\n}\n.code-field {\n  background-color: #fff;\n  border-left: 1px solid #d8e0ea;\n  border-radius: 0px 0px 6px 0px;\n  font-family: monospace;\n  font-weight: 500;\n  margin: 0 0 0 45px;\n  padding: 15px;\n  display: -webkit-inline-box;\n  display: -ms-inline-flexbox;\n  display: inline-flex;\n}\n.code-field pre {\n  color: #4c6072;\n  display: inline-block;\n  letter-spacing: 1.5px;\n  line-height: 20px;\n  margin: -2px 0 0 -45px;\n  white-space: pre-wrap;\n}\n.code-field pre:nth-child(2n) {\n  overflow-x: scroll;\n  white-space: pre;\n  margin-left: 40px;\n  width: 100%;\n}\npre span.mp-red {\n  color: #e4567b;\n}\npre span.mp-purple {\n  color: #9270e2;\n}\npre span.mp-green {\n  color: #2dc376;\n}\npre span.grey-500 {\n  color: #9bacbf;\n}\npre span.mp-orange {\n  color: #f1842b;\n}\n.common-example {\n  border: 1px dashed #bdc9d6;\n  border-radius: 4px;\n  min-height: 40px;\n  display: -webkit-inline-box;\n  display: -ms-inline-flexbox;\n  display: inline-flex;\n  -webkit-box-align: center;\n      -ms-flex-align: center;\n          align-items: center;\n  margin: 0;\n}\n.example-block {\n  display: -webkit-inline-box;\n  display: -ms-inline-flexbox;\n  display: inline-flex;\n  margin: 0 15px 10px 0;\n  -webkit-box-orient: vertical;\n  -webkit-box-direction: normal;\n      -ms-flex-direction: column;\n          flex-direction: column;\n}\n.example-block.half {\n  width: 40%;\n  display: inline-table;\n}\n.floating-example-bar {\n  background: #fff;\n  width: 80%;\n  box-shadow: 0px 8px 22px 0px rgba(0,0,0,0.23);\n  padding: 15px 20px;\n  min-width: 740px;\n  margin-top: 10px;\n}\n.floating-example-bar.align-right {\n  text-align: right;\n}\n.floating-example-bar.blue-bar {\n  background: #4ba8ff;\n}\n.floating-example-bar.grey-bar {\n  background: #f4f9fd;\n}\n.floating-example-bar .example-bar-divider {\n  margin: 0 15px;\n  border-bottom: 1px solid #e5eef4;\n  height: 1px;\n}\n.floating-example-bar .example-bar-line-item {\n  padding: 15px;\n  display: -webkit-inline-box;\n  display: -ms-inline-flexbox;\n  display: inline-flex;\n  -webkit-box-align: center;\n      -ms-flex-align: center;\n          align-items: center;\n  -webkit-box-pack: justify;\n      -ms-flex-pack: justify;\n          justify-content: space-between;\n  width: 96%;\n}\n.blue-vertical-seperator {\n  border-left: 1px solid rgba(255,255,255,0.15);\n  border-right: 1px solid #3391e9;\n  height: 48px;\n  display: inline-block;\n  vertical-align: middle;\n  margin-left: 30px;\n}\n.example-card {\n  background: #fff;\n  border-radius: 6px;\n  border: 1px solid #ecf3f8;\n  box-shadow: 0px 1px 2px 0px rgba(0,0,0,0.14);\n  display: inline-block;\n  margin: 0 30px 20px 0;\n  position: relative;\n  min-height: 200px;\n  box-sizing: border-box;\n}\n.example-card.narrow {\n  display: -webkit-inline-box;\n  display: -ms-inline-flexbox;\n  display: inline-flex;\n  width: auto;\n  max-width: 30%;\n  min-width: 365px;\n  -webkit-box-align: end;\n      -ms-flex-align: end;\n          align-items: flex-end;\n}\n.example-card.truncated {\n  height: 90px;\n  min-height: 90px;\n}\n.example-card.long {\n  min-width: 560px;\n  max-width: 40%;\n}\n.example-card-footer {\n  border-top: 1px solid #d8e0ea;\n  position: absolute;\n  bottom: 0;\n  left: 0;\n  right: 0;\n  padding: 10px 15px;\n  text-align: right;\n}\n.example-card-footer :last-child {\n  margin-left: 10px;\n}\n.example-card-header {\n  border-bottom: 1px solid #3b99f0;\n  border-radius: 6px 6px 0 0;\n  position: absolute;\n  top: 0;\n  left: -1px;\n  right: -1px;\n  background-color: #4ba8ff;\n  text-align: center;\n  color: #fff;\n  padding: 20px 0;\n}\n.example-card-header b {\n  font-size: 18px;\n}\n.example-card-header.grey {\n  background-color: #ecf3f8;\n  border-bottom: 1px solid #d8e0ea;\n  display: -webkit-box;\n  display: -ms-flexbox;\n  display: flex;\n  -webkit-box-pack: end;\n      -ms-flex-pack: end;\n          justify-content: flex-end;\n  padding-right: 20px;\n}\n.demo-divider {\n  border-bottom: 1px dashed #bdc9d6;\n  width: 80%;\n  text-align: right;\n  padding-bottom: 15px;\n}\n.demo-divider a {\n  margin-left: 45px;\n}\n.section-modifier {\n  margin-top: -45px;\n}\n@-webkit-keyframes fadeContentIn {\n  from {\n    -webkit-transform: translateY(30px);\n            transform: translateY(30px);\n    opacity: 0;\n  }\n  to {\n    opacity: 1;\n  }\n}\n@keyframes fadeContentIn {\n  from {\n    -webkit-transform: translateY(30px);\n            transform: translateY(30px);\n    opacity: 0;\n  }\n  to {\n    opacity: 1;\n  }\n}\n", ""]);
 
 	// exports
 
 
 /***/ },
-/* 608 */
+/* 613 */
 /***/ function(module, exports) {
 
 	module.exports = "data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB3aWR0aD0iMjMwcHgiIGhlaWdodD0iOTBweCIgdmlld0JveD0iMCAwIDIzMCA5MCIgdmVyc2lvbj0iMS4xIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIj4KICAgIDwhLS0gR2VuZXJhdG9yOiBTa2V0Y2ggMzkuMSAoMzE3MjApIC0gaHR0cDovL3d3dy5ib2hlbWlhbmNvZGluZy5jb20vc2tldGNoIC0tPgogICAgPHRpdGxlPm1wLWxvZ288L3RpdGxlPgogICAgPGRlc2M+Q3JlYXRlZCB3aXRoIFNrZXRjaC48L2Rlc2M+CiAgICA8ZGVmcz48L2RlZnM+CiAgICA8ZyBpZD0iUGFnZS0xIiBzdHJva2U9Im5vbmUiIHN0cm9rZS13aWR0aD0iMSIgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJldmVub2RkIj4KICAgICAgICA8ZyBpZD0ibXAtbG9nbyI+CiAgICAgICAgICAgIDxnIGlkPSJIZWFkZXIiIHRyYW5zZm9ybT0idHJhbnNsYXRlKC0xMzcuMDAwMDAwLCAtMC41MDAwMDApIj4KICAgICAgICAgICAgICAgIDx0ZXh0IGlkPSJNaXhwYW5lbC1EZXNpZ24iIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2FOZXVlLCBIZWx2ZXRpY2EgTmV1ZSIgZm9udC1zaXplPSIzMSIgZm9udC13ZWlnaHQ9Im5vcm1hbCIgZmlsbD0iIzRDNjA3MiI+CiAgICAgICAgICAgICAgICAgICAgPHRzcGFuIHg9IjEzNi44ODE1IiB5PSI4NCI+TWl4cGFuZWwgRGVzaWduPC90c3Bhbj4KICAgICAgICAgICAgICAgIDwvdGV4dD4KICAgICAgICAgICAgICAgIDxnIGlkPSJHcm91cCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMjAyLjAwMDAwMCwgMC41MDAwMDApIiBmaWxsPSIjNEJBOEZGIj4KICAgICAgICAgICAgICAgICAgICA8Y2lyY2xlIGlkPSJPdmFsLTUiIGN4PSIxMSIgY3k9IjExIiByPSIxMSI+PC9jaXJjbGU+CiAgICAgICAgICAgICAgICAgICAgPGNpcmNsZSBpZD0iT3ZhbC01LUNvcHkiIGN4PSI1MCIgY3k9IjExIiByPSI4Ij48L2NpcmNsZT4KICAgICAgICAgICAgICAgICAgICA8Y2lyY2xlIGlkPSJPdmFsLTUtQ29weS0yIiBjeD0iODEuNSIgY3k9IjExLjUiIHI9IjMuNSI+PC9jaXJjbGU+CiAgICAgICAgICAgICAgICA8L2c+CiAgICAgICAgICAgIDwvZz4KICAgICAgICA8L2c+CiAgICA8L2c+Cjwvc3ZnPg=="
