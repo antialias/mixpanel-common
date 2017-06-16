@@ -35,7 +35,7 @@
       "from_date": -15,
       "to_date": -10,
       "segment_type": "number",
-      "segfilters": {
+      "segfilter": {
         "filters": [
           {
             "dropdown_tab_index": 0,

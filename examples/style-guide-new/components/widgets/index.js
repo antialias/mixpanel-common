@@ -1,6 +1,6 @@
 import {Component} from 'panel';
 
-import alerts from './alert-data.json';
+import smartHubAlerts from './smart-hub-alerts-data.json';
 import bookmarks from './bookmark-data.json';
 
 import template from './index.jade';
@@ -17,8 +17,9 @@ document.registerElement(`widgets-section`, class extends Component {
   get config() {
     return {
       defaultState: {
-        alerts,
-        alertDropdownOpen: false,
+        smartHubAlerts,
+        smartHubDropdownOpen: false,
+        smartHubTooltip: null,
         currentBookmark: `default`,
         bookmarks,
         itemsMenuOpen: false,
@@ -271,7 +272,28 @@ document.registerElement(`widgets-section`, class extends Component {
             ...sections,
           ];
         },
-        toggleAlertDropdown: () => this.update({alertDropdownOpen: !this.state.alertDropdownOpen}),
+        toggleSmartHubDropdown: () => this.update({smartHubDropdownOpen: !this.state.smartHubDropdownOpen}),
+        handleClickAnomalyUp: ev => {
+          const offsetElRect = ev.target.getBoundingClientRect();
+          this.update({smartHubTooltip: {
+            placement: `top`,
+            offsetLeft: document.body.scrollLeft + offsetElRect.left + offsetElRect.width / 2,
+            offsetTop: document.body.scrollTop + offsetElRect.top,
+            alert: this.state.smartHubAlerts[0].alert,
+          }});
+        },
+        handleClickAnomalyDown: ev => {
+          const offsetElRect = ev.target.getBoundingClientRect();
+          this.update({smartHubTooltip: {
+            placement: `bottom`,
+            offsetLeft: document.body.scrollLeft + offsetElRect.left + offsetElRect.width / 2,
+            offsetTop: document.body.scrollTop + offsetElRect.top + offsetElRect.height,
+            alert: this.state.smartHubAlerts[1].alert,
+          }});
+        },
+        handleRemovedTooltipAlert: () => {
+          this.update({smartHubTooltip: null});
+        },
       },
       template,
     };

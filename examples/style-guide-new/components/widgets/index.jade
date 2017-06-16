@@ -385,12 +385,12 @@
               strong.icon +
               strong mp-smart-hub-dropdown
             .floating-example-bar.alerts-example
-              .alert-button(on={click: $helpers.toggleAlertDropdown})
+              .alert-button(on={click: $helpers.toggleSmartHubDropdown})
                 svg-icon(attrs={icon: `hubs-notif`})
                 mp-smart-hub-dropdown(
                  attrs={
-                   'open': alertDropdownOpen,
-                   'alerts': JSON.stringify(alerts),
+                   'open': smartHubDropdownOpen,
+                   'smart-hub-alerts': JSON.stringify(smartHubAlerts),
                    'mixpanel-host': `https://mixpanel.com`,
                    'project-id': 3,
                  }
@@ -408,3 +408,22 @@
                 pre
                   //- TODO - make example code snippet
                   span.grey-500 // Smart Hub Dropdown
+          .example-block
+            .call-out.first-call-out
+              strong.icon +
+              strong mp-smart-hub-tooltip
+            .floating-example-bar.alerts-example
+              .anomaly-up(on={click: $helpers.handleClickAnomalyUp})
+                include ../../../../lib/widgets/smart-hub-alert/smart-hub-assets/anomaly-up.svg
+              .anomaly-down(on={click: $helpers.handleClickAnomalyDown})
+                include ../../../../lib/widgets/smart-hub-alert/smart-hub-assets/anomaly-down.svg
+              if smartHubTooltip
+                  mp-smart-hub-tooltip(
+                    attrs={
+                      'placement': smartHubTooltip.placement,
+                      'offset-left': `${smartHubTooltip.offsetLeft}`,
+                      'offset-top': `${smartHubTooltip.offsetTop}`,
+                      'alert': JSON.stringify(smartHubTooltip.alert),
+                    }
+                    on={removedAlert: $helpers.handleRemovedTooltipAlert}
+                  )

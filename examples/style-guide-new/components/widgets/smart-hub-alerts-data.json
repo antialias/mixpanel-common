@@ -1,0 +1,285 @@
+[
+  {
+    "alert": {
+      "alertContentId": "insights-basic",
+      "alertId": "insights-alert-id1",
+      "alertMetadata": {
+        "type": "ANOMALY",
+        "message": "Insights: basic with single event time series",
+        "readAtMs": "1490908189900",
+        "ingestedAtMs": "1490908189900",
+        "markedUsefulAtMs": "1490908189900"
+      },
+      "insightsQuery": {
+        "propertyFilters": [],
+        "dateRange": {
+          "from": "2016-09-01",
+          "to": "2016-09-25"
+        },
+        "timeUnit": "DAY",
+        "showClauses": [
+          {
+            "showEvent": {
+              "action": "TOTAL",
+              "event": "Viewed report"
+            }
+          }
+        ],
+        "groupByProperties": []
+      },
+      "anomaly": {
+        "insightsDetails": {
+          "showClauseIdx": 0,
+          "propertyVals": []
+        },
+        "direction": "POSITIVE",
+        "valueAtTimestamp": 105954,
+        "anomalyId": "anomaly-id-insights1",
+        "anomalyTimestamp": "2016-09-06"
+      }
+    }
+  },
+  {
+    "alert": {
+      "alertContentId": "insights-group-by",
+      "alertId": "insights-alert-id1",
+      "alertMetadata": {
+        "type": "ANOMALY",
+        "message": "Insights: single time series with two group by",
+        "readAtMs": "1490908189900",
+        "ingestedAtMs": "1490908189900",
+        "markedUsefulAtMs": "1490908189900"
+      },
+      "insightsQuery": {
+        "propertyFilters": [],
+        "dateRange": {
+          "from": "2016-09-01",
+          "to": "2016-09-25"
+        },
+        "timeUnit": "DAY",
+        "showClauses": [
+          {
+            "showEvent": {
+              "action": "TOTAL",
+              "event": "Viewed report"
+            }
+          }
+        ],
+        "groupByProperties": [
+          {
+            "property": {
+              "source": "EVENTS",
+              "type": "STRING",
+              "name": "$os"
+            }
+          },
+          {
+            "property": {
+              "source": "EVENTS",
+              "type": "STRING",
+              "name": "has_integrated_engage"
+            }
+          }
+        ]
+      },
+      "anomaly": {
+        "insightsDetails": {
+          "showClauseIdx": 0,
+          "propertyVals": ["Mac OS X", "true"]
+        },
+        "direction": "POSITIVE",
+        "valueAtTimestamp": 66814,
+        "anomalyId": "anomaly-id-insights1",
+        "anomalyTimestamp": "2016-09-06"
+      }
+    }
+  },
+  {
+    "alert": {
+      "alertContentId": "funnels-basic",
+      "alertMetadata": {
+        "type": "ANOMALY",
+        "message": "Funnels: single anomaly",
+        "readAtMs": "1490908189900",
+        "ingestedAtMs": "1490908189900",
+        "markedUsefulAtMs": "1490908189900"
+      },
+      "anomaly": {
+        "funnelsDetails": {
+          "startStepIdx": 0,
+          "isOverallConversion": false
+        },
+        "direction": "NEGATIVE",
+        "valueAtTimestamp": 71.62,
+        "anomalyId": "anomaly-id-funnels1",
+        "anomalyTimestamp": "2017-05-20"
+      },
+      "funnelsQuery": {
+        "timeUnit": "DAY",
+        "dateRange": {
+          "from": "2017-05-05",
+          "to": "2017-05-25"
+        },
+        "bookmarkId": 2540095,
+        "groupByProperty": {
+          "source": "EVENTS",
+          "name": "$os",
+          "type": "STRING"
+        },
+        "propertyFilters": [
+          {
+            "property": {
+              "source": "EVENTS",
+              "name": "$browser",
+              "type": "STRING"
+            },
+            "stringFilter": {
+              "operator": "EQUALS",
+              "operands": [
+                "Chrome",
+                "Firefox"
+              ]
+            }
+          }
+        ]
+      },
+      "alertId": "funnel-alert-id1"
+    }
+  },
+  {
+    "groupedAlert": {
+      "groupedAlertId": "retention-two-intervals",
+      "alertMetadata": {
+        "type": "ANOMALY",
+        "message": "Retention: two intervals",
+        "readAtMs": "1490908189900",
+        "ingestedAtMs": "1490908189900",
+        "markedUsefulAtMs": "1490908189900"
+      },
+      "alerts": [
+        {
+          "alertContentId": "retention-single-interval-1",
+          "alertMetadata": {
+            "type": "ANOMALY",
+            "message": "Retention: single interval 1",
+            "readAtMs": "1490908189900",
+            "ingestedAtMs": "1490908189900",
+            "markedUsefulAtMs": "1490908189900"
+          },
+          "retentionQuery": {
+            "bornEvent": "$signup",
+            "bornPropertyFilters": [
+              {
+                "property": {
+                  "source": "EVENTS",
+                  "type": "STRING",
+                  "name": "$os"
+                },
+                "stringFilter": {
+                  "operator": "CONTAINS",
+                  "operands": [
+                    "Mac OS X"
+                  ]
+                }
+              }
+            ],
+            "event": "Viewed report",
+            "propertyFilters": [
+              {
+                "property": {
+                  "source": "EVENTS",
+                  "type": "STRING",
+                  "name": "$browser"
+                },
+                "stringFilter": {
+                  "operator": "EQUALS",
+                  "operands": [
+                    "Chrome"
+                  ]
+                }
+              }
+            ],
+            "dateRange": {
+              "from": "2016-09-01",
+              "to": "2016-09-25"
+            },
+            "retentionType": "BIRTH",
+            "countType": "PERCENT",
+            "timeUnit": "DAY"
+          },
+          "alertId": "retention-alert-id1",
+          "anomaly": {
+            "retentionDetails": {
+              "interval": 6
+            },
+            "direction": "POSITIVE",
+            "valueAtTimestamp": 19.13,
+            "anomalyId": "anomaly-id-retention1",
+            "anomalyTimestamp": "2016-09-08"
+          }
+        },
+        {
+          "alertContentId": "retention-single-interval-2",
+          "alertMetadata": {
+            "type": "ANOMALY",
+            "message": "Retention: single interval 2",
+            "readAtMs": "1490908189900",
+            "ingestedAtMs": "1490908189900",
+            "markedUsefulAtMs": "1490908189900"
+          },
+          "retentionQuery": {
+            "bornEvent": "$signup",
+            "bornPropertyFilters": [
+              {
+                "property": {
+                  "source": "EVENTS",
+                  "type": "STRING",
+                  "name": "$os"
+                },
+                "stringFilter": {
+                  "operator": "CONTAINS",
+                  "operands": [
+                    "Mac OS X"
+                  ]
+                }
+              }
+            ],
+            "event": "Viewed report",
+            "propertyFilters": [
+              {
+                "property": {
+                  "source": "EVENTS",
+                  "type": "STRING",
+                  "name": "$browser"
+                },
+                "stringFilter": {
+                  "operator": "EQUALS",
+                  "operands": [
+                    "Chrome"
+                  ]
+                }
+              }
+            ],
+            "dateRange": {
+              "from": "2016-09-01",
+              "to": "2016-09-25"
+            },
+            "retentionType": "BIRTH",
+            "countType": "PERCENT",
+            "timeUnit": "DAY"
+          },
+          "alertId": "retention-alert-id1",
+          "anomaly": {
+            "retentionDetails": {
+              "interval": 13
+            },
+            "direction": "POSITIVE",
+            "valueAtTimestamp": 11.74,
+            "anomalyId": "anomaly-id-retention1",
+            "anomalyTimestamp": "2016-09-08"
+          }
+        }
+      ]
+    }
+  }
+]
