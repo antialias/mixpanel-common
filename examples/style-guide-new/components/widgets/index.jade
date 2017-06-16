@@ -338,7 +338,7 @@
                 )
               .drop-menu-container
                 mp-drop-menu(
-                  attrs={open: itemsMenuOpen}
+                  attrs={open: itemsMenuOpen, 'prevent-close-selectors': JSON.stringify([`.mp-event-definition-tooltip`])}
                   on={change: $helpers.handleItemsMenuChange}
                 )
                   mp-items-menu(

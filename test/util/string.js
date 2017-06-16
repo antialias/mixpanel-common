@@ -58,6 +58,11 @@ describe(`stringFilterMatches`, function() {
     expect(stringFilterMatches(`abcdefg`, `  abc `)).to.eql([`abc`, `defg`]);
   });
 
+  it(`matches when one search term is a substring of another`, function() {
+    expect(stringFilterMatches(`This is a test`, `this is`)).to.eql([`This`, ` `, `is`, ` a test`]);
+    expect(stringFilterMatches(`This should not match`, `this is`)).to.eql(null);
+  });
+
   it(`matches when no filter string is passed`, function() {
     expect(stringFilterMatches(`abcdefg`, ``)).to.eql([``, `abcdefg`]);
     expect(stringFilterMatches(`abcdefg`, null)).to.eql([``, `abcdefg`]);
