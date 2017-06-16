@@ -36675,6 +36675,8 @@
 	        } else {
 	          this._closeMenu();
 	        }
+	      } else if (attr === 'prevent-close-selectors') {
+	        this.update({ preventCloseSelectors: this.getJSONAttribute(attr) });
 	      }
 	    }
 	  }, {
@@ -36713,7 +36715,13 @@
 
 	      // close when the user clicks outside of the menu
 	      this.clickOutsideListener = function (e) {
-	        if (_this2.isAttributeEnabled('open') && (0, _dom.clickWasOutside)(e, _this2)) {
+	        var path = window.ShadowDOMPolyfill || typeof e.composedPath !== 'function' ? e.path : e.composedPath();
+	        var clickWithinPreventCloseElement = _this2.state.preventCloseSelectors.some(function (selector) {
+	          return path.some(function (el) {
+	            return el.matches && el.matches(selector);
+	          });
+	        });
+	        if (_this2.isAttributeEnabled('open') && (0, _dom.clickWasOutside)(e, _this2) && !clickWithinPreventCloseElement) {
 	          _this2._closeMenu();
 	        }
 	      };
@@ -36735,6 +36743,7 @@
 	        useShadowDom: true,
 
 	        defaultState: {
+	          preventCloseSelectors: [],
 	          visibility: VISIBILITY_CLOSED
 	        }
 	      };
@@ -37870,6 +37879,8 @@
 	  value: true
 	});
 
+	var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
+
 	var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
 	var _array = __webpack_require__(485);
@@ -37891,6 +37902,7 @@
 	exports.mapKeys = mapKeys;
 	exports.mapValues = mapValues;
 	exports.nestedObjectDepth = nestedObjectDepth;
+	exports.parseUrlQueryParams = parseUrlQueryParams;
 	exports.nestedObjectKeys = nestedObjectKeys;
 	exports.objectFromPairs = objectFromPairs;
 	exports.objToQueryString = objToQueryString;
@@ -38012,6 +38024,17 @@
 
 	function nestedObjectDepth(obj) {
 	  return obj !== null && typeof obj === 'object' ? nestedObjectDepth(obj[Object.keys(obj)[0]]) + 1 : 0;
+	}
+
+	function parseUrlQueryParams() {
+	  return window.location.search.slice(1).split('&').reduce(function (params, pairStr) {
+	    var _pairStr$split = pairStr.split('='),
+	        _pairStr$split2 = _slicedToArray(_pairStr$split, 2),
+	        k = _pairStr$split2[0],
+	        v = _pairStr$split2[1];
+
+	    return Object.assign(params, _defineProperty({}, k, v));
+	  }, {});
 	}
 
 	function getKeys(obj, depth, keySet) {
@@ -38934,12 +38957,21 @@
 	    for (var _iterator = searchTerms[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
 	      var term = _step.value;
 
-	      var matchIdx = matchStr.indexOf(term);
-	      if (matchIdx === -1) {
-	        return null; // short-circuit stop for non-match
-	      }
-	      for (var mi = matchIdx; mi < matchIdx + term.length; mi++) {
-	        matchPositions[mi] = true;
+	      var fromIndex = 0;
+	      var foundNewMatch = false;
+	      while (!foundNewMatch) {
+	        var matchIdx = matchStr.indexOf(term, fromIndex);
+	        if (matchIdx === -1) {
+	          return null; // short-circuit stop for non-match
+	        }
+	        for (var mi = matchIdx; mi < matchIdx + term.length; mi++) {
+	          if (!matchPositions[mi]) {
+	            foundNewMatch = true;
+	            matchPositions[mi] = true;
+	          }
+	        }
+
+	        fromIndex = matchIdx + term.length;
 	      }
 	    }
 
@@ -39092,6 +39124,10 @@
 
 	var _registerElement = __webpack_require__(320);
 
+	var _timingJson = __webpack_require__(462);
+
+	var _timingJson2 = _interopRequireDefault(_timingJson);
+
 	var _index = __webpack_require__(496);
 
 	var _index2 = _interopRequireDefault(_index);
@@ -39120,15 +39156,11 @@
 	  _createClass(_class, [{
 	    key: '_triggerAction',
 	    value: function _triggerAction() {
-	      //TODO: remove 'change' event when notifications 3 updates to panel 0.10
-	      this.dispatchEvent(new CustomEvent('change', { detail: { action: 'action' } }));
 	      this.dispatchEvent(new CustomEvent('action'));
 	    }
 	  }, {
 	    key: '_triggerClose',
 	    value: function _triggerClose() {
-	      //TODO: remove 'change' event when notifications 3 updates to panel 0.10
-	      this.dispatchEvent(new CustomEvent('change', { detail: { action: 'close' } }));
 	      this.dispatchEvent(new CustomEvent('close'));
 	    }
 	  }, {
@@ -39153,7 +39185,7 @@
 	        template: _index2.default,
 	        useShadowDom: true,
 	        defaultState: {
-	          delayRemove: 250 // TODO replace this with "mp-fast" from stylesheets/mixins/timing.json
+	          delayRemove: _timingJson2.default['mp-fast']
 	        },
 	        helpers: {
 	          ctaClick: function ctaClick() {
@@ -51776,6 +51808,10 @@
 
 	var _registerElement = __webpack_require__(320);
 
+	var _timingJson = __webpack_require__(462);
+
+	var _timingJson2 = _interopRequireDefault(_timingJson);
+
 	var _index = __webpack_require__(556);
 
 	var _index2 = _interopRequireDefault(_index);
@@ -51833,19 +51869,15 @@
 	        defaultState: {
 	          numSteps: 0,
 	          currStep: 0,
-	          delayRemove: 400 // TODO replace this with "mp-slow" from stylesheets/mixins/timing.json
+	          delayRemove: _timingJson2.default['mp-slow']
 	        },
 	        helpers: {
 	          close: function close(e) {
 	            e.stopPropagation();
-	            //TODO: remove 'change' event when notifications 3 updates to panel 0.10
-	            _this2.dispatchEvent(new CustomEvent('change', { detail: { action: 'close' } }));
 	            _this2.dispatchEvent(new CustomEvent('close'));
 	          },
 	          next: function next(e) {
 	            e.stopPropagation();
-	            //TODO: remove 'change' event when notifications 3 updates to panel 0.10
-	            _this2.dispatchEvent(new CustomEvent('change', { detail: { action: 'next' } }));
 	            _this2.dispatchEvent(new CustomEvent('next'));
 	          },
 	          getSteps: function getSteps() {
