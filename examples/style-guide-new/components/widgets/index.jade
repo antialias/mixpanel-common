@@ -377,10 +377,26 @@
       .divider
       .section-content
         section
-        .subsection-title Smart Hub Dropdown
+        .subsection-title Smart Hub Widgets
         .subsection-description For displaying alerts surfaced by our machine learning endpoints, used in reports and as smarthub global.
         .indent-container
           .example-block
+            .call-out.first-call-out
+                  strong.icon +
+                  strong .mp-smart-hub-tooltip
+                .common-example.small(style={width: '40px'})
+                  .anomaly-up(on={click: $helpers.handleClickAnomalyUp})
+                    include ../../../../lib/widgets/smart-hub-alert/smart-hub-assets/anomaly-up.svg
+                  if smartHubTooltip
+                      mp-smart-hub-tooltip(
+                        attrs={
+                          'placement': smartHubTooltip.placement,
+                          'offset-left': `${smartHubTooltip.offsetLeft}`,
+                          'offset-top': `${smartHubTooltip.offsetTop}`,
+                          'alert': JSON.stringify(smartHubTooltip.alert),
+                        }
+                        on={removedAlert: $helpers.handleRemovedTooltipAlert}
+                      )
             .call-out.first-call-out
               strong.icon +
               strong mp-smart-hub-dropdown
@@ -405,25 +421,10 @@
               .code-field
                 pre
                   | 1
+                  br
+                  | 2
                 pre
                   //- TODO - make example code snippet
                   span.grey-500 // Smart Hub Dropdown
-          .example-block
-            .call-out.first-call-out
-              strong.icon +
-              strong mp-smart-hub-tooltip
-            .floating-example-bar.alerts-example
-              .anomaly-up(on={click: $helpers.handleClickAnomalyUp})
-                include ../../../../lib/widgets/smart-hub-alert/smart-hub-assets/anomaly-up.svg
-              .anomaly-down(on={click: $helpers.handleClickAnomalyDown})
-                include ../../../../lib/widgets/smart-hub-alert/smart-hub-assets/anomaly-down.svg
-              if smartHubTooltip
-                  mp-smart-hub-tooltip(
-                    attrs={
-                      'placement': smartHubTooltip.placement,
-                      'offset-left': `${smartHubTooltip.offsetLeft}`,
-                      'offset-top': `${smartHubTooltip.offsetTop}`,
-                      'alert': JSON.stringify(smartHubTooltip.alert),
-                    }
-                    on={removedAlert: $helpers.handleRemovedTooltipAlert}
-                  )
+                  br
+                  span.grey-500 // Smart Hub Tooltip
