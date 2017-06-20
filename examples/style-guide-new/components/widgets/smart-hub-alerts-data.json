@@ -35,7 +35,7 @@
         "direction": "POSITIVE",
         "valueAtTimestamp": 105954,
         "anomalyId": "anomaly-id-insights1",
-        "anomalyTimestamp": "2016-09-06"
+        "anomalyTimestamp": 1473145200000
       }
     }
   },
@@ -90,7 +90,7 @@
         "direction": "POSITIVE",
         "valueAtTimestamp": 66814,
         "anomalyId": "anomaly-id-insights1",
-        "anomalyTimestamp": "2016-09-06"
+        "anomalyTimestamp": 1473145200000
       }
     }
   },
@@ -112,7 +112,7 @@
         "direction": "NEGATIVE",
         "valueAtTimestamp": 71.62,
         "anomalyId": "anomaly-id-funnels1",
-        "anomalyTimestamp": "2017-05-20"
+        "anomalyTimestamp": 1495263600000
       },
       "funnelsQuery": {
         "timeUnit": "DAY",
@@ -215,7 +215,7 @@
             "direction": "POSITIVE",
             "valueAtTimestamp": 19.13,
             "anomalyId": "anomaly-id-retention1",
-            "anomalyTimestamp": "2016-09-08"
+            "anomalyTimestamp": 1473318000000
           }
         },
         {
@@ -276,7 +276,7 @@
             "direction": "POSITIVE",
             "valueAtTimestamp": 11.74,
             "anomalyId": "anomaly-id-retention1",
-            "anomalyTimestamp": "2016-09-08"
+            "anomalyTimestamp": 1473318000000
           }
         }
       ]
