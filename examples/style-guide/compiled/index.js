@@ -49433,7 +49433,9 @@
 	      });
 
 	      if (firstAlert.insightsQuery) {
-	        var urlParams = (0, _util.extend)((0, _utils.insightsQueryToUrlParams)(firstAlert.insightsQuery), { alertContentIds: alertContentIds });
+	        var urlParams = (0, _util.extend)((0, _utils.insightsQueryToUrlParams)(firstAlert.insightsQuery), {
+	          smartHub: { alertContentIds: alertContentIds }
+	        });
 	        return projectUrl + '/insights/#' + _jsurl2.default.stringify(urlParams);
 	      } else if (firstAlert.funnelsQuery) {
 	        var funnelsQuery = firstAlert.funnelsQuery;
@@ -49441,13 +49443,15 @@
 	        // TODO(mack): Support isOverallConversion
 	        var startStepIdx = firstAlert.anomaly.funnelsDetails.startStepIdx;
 	        var _urlParams = (0, _util.extend)((0, _utils.funnelsQueryToUrlParams)(funnelsQuery), {
-	          alert_content_ids: alertContentIds,
+	          smart_sub: { alert_content_ids: alertContentIds },
 	          event_index: startStepIdx + 1
 	        });
 	        var urlHash = _rison2.default.encode(_urlParams);
 	        return projectUrl + '/funnels/#view/' + funnelsQuery.bookmarkId + '/' + urlHash.substring(1, urlHash.length - 1);
 	      } else if (firstAlert.retentionQuery) {
-	        var _urlParams2 = (0, _util.extend)((0, _utils.retentionQueryToUrlParams)(firstAlert.retentionQuery), { alert_content_ids: alertContentIds });
+	        var _urlParams2 = (0, _util.extend)((0, _utils.retentionQueryToUrlParams)(firstAlert.retentionQuery), {
+	          smart_hub: { alert_content_ids: alertContentIds }
+	        });
 	        var _urlHash = _rison2.default.encode(_urlParams2);
 	        return projectUrl + '/retention/#' + _urlHash.substring(1, _urlHash.length - 1);
 	      }

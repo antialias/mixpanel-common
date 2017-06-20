@@ -49235,7 +49235,9 @@
 	      });
 
 	      if (firstAlert.insightsQuery) {
-	        var urlParams = (0, _util.extend)((0, _utils.insightsQueryToUrlParams)(firstAlert.insightsQuery), { alertContentIds: alertContentIds });
+	        var urlParams = (0, _util.extend)((0, _utils.insightsQueryToUrlParams)(firstAlert.insightsQuery), {
+	          smartHub: { alertContentIds: alertContentIds }
+	        });
 	        return projectUrl + '/insights/#' + _jsurl2.default.stringify(urlParams);
 	      } else if (firstAlert.funnelsQuery) {
 	        var funnelsQuery = firstAlert.funnelsQuery;
@@ -49243,13 +49245,15 @@
 	        // TODO(mack): Support isOverallConversion
 	        var startStepIdx = firstAlert.anomaly.funnelsDetails.startStepIdx;
 	        var _urlParams = (0, _util.extend)((0, _utils.funnelsQueryToUrlParams)(funnelsQuery), {
-	          alert_content_ids: alertContentIds,
+	          smart_sub: { alert_content_ids: alertContentIds },
 	          event_index: startStepIdx + 1
 	        });
 	        var urlHash = _rison2.default.encode(_urlParams);
 	        return projectUrl + '/funnels/#view/' + funnelsQuery.bookmarkId + '/' + urlHash.substring(1, urlHash.length - 1);
 	      } else if (firstAlert.retentionQuery) {
-	        var _urlParams2 = (0, _util.extend)((0, _utils.retentionQueryToUrlParams)(firstAlert.retentionQuery), { alert_content_ids: alertContentIds });
+	        var _urlParams2 = (0, _util.extend)((0, _utils.retentionQueryToUrlParams)(firstAlert.retentionQuery), {
+	          smart_hub: { alert_content_ids: alertContentIds }
+	        });
 	        var _urlHash = _rison2.default.encode(_urlParams2);
 	        return projectUrl + '/retention/#' + _urlHash.substring(1, _urlHash.length - 1);
 	      }
@@ -58987,10 +58991,11 @@
 	                  }.call(this).filter(Boolean)));
 	                  __jade_nodes = __jade_nodes.concat(h("div", {
 	                    "style": {
-	                      width: '30px'
+	                      width: '40px'
 	                    },
 	                    "class": {
-	                      'common-example': true
+	                      'common-example': true,
+	                      'small': true
 	                    }
 	                  }, function () {
 	                    var __jade_nodes = [];
@@ -62526,7 +62531,7 @@
 					"direction": "POSITIVE",
 					"valueAtTimestamp": 105954,
 					"anomalyId": "anomaly-id-insights1",
-					"anomalyTimestamp": "2016-09-06"
+					"anomalyTimestamp": 1473145200000
 				}
 			}
 		},
@@ -62584,7 +62589,7 @@
 					"direction": "POSITIVE",
 					"valueAtTimestamp": 66814,
 					"anomalyId": "anomaly-id-insights1",
-					"anomalyTimestamp": "2016-09-06"
+					"anomalyTimestamp": 1473145200000
 				}
 			}
 		},
@@ -62606,7 +62611,7 @@
 					"direction": "NEGATIVE",
 					"valueAtTimestamp": 71.62,
 					"anomalyId": "anomaly-id-funnels1",
-					"anomalyTimestamp": "2017-05-20"
+					"anomalyTimestamp": 1495263600000
 				},
 				"funnelsQuery": {
 					"timeUnit": "DAY",
@@ -62709,7 +62714,7 @@
 							"direction": "POSITIVE",
 							"valueAtTimestamp": 19.13,
 							"anomalyId": "anomaly-id-retention1",
-							"anomalyTimestamp": "2016-09-08"
+							"anomalyTimestamp": 1473318000000
 						}
 					},
 					{
@@ -62770,7 +62775,7 @@
 							"direction": "POSITIVE",
 							"valueAtTimestamp": 11.74,
 							"anomalyId": "anomaly-id-retention1",
-							"anomalyTimestamp": "2016-09-08"
+							"anomalyTimestamp": 1473318000000
 						}
 					}
 				]
@@ -64282,7 +64287,7 @@
 	                }
 	              }, function () {
 	                var __jade_nodes = [];
-	                __jade_nodes = __jade_nodes.concat("Smart Hub Dropdown");;
+	                __jade_nodes = __jade_nodes.concat("Smart Hub Widgets");;
 	                return __jade_nodes;
 	              }.call(this).filter(Boolean)));
 	              __jade_nodes = __jade_nodes.concat(h("div", {
@@ -64306,6 +64311,72 @@
 	                  }
 	                }, function () {
 	                  var __jade_nodes = [];
+	                  __jade_nodes = __jade_nodes.concat(h("div", {
+	                    "class": {
+	                      'call-out': true,
+	                      'first-call-out': true
+	                    }
+	                  }, function () {
+	                    var __jade_nodes = [];
+	                    __jade_nodes = __jade_nodes.concat(h("strong", {
+	                      "class": {
+	                        'icon': true
+	                      }
+	                    }, function () {
+	                      var __jade_nodes = [];
+	                      __jade_nodes = __jade_nodes.concat("+");;
+	                      return __jade_nodes;
+	                    }.call(this).filter(Boolean)));
+	                    __jade_nodes = __jade_nodes.concat(h("strong", function () {
+	                      var __jade_nodes = [];
+	                      __jade_nodes = __jade_nodes.concat(".mp-smart-hub-tooltip");;
+	                      return __jade_nodes;
+	                    }.call(this).filter(Boolean)));;
+	                    return __jade_nodes;
+	                  }.call(this).filter(Boolean)));
+	                  __jade_nodes = __jade_nodes.concat(h("div", {
+	                    "style": {
+	                      width: '40px'
+	                    },
+	                    "class": {
+	                      'common-example': true,
+	                      'small': true
+	                    }
+	                  }, function () {
+	                    var __jade_nodes = [];
+	                    __jade_nodes = __jade_nodes.concat(h("div", {
+	                      "on": {
+	                        click: $helpers.handleClickAnomalyUp
+	                      },
+	                      "class": {
+	                        'anomaly-up': true
+	                      }
+	                    }, function () {
+	                      var __jade_nodes = [];
+	                      __jade_nodes = __jade_nodes.concat(h('div', {
+	                        props: {
+	                          innerHTML: '<?xml version="1.0" encoding="UTF-8"?><svg width="22px" height="22px" viewBox="0 0 22 22" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">    <title>anomaly-down</title>    <desc>Anomaly Down Icon</desc>    <defs></defs>    <g id="anomaly-down" stroke="none" stroke-width="1" fill-rule="evenodd">        <g id="16-x-16" transform="translate(3.000000, 3.000000)">            <circle id="circle" fill="#FFC529" cx="8" cy="8" r="8"></circle>            <path d="M10.9122456,7.33950855 L8.42452122,4.92105894 C8.1899095,4.69298035 7.81009051,4.69298035 7.57547877,4.92105894 L5.08775439,7.33950855 C4.97074854,7.45325618 4.97074854,7.638169 5.08775439,7.75191663 L5.5119756,8.1643247 C5.62898145,8.27807233 5.81919096,8.27807233 5.93619681,8.1643247 L7.39966998,6.74160434 L7.39966998,11.4583394 C7.39966998,11.6193361 7.5340767,11.75 7.69968499,11.75 L8.29971498,11.75 C8.46592329,11.75 8.59972998,11.6193361 8.59972998,11.4583394 L8.59972998,6.74160434 L10.0638032,8.1643247 C10.180809,8.27807233 10.3710186,8.27807233 10.4880244,8.1643247 L10.9122456,7.75191663 C11.0292515,7.638169 11.0292515,7.45325618 10.9122456,7.33950855" id="arrow-up" fill="#FFFFFF"></path>        </g>    </g></svg>'
+	                        }
+	                      }));;
+	                      return __jade_nodes;
+	                    }.call(this).filter(Boolean)));
+	                    __jade_nodes = __jade_nodes.concat(smartHubTooltip ? function () {
+	                      var __jade_nodes = [];
+	                      __jade_nodes = __jade_nodes.concat(h("mp-smart-hub-tooltip", {
+	                        "attrs": {
+	                          'placement': smartHubTooltip.placement,
+	                          'offset-left': "" + smartHubTooltip.offsetLeft,
+	                          'offset-top': "" + smartHubTooltip.offsetTop,
+	                          'alert': JSON.stringify(smartHubTooltip.alert)
+	                        },
+	                        "on": {
+	                          removedAlert: $helpers.handleRemovedTooltipAlert
+	                        }
+	                      }));;
+	                      return __jade_nodes;
+	                    }.call(this) : undefined);;
+	                    return __jade_nodes;
+	                  }.call(this).filter(Boolean)));
 	                  __jade_nodes = __jade_nodes.concat(h("div", {
 	                    "class": {
 	                      'call-out': true,
@@ -64422,7 +64493,9 @@
 	                      var __jade_nodes = [];
 	                      __jade_nodes = __jade_nodes.concat(h("pre", function () {
 	                        var __jade_nodes = [];
-	                        __jade_nodes = __jade_nodes.concat("1");;
+	                        __jade_nodes = __jade_nodes.concat("1");
+	                        __jade_nodes = __jade_nodes.concat(h("br"));
+	                        __jade_nodes = __jade_nodes.concat("2");;
 	                        return __jade_nodes;
 	                      }.call(this).filter(Boolean)));
 	                      __jade_nodes = __jade_nodes.concat(h("pre", function () {
@@ -64435,98 +64508,21 @@
 	                          var __jade_nodes = [];
 	                          __jade_nodes = __jade_nodes.concat("// Smart Hub Dropdown");;
 	                          return __jade_nodes;
+	                        }.call(this).filter(Boolean)));
+	                        __jade_nodes = __jade_nodes.concat(h("br"));
+	                        __jade_nodes = __jade_nodes.concat(h("span", {
+	                          "class": {
+	                            'grey-500': true
+	                          }
+	                        }, function () {
+	                          var __jade_nodes = [];
+	                          __jade_nodes = __jade_nodes.concat("// Smart Hub Tooltip");;
+	                          return __jade_nodes;
 	                        }.call(this).filter(Boolean)));;
 	                        return __jade_nodes;
 	                      }.call(this).filter(Boolean)));;
 	                      return __jade_nodes;
 	                    }.call(this).filter(Boolean)));;
-	                    return __jade_nodes;
-	                  }.call(this).filter(Boolean)));;
-	                  return __jade_nodes;
-	                }.call(this).filter(Boolean)));
-	                __jade_nodes = __jade_nodes.concat(h("div", {
-	                  "class": {
-	                    'example-block': true
-	                  }
-	                }, function () {
-	                  var __jade_nodes = [];
-	                  __jade_nodes = __jade_nodes.concat(h("div", {
-	                    "class": {
-	                      'call-out': true,
-	                      'first-call-out': true
-	                    }
-	                  }, function () {
-	                    var __jade_nodes = [];
-	                    __jade_nodes = __jade_nodes.concat(h("strong", {
-	                      "class": {
-	                        'icon': true
-	                      }
-	                    }, function () {
-	                      var __jade_nodes = [];
-	                      __jade_nodes = __jade_nodes.concat("+");;
-	                      return __jade_nodes;
-	                    }.call(this).filter(Boolean)));
-	                    __jade_nodes = __jade_nodes.concat(h("strong", function () {
-	                      var __jade_nodes = [];
-	                      __jade_nodes = __jade_nodes.concat("mp-smart-hub-tooltip");;
-	                      return __jade_nodes;
-	                    }.call(this).filter(Boolean)));;
-	                    return __jade_nodes;
-	                  }.call(this).filter(Boolean)));
-	                  __jade_nodes = __jade_nodes.concat(h("div", {
-	                    "class": {
-	                      'floating-example-bar': true,
-	                      'alerts-example': true
-	                    }
-	                  }, function () {
-	                    var __jade_nodes = [];
-	                    __jade_nodes = __jade_nodes.concat(h("div", {
-	                      "on": {
-	                        click: $helpers.handleClickAnomalyUp
-	                      },
-	                      "class": {
-	                        'anomaly-up': true
-	                      }
-	                    }, function () {
-	                      var __jade_nodes = [];
-	                      __jade_nodes = __jade_nodes.concat(h('div', {
-	                        props: {
-	                          innerHTML: '<?xml version="1.0" encoding="UTF-8"?><svg width="22px" height="22px" viewBox="0 0 22 22" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">    <title>anomaly-down</title>    <desc>Anomaly Down Icon</desc>    <defs></defs>    <g id="anomaly-down" stroke="none" stroke-width="1" fill-rule="evenodd">        <g id="16-x-16" transform="translate(3.000000, 3.000000)">            <circle id="circle" fill="#FFC529" cx="8" cy="8" r="8"></circle>            <path d="M10.9122456,7.33950855 L8.42452122,4.92105894 C8.1899095,4.69298035 7.81009051,4.69298035 7.57547877,4.92105894 L5.08775439,7.33950855 C4.97074854,7.45325618 4.97074854,7.638169 5.08775439,7.75191663 L5.5119756,8.1643247 C5.62898145,8.27807233 5.81919096,8.27807233 5.93619681,8.1643247 L7.39966998,6.74160434 L7.39966998,11.4583394 C7.39966998,11.6193361 7.5340767,11.75 7.69968499,11.75 L8.29971498,11.75 C8.46592329,11.75 8.59972998,11.6193361 8.59972998,11.4583394 L8.59972998,6.74160434 L10.0638032,8.1643247 C10.180809,8.27807233 10.3710186,8.27807233 10.4880244,8.1643247 L10.9122456,7.75191663 C11.0292515,7.638169 11.0292515,7.45325618 10.9122456,7.33950855" id="arrow-up" fill="#FFFFFF"></path>        </g>    </g></svg>'
-	                        }
-	                      }));;
-	                      return __jade_nodes;
-	                    }.call(this).filter(Boolean)));
-	                    __jade_nodes = __jade_nodes.concat(h("div", {
-	                      "on": {
-	                        click: $helpers.handleClickAnomalyDown
-	                      },
-	                      "class": {
-	                        'anomaly-down': true
-	                      }
-	                    }, function () {
-	                      var __jade_nodes = [];
-	                      __jade_nodes = __jade_nodes.concat(h('div', {
-	                        props: {
-	                          innerHTML: '<?xml version="1.0" encoding="UTF-8"?><svg width="22px" height="22px" viewBox="0 0 22 22" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">    <title>anomaly-down</title>    <desc>Created with Sketch.</desc>    <defs></defs>    <g id="anomaly-down" stroke="none" stroke-width="1" fill-rule="evenodd">        <g id="16-x-16" transform="translate(3.000000, 3.000000)">            <circle id="circle" fill="#FFC529" cx="8" cy="8" r="8"></circle>            <path d="M10.9122456,7.33950855 L8.42452122,4.92105894 C8.1899095,4.69298035 7.81009051,4.69298035 7.57547877,4.92105894 L5.08775439,7.33950855 C4.97074854,7.45325618 4.97074854,7.638169 5.08775439,7.75191663 L5.5119756,8.1643247 C5.62898145,8.27807233 5.81919096,8.27807233 5.93619681,8.1643247 L7.39966998,6.74160434 L7.39966998,11.4583394 C7.39966998,11.6193361 7.5340767,11.75 7.69968499,11.75 L8.29971498,11.75 C8.46592329,11.75 8.59972998,11.6193361 8.59972998,11.4583394 L8.59972998,6.74160434 L10.0638032,8.1643247 C10.180809,8.27807233 10.3710186,8.27807233 10.4880244,8.1643247 L10.9122456,7.75191663 C11.0292515,7.638169 11.0292515,7.45325618 10.9122456,7.33950855" id="arrow-up" fill="#FFFFFF" transform="translate(8.000000, 8.250000) rotate(180.000000) translate(-8.000000, -8.250000) "></path>        </g>    </g></svg>'
-	                        }
-	                      }));;
-	                      return __jade_nodes;
-	                    }.call(this).filter(Boolean)));
-	                    __jade_nodes = __jade_nodes.concat(smartHubTooltip ? function () {
-	                      var __jade_nodes = [];
-	                      __jade_nodes = __jade_nodes.concat(h("mp-smart-hub-tooltip", {
-	                        "attrs": {
-	                          'placement': smartHubTooltip.placement,
-	                          'offset-left': "" + smartHubTooltip.offsetLeft,
-	                          'offset-top': "" + smartHubTooltip.offsetTop,
-	                          'alert': JSON.stringify(smartHubTooltip.alert)
-	                        },
-	                        "on": {
-	                          removedAlert: $helpers.handleRemovedTooltipAlert
-	                        }
-	                      }));;
-	                      return __jade_nodes;
-	                    }.call(this) : undefined);;
 	                    return __jade_nodes;
 	                  }.call(this).filter(Boolean)));;
 	                  return __jade_nodes;
@@ -64729,7 +64725,7 @@
 	exports.i(__webpack_require__(577), "");
 
 	// module
-	exports.push([module.id, "* {\n  font-smoothing: antialiased;\n  -webkit-font-smoothing: antialiased;\n}\nbody {\n  background-color: #fcfcfc;\n  font-family: 'Helvetica Neue', 'Helvetica', 'Tahoma', 'Geneva', 'Arial', sans-serif;\n  color: #6d859e;\n  font-size: 13px;\n  font-stretch: normal;\n  font-weight: weight-default;\n}\nh1,\nstrong,\n.bold {\n  font-weight: 600;\n}\na {\n  color: #6d859e;\n}\na :hover {\n  color: #4ba8ff;\n}\n.style-guide-title {\n  color: #4c6072;\n  display: -webkit-box;\n  display: -ms-flexbox;\n  display: flex;\n  -webkit-box-orient: horizontal;\n  -webkit-box-direction: normal;\n      -ms-flex-direction: row;\n          flex-direction: row;\n  font-size: 24px;\n  -webkit-box-pack: center;\n      -ms-flex-pack: center;\n          justify-content: center;\n  left: 150px;\n  position: relative;\n  position: relative;\n  top: 100px;\n  width: calc(100% - 150px);\n}\n.version-bar {\n  background-color: #fff;\n  border-left: 1px solid #d8e0ea;\n  position: fixed;\n  top: 0;\n  right: 0;\n  bottom: 0;\n  width: 75px;\n  z-index: 1000;\n}\n.version-label {\n  color: #9bacbf;\n  font-size: 16px;\n  height: 75px;\n  width: 285px;\n  position: absolute;\n  top: 160px;\n  right: -75px;\n  -webkit-transform: rotate(90deg);\n          transform: rotate(90deg);\n}\n.version-label strong {\n  color: #4ba8ff;\n}\n.version-label * {\n  display: inline-block;\n}\n.logo {\n  background: url(" + __webpack_require__(613) + ") no-repeat top center;\n  background-size: contain;\n  height: 90px;\n  margin: 0 auto;\n  margin-left: -115px;\n  width: 100%;\n}\n.decoration {\n  height: 3px;\n  width: 40px;\n  background-color: #d8e0ea;\n  margin: 0 10px 3px 10px;\n}\n.section-content {\n  margin: 40px 0 0 0;\n}\n.section-container {\n  display: -webkit-box;\n  display: -ms-flexbox;\n  display: flex;\n  left: 345px;\n  position: relative;\n  top: 185px;\n  width: calc(100% - 350px);\n}\n.section-title {\n  display: -webkit-inline-box;\n  display: -ms-inline-flexbox;\n  display: inline-flex;\n  font-weight: 600;\n  padding: 0px 0px 15px 0px;\n  width: 100%;\n}\n.section-title .title-text {\n  color: #4c6072;\n  font-size: 64px;\n}\n.section-title .title-section {\n  color: #bdc9d6;\n  font-size: 24px;\n  height: 60px;\n  padding-left: 10px;\n  position: relative;\n  top: 16px;\n}\n.indent-container {\n  margin: 20px 0 60px 50px;\n}\n.divider {\n  border-top: 1px solid #d8e0ea;\n  margin: 0 30px 0x 0;\n  position: relative;\n  width: 90%;\n}\n.divider sup {\n  color: #9bacbf;\n  right: -30px;\n  position: absolute;\n  top: -10px;\n}\n.divider label {\n  color: #bdc9d6;\n  font-weight: 600;\n  position: absolute;\n  right: -30px;\n  top: -10px;\n}\n.section {\n  position: relative;\n  width: 70vw;\n  -webkit-animation: fadeContentIn 500ms forwards;\n          animation: fadeContentIn 500ms forwards;\n}\n.subsection-title {\n  color: #4c6072;\n  font-weight: 500;\n  font-size: 24px;\n}\n.subsection-description {\n  padding: 16px 0px 10px 0px;\n  font-size: 16px;\n  font-weight: weight-default;\n  max-width: 900px;\n  line-height: 24px;\n}\n.section-nav {\n  display: -webkit-box;\n  display: -ms-flexbox;\n  display: flex;\n  -webkit-box-orient: horizontal;\n  -webkit-box-direction: normal;\n      -ms-flex-direction: row;\n          flex-direction: row;\n  list-style-type: none;\n  overflow-x: scroll;\n  padding: 0 0 30px 0;\n  position: relative;\n  white-space: nowrap;\n  width: 100%;\n}\n.section-nav .nav-item {\n  color: #4c6072;\n  cursor: pointer;\n  font-size: 16px;\n  font-weight: 500;\n  margin: 30px 30px 0 0;\n  padding: 10px 30px;\n}\n.section-nav .nav-item:hover {\n  color: #4ba8ff;\n}\n.section-nav .nav-item.selected {\n  background-color: #4ba8ff;\n  border-radius: 30px;\n  color: #fff;\n}\n.code-snippet {\n  max-width: 90%;\n  left: -60px;\n  padding-left: 15px;\n  position: relative;\n  margin-left: 50px;\n}\n.code-snippet .first-call-out {\n  margin-left: -15px;\n}\n.call-out {\n  color: #9bacbf;\n  margin: 40px 0 20px 0;\n  font-size: 16px;\n}\n.call-out.extra {\n  margin-top: 30px;\n}\n.call-out label {\n  text-transform: none;\n}\n.call-out p {\n  line-height: 4px;\n  display: -webkit-inline-box;\n  display: -ms-inline-flexbox;\n  display: inline-flex;\n  text-transform: none;\n  margin: 0;\n}\n.call-out .icon {\n  font-size: 14pt;\n  position: relative;\n  top: -1px;\n  left: -20px;\n}\n.desc {\n  width: 80%;\n  padding-left: 14px;\n  margin-top: 6px;\n  line-height: 24px;\n}\n.first-call-out {\n  margin-left: -10px;\n}\n.snippet-container {\n  background-color: #f4f9fd;\n  border: 1px solid #d8e0ea;\n  border-radius: 6px;\n  font-size: 14px;\n  margin-top: 10px;\n  width: 90%;\n  display: -webkit-inline-box;\n  display: -ms-inline-flexbox;\n  display: inline-flex;\n  -webkit-box-orient: vertical;\n  -webkit-box-direction: normal;\n      -ms-flex-direction: column;\n          flex-direction: column;\n}\n.snippet-header {\n  color: #6d859e;\n  border-bottom: 1px solid #d8e0ea;\n  border-radius: 6px 6px 0px 0px;\n  padding: 15px;\n  margin-right: 0;\n}\n.snippet-header label {\n  text-transform: uppercase;\n  letter-spacing: 1.2px;\n}\n.code-field {\n  background-color: #fff;\n  border-left: 1px solid #d8e0ea;\n  border-radius: 0px 0px 6px 0px;\n  font-family: monospace;\n  font-weight: 500;\n  margin: 0 0 0 45px;\n  padding: 15px;\n  display: -webkit-inline-box;\n  display: -ms-inline-flexbox;\n  display: inline-flex;\n}\n.code-field pre {\n  color: #4c6072;\n  display: inline-block;\n  letter-spacing: 1.5px;\n  line-height: 20px;\n  margin: -2px 0 0 -45px;\n  white-space: pre-wrap;\n}\n.code-field pre:nth-child(2n) {\n  overflow-x: scroll;\n  white-space: pre;\n  margin-left: 40px;\n  width: 100%;\n}\npre span.mp-red {\n  color: #e4567b;\n}\npre span.mp-purple {\n  color: #9270e2;\n}\npre span.mp-green {\n  color: #2dc376;\n}\npre span.grey-500 {\n  color: #9bacbf;\n}\npre span.mp-orange {\n  color: #f1842b;\n}\n.common-example {\n  border: 1px dashed #bdc9d6;\n  border-radius: 4px;\n  min-height: 40px;\n  display: -webkit-inline-box;\n  display: -ms-inline-flexbox;\n  display: inline-flex;\n  -webkit-box-align: center;\n      -ms-flex-align: center;\n          align-items: center;\n  margin: 0;\n}\n.example-block {\n  display: -webkit-inline-box;\n  display: -ms-inline-flexbox;\n  display: inline-flex;\n  margin: 0 15px 10px 0;\n  -webkit-box-orient: vertical;\n  -webkit-box-direction: normal;\n      -ms-flex-direction: column;\n          flex-direction: column;\n}\n.example-block.half {\n  width: 40%;\n  display: inline-table;\n}\n.floating-example-bar {\n  background: #fff;\n  width: 80%;\n  box-shadow: 0px 8px 22px 0px rgba(0,0,0,0.23);\n  padding: 15px 20px;\n  min-width: 740px;\n  margin-top: 10px;\n}\n.floating-example-bar.align-right {\n  text-align: right;\n}\n.floating-example-bar.blue-bar {\n  background: #4ba8ff;\n}\n.floating-example-bar.grey-bar {\n  background: #f4f9fd;\n}\n.floating-example-bar .example-bar-divider {\n  margin: 0 15px;\n  border-bottom: 1px solid #e5eef4;\n  height: 1px;\n}\n.floating-example-bar .example-bar-line-item {\n  padding: 15px;\n  display: -webkit-inline-box;\n  display: -ms-inline-flexbox;\n  display: inline-flex;\n  -webkit-box-align: center;\n      -ms-flex-align: center;\n          align-items: center;\n  -webkit-box-pack: justify;\n      -ms-flex-pack: justify;\n          justify-content: space-between;\n  width: 96%;\n}\n.blue-vertical-seperator {\n  border-left: 1px solid rgba(255,255,255,0.15);\n  border-right: 1px solid #3391e9;\n  height: 48px;\n  display: inline-block;\n  vertical-align: middle;\n  margin-left: 30px;\n}\n.example-card {\n  background: #fff;\n  border-radius: 6px;\n  border: 1px solid #ecf3f8;\n  box-shadow: 0px 1px 2px 0px rgba(0,0,0,0.14);\n  display: inline-block;\n  margin: 0 30px 20px 0;\n  position: relative;\n  min-height: 200px;\n  box-sizing: border-box;\n}\n.example-card.narrow {\n  display: -webkit-inline-box;\n  display: -ms-inline-flexbox;\n  display: inline-flex;\n  width: auto;\n  max-width: 30%;\n  min-width: 365px;\n  -webkit-box-align: end;\n      -ms-flex-align: end;\n          align-items: flex-end;\n}\n.example-card.truncated {\n  height: 90px;\n  min-height: 90px;\n}\n.example-card.long {\n  min-width: 560px;\n  max-width: 40%;\n}\n.example-card-footer {\n  border-top: 1px solid #d8e0ea;\n  position: absolute;\n  bottom: 0;\n  left: 0;\n  right: 0;\n  padding: 10px 15px;\n  text-align: right;\n}\n.example-card-footer :last-child {\n  margin-left: 10px;\n}\n.example-card-header {\n  border-bottom: 1px solid #3b99f0;\n  border-radius: 6px 6px 0 0;\n  position: absolute;\n  top: 0;\n  left: -1px;\n  right: -1px;\n  background-color: #4ba8ff;\n  text-align: center;\n  color: #fff;\n  padding: 20px 0;\n}\n.example-card-header b {\n  font-size: 18px;\n}\n.example-card-header.grey {\n  background-color: #ecf3f8;\n  border-bottom: 1px solid #d8e0ea;\n  display: -webkit-box;\n  display: -ms-flexbox;\n  display: flex;\n  -webkit-box-pack: end;\n      -ms-flex-pack: end;\n          justify-content: flex-end;\n  padding-right: 20px;\n}\n.demo-divider {\n  border-bottom: 1px dashed #bdc9d6;\n  width: 80%;\n  text-align: right;\n  padding-bottom: 15px;\n}\n.demo-divider a {\n  margin-left: 45px;\n}\n.section-modifier {\n  margin-top: -45px;\n}\n@-webkit-keyframes fadeContentIn {\n  from {\n    -webkit-transform: translateY(30px);\n            transform: translateY(30px);\n    opacity: 0;\n  }\n  to {\n    opacity: 1;\n  }\n}\n@keyframes fadeContentIn {\n  from {\n    -webkit-transform: translateY(30px);\n            transform: translateY(30px);\n    opacity: 0;\n  }\n  to {\n    opacity: 1;\n  }\n}\n", ""]);
+	exports.push([module.id, "* {\n  font-smoothing: antialiased;\n  -webkit-font-smoothing: antialiased;\n}\nbody {\n  background-color: #fcfcfc;\n  font-family: 'Helvetica Neue', 'Helvetica', 'Tahoma', 'Geneva', 'Arial', sans-serif;\n  color: #6d859e;\n  font-size: 13px;\n  font-stretch: normal;\n  font-weight: weight-default;\n}\nh1,\nstrong,\n.bold {\n  font-weight: 600;\n}\na {\n  color: #6d859e;\n}\na :hover {\n  color: #4ba8ff;\n}\n.style-guide-title {\n  color: #4c6072;\n  display: -webkit-box;\n  display: -ms-flexbox;\n  display: flex;\n  -webkit-box-orient: horizontal;\n  -webkit-box-direction: normal;\n      -ms-flex-direction: row;\n          flex-direction: row;\n  font-size: 24px;\n  -webkit-box-pack: center;\n      -ms-flex-pack: center;\n          justify-content: center;\n  left: 150px;\n  position: relative;\n  position: relative;\n  top: 100px;\n  width: calc(100% - 150px);\n}\n.version-bar {\n  background-color: #fff;\n  border-left: 1px solid #d8e0ea;\n  position: fixed;\n  top: 0;\n  right: 0;\n  bottom: 0;\n  width: 75px;\n  z-index: 1000;\n}\n.version-label {\n  color: #9bacbf;\n  font-size: 16px;\n  height: 75px;\n  width: 285px;\n  position: absolute;\n  top: 160px;\n  right: -75px;\n  -webkit-transform: rotate(90deg);\n          transform: rotate(90deg);\n}\n.version-label strong {\n  color: #4ba8ff;\n}\n.version-label * {\n  display: inline-block;\n}\n.logo {\n  background: url(" + __webpack_require__(613) + ") no-repeat top center;\n  background-size: contain;\n  height: 90px;\n  margin: 0 auto;\n  margin-left: -115px;\n  width: 100%;\n}\n.decoration {\n  height: 3px;\n  width: 40px;\n  background-color: #d8e0ea;\n  margin: 0 10px 3px 10px;\n}\n.section-content {\n  margin: 40px 0 0 0;\n}\n.section-container {\n  display: -webkit-box;\n  display: -ms-flexbox;\n  display: flex;\n  left: 345px;\n  position: relative;\n  top: 185px;\n  width: calc(100% - 350px);\n}\n.section-title {\n  display: -webkit-inline-box;\n  display: -ms-inline-flexbox;\n  display: inline-flex;\n  font-weight: 600;\n  padding: 0px 0px 15px 0px;\n  width: 100%;\n}\n.section-title .title-text {\n  color: #4c6072;\n  font-size: 64px;\n}\n.section-title .title-section {\n  color: #bdc9d6;\n  font-size: 24px;\n  height: 60px;\n  padding-left: 10px;\n  position: relative;\n  top: 16px;\n}\n.indent-container {\n  margin: 20px 0 60px 50px;\n}\n.divider {\n  border-top: 1px solid #d8e0ea;\n  margin: 0 30px 0x 0;\n  position: relative;\n  width: 90%;\n}\n.divider sup {\n  color: #9bacbf;\n  right: -30px;\n  position: absolute;\n  top: -10px;\n}\n.divider label {\n  color: #bdc9d6;\n  font-weight: 600;\n  position: absolute;\n  right: -30px;\n  top: -10px;\n}\n.section {\n  position: relative;\n  width: 70vw;\n  -webkit-animation: fadeContentIn 500ms forwards;\n          animation: fadeContentIn 500ms forwards;\n}\n.subsection-title {\n  color: #4c6072;\n  font-weight: 500;\n  font-size: 24px;\n}\n.subsection-description {\n  padding: 16px 0px 10px 0px;\n  font-size: 16px;\n  font-weight: weight-default;\n  max-width: 900px;\n  line-height: 24px;\n}\n.section-nav {\n  display: -webkit-box;\n  display: -ms-flexbox;\n  display: flex;\n  -webkit-box-orient: horizontal;\n  -webkit-box-direction: normal;\n      -ms-flex-direction: row;\n          flex-direction: row;\n  list-style-type: none;\n  overflow-x: scroll;\n  padding: 0 0 30px 0;\n  position: relative;\n  white-space: nowrap;\n  width: 100%;\n}\n.section-nav .nav-item {\n  color: #4c6072;\n  cursor: pointer;\n  font-size: 16px;\n  font-weight: 500;\n  margin: 30px 30px 0 0;\n  padding: 10px 30px;\n}\n.section-nav .nav-item:hover {\n  color: #4ba8ff;\n}\n.section-nav .nav-item.selected {\n  background-color: #4ba8ff;\n  border-radius: 30px;\n  color: #fff;\n}\n.code-snippet {\n  max-width: 90%;\n  left: -60px;\n  padding-left: 15px;\n  position: relative;\n  margin-left: 50px;\n}\n.code-snippet .first-call-out {\n  margin-left: -15px;\n}\n.call-out {\n  color: #9bacbf;\n  margin: 40px 0 20px 0;\n  font-size: 16px;\n}\n.call-out.extra {\n  margin-top: 30px;\n}\n.call-out label {\n  text-transform: none;\n}\n.call-out p {\n  line-height: 4px;\n  display: -webkit-inline-box;\n  display: -ms-inline-flexbox;\n  display: inline-flex;\n  text-transform: none;\n  margin: 0;\n}\n.call-out .icon {\n  font-size: 14pt;\n  position: relative;\n  top: -1px;\n  left: -20px;\n}\n.desc {\n  width: 80%;\n  padding-left: 14px;\n  margin-top: 6px;\n  line-height: 24px;\n}\n.first-call-out {\n  margin-left: -10px;\n}\n.snippet-container {\n  background-color: #f4f9fd;\n  border: 1px solid #d8e0ea;\n  border-radius: 6px;\n  font-size: 14px;\n  margin-top: 10px;\n  width: 90%;\n  display: -webkit-inline-box;\n  display: -ms-inline-flexbox;\n  display: inline-flex;\n  -webkit-box-orient: vertical;\n  -webkit-box-direction: normal;\n      -ms-flex-direction: column;\n          flex-direction: column;\n}\n.snippet-header {\n  color: #6d859e;\n  border-bottom: 1px solid #d8e0ea;\n  border-radius: 6px 6px 0px 0px;\n  padding: 15px;\n  margin-right: 0;\n}\n.snippet-header label {\n  text-transform: uppercase;\n  letter-spacing: 1.2px;\n}\n.code-field {\n  background-color: #fff;\n  border-left: 1px solid #d8e0ea;\n  border-radius: 0px 0px 6px 0px;\n  font-family: monospace;\n  font-weight: 500;\n  margin: 0 0 0 45px;\n  padding: 15px;\n  display: -webkit-inline-box;\n  display: -ms-inline-flexbox;\n  display: inline-flex;\n}\n.code-field pre {\n  color: #4c6072;\n  display: inline-block;\n  letter-spacing: 1.5px;\n  line-height: 20px;\n  margin: -2px 0 0 -45px;\n  white-space: pre-wrap;\n}\n.code-field pre:nth-child(2n) {\n  overflow-x: scroll;\n  white-space: pre;\n  margin-left: 40px;\n  width: 100%;\n}\npre span.mp-red {\n  color: #e4567b;\n}\npre span.mp-purple {\n  color: #9270e2;\n}\npre span.mp-green {\n  color: #2dc376;\n}\npre span.grey-500 {\n  color: #9bacbf;\n}\npre span.mp-orange {\n  color: #f1842b;\n}\n.common-example {\n  border: 1px dashed #bdc9d6;\n  border-radius: 4px;\n  min-height: 40px;\n  display: -webkit-inline-box;\n  display: -ms-inline-flexbox;\n  display: inline-flex;\n  -webkit-box-align: center;\n      -ms-flex-align: center;\n          align-items: center;\n  margin: 0;\n}\n.common-example.small {\n  -ms-flex-pack: distribute;\n      justify-content: space-around;\n}\n.example-block {\n  display: -webkit-inline-box;\n  display: -ms-inline-flexbox;\n  display: inline-flex;\n  margin: 0 15px 10px 0;\n  -webkit-box-orient: vertical;\n  -webkit-box-direction: normal;\n      -ms-flex-direction: column;\n          flex-direction: column;\n}\n.example-block.half {\n  width: 40%;\n  display: inline-table;\n}\n.floating-example-bar {\n  background: #fff;\n  width: 80%;\n  box-shadow: 0px 8px 22px 0px rgba(0,0,0,0.23);\n  padding: 15px 20px;\n  min-width: 740px;\n  margin-top: 10px;\n}\n.floating-example-bar.align-right {\n  text-align: right;\n}\n.floating-example-bar.blue-bar {\n  background: #4ba8ff;\n}\n.floating-example-bar.grey-bar {\n  background: #f4f9fd;\n}\n.floating-example-bar .example-bar-divider {\n  margin: 0 15px;\n  border-bottom: 1px solid #e5eef4;\n  height: 1px;\n}\n.floating-example-bar .example-bar-line-item {\n  padding: 15px;\n  display: -webkit-inline-box;\n  display: -ms-inline-flexbox;\n  display: inline-flex;\n  -webkit-box-align: center;\n      -ms-flex-align: center;\n          align-items: center;\n  -webkit-box-pack: justify;\n      -ms-flex-pack: justify;\n          justify-content: space-between;\n  width: 96%;\n}\n.blue-vertical-seperator {\n  border-left: 1px solid rgba(255,255,255,0.15);\n  border-right: 1px solid #3391e9;\n  height: 48px;\n  display: inline-block;\n  vertical-align: middle;\n  margin-left: 30px;\n}\n.example-card {\n  background: #fff;\n  border-radius: 6px;\n  border: 1px solid #ecf3f8;\n  box-shadow: 0px 1px 2px 0px rgba(0,0,0,0.14);\n  display: inline-block;\n  margin: 0 30px 20px 0;\n  position: relative;\n  min-height: 200px;\n  box-sizing: border-box;\n}\n.example-card.narrow {\n  display: -webkit-inline-box;\n  display: -ms-inline-flexbox;\n  display: inline-flex;\n  width: auto;\n  max-width: 30%;\n  min-width: 365px;\n  -webkit-box-align: end;\n      -ms-flex-align: end;\n          align-items: flex-end;\n}\n.example-card.truncated {\n  height: 90px;\n  min-height: 90px;\n}\n.example-card.long {\n  min-width: 560px;\n  max-width: 40%;\n}\n.example-card-footer {\n  border-top: 1px solid #d8e0ea;\n  position: absolute;\n  bottom: 0;\n  left: 0;\n  right: 0;\n  padding: 10px 15px;\n  text-align: right;\n}\n.example-card-footer :last-child {\n  margin-left: 10px;\n}\n.example-card-header {\n  border-bottom: 1px solid #3b99f0;\n  border-radius: 6px 6px 0 0;\n  position: absolute;\n  top: 0;\n  left: -1px;\n  right: -1px;\n  background-color: #4ba8ff;\n  text-align: center;\n  color: #fff;\n  padding: 20px 0;\n}\n.example-card-header b {\n  font-size: 18px;\n}\n.example-card-header.grey {\n  background-color: #ecf3f8;\n  border-bottom: 1px solid #d8e0ea;\n  display: -webkit-box;\n  display: -ms-flexbox;\n  display: flex;\n  -webkit-box-pack: end;\n      -ms-flex-pack: end;\n          justify-content: flex-end;\n  padding-right: 20px;\n}\n.demo-divider {\n  border-bottom: 1px dashed #bdc9d6;\n  width: 80%;\n  text-align: right;\n  padding-bottom: 15px;\n}\n.demo-divider a {\n  margin-left: 45px;\n}\n.section-modifier {\n  margin-top: -45px;\n}\n@-webkit-keyframes fadeContentIn {\n  from {\n    -webkit-transform: translateY(30px);\n            transform: translateY(30px);\n    opacity: 0;\n  }\n  to {\n    opacity: 1;\n  }\n}\n@keyframes fadeContentIn {\n  from {\n    -webkit-transform: translateY(30px);\n            transform: translateY(30px);\n    opacity: 0;\n  }\n  to {\n    opacity: 1;\n  }\n}\n", ""]);
 
 	// exports
 
