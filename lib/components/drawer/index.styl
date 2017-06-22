@@ -11,7 +11,7 @@ mp-fast = 250
 
   .mp-drawer-content
     background-color white
-    min-height 100vh
+    min-height 100%
     overflow hidden
     padding 0
     position fixed
@@ -32,9 +32,9 @@ mp-fast = 250
     opacity 0
 
   &.mp-drawer-in
-    height 100vh
+    height 100%
     overflow initial
-    width 100vw
+    width 100%
 
     .mp-drawer-overlay
       background-color #3c4c63
@@ -52,3 +52,21 @@ mp-fast = 250
       opacity 0
     .mp-drawer-bg, .mp-drawer-content
       transform translate3d(100%, 0, 0)
+
+  &.mp-drawer-placement-top
+    .mp-drawer-content
+      transform translate3d(0, -100%, 0)
+      min-height 0
+      width 100%
+
+    &.mp-drawer-in
+      .mp-drawer-bg, .mp-drawer-content
+        transform translate3d(0, 0, 0)
+
+    &.mp-drawer-out
+      .mp-drawer-bg, .mp-drawer-content
+        transform translate3d(0, -100%, 0)
+
+  &.mp-modal-absolute
+    .mp-drawer-overlay, .mp-drawer-content, .mp-drawer-bg
+      position absolute

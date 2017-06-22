@@ -3,6 +3,8 @@
     .mp-drawer(class={
       delayed: {'mp-drawer-in': true},
       remove: {'mp-drawer-out': true, delayRemove},
+      [`mp-drawer-placement-${placement}`]: true,
+      'mp-modal-absolute': $component.isAttributeEnabled('not-fullscreen')
     })
       .mp-drawer-overlay(on={click: $helpers.close})
       .mp-drawer-bg
