@@ -37,7 +37,7 @@ mp-fast = 250
     width 100%
 
     .mp-drawer-overlay
-      background-color #3c4c63
+      background-color grey-900
       height 100%
       opacity 0.8
       position fixed
@@ -50,13 +50,14 @@ mp-fast = 250
   &.mp-drawer-out
     .mp-drawer-overlay
       opacity 0
+
     .mp-drawer-bg, .mp-drawer-content
       transform translate3d(100%, 0, 0)
 
   &.mp-drawer-placement-top
     .mp-drawer-content
-      transform translate3d(0, -100%, 0)
       min-height 0
+      transform translate3d(0, -100%, 0)
       width 100%
 
     &.mp-drawer-in

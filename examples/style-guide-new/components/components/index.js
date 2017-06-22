@@ -9,7 +9,7 @@ document.registerElement(`components-section`, class extends Component {
   get config() {
     return {
       defaultState: {
-	drawerOpen: false,
+        drawerOpen: false,
       },
       template,
       helpers: {
