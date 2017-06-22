@@ -68,6 +68,9 @@ mixin nav-section-header(number, label)
         .sub-nav-section(on={click: () => $helpers.jumpToNavigate('contextual-elements')})
           .sub-nav-label Contextual Elements
           .sub-nav-number 5.4
+        .sub-nav-section(on={click: () => $helpers.jumpToNavigate('drawer')})
+          .sub-nav-label Drawer
+          .sub-nav-number 5.5
     +nav-section-header('06', 'Widgets')
     if sectionOpen === 'widgets'
       .sub-nav

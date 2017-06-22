@@ -201,7 +201,16 @@
     "up",
     "down"
   ],
-  "ui-icons": [
+  "drawer": [
+    "components",
+    "mp-drawer",
+    "drawer",
+    "left",
+    "right",
+    "up",
+    "down"
+  ],
+ "ui-icons": [
     "icons",
     "iconography",
     "alert",

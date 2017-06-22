@@ -492,3 +492,44 @@
                 |   .custom-size-class
                 br
                 span.mp-red     mp-spinner
+
+  if sectionOpen == 'components' || searchSections.includes('drawer')
+    .sub-section-container#drawer
+      .divider
+      .section-content
+        section
+        .subsection-title Drawer
+        .subsection-description For displaying modals that slide in from the side.
+        .indent-container
+          .example-block
+            mp-button.mp-button-secondary(on={click: () => $helpers.shouldShowDrawer(true)}) Show drawer
+            mp-drawer(
+              attrs={hide: !drawerOpen}
+              on={close: () => $helpers.shouldShowDrawer(false)}
+            )
+              .drawer-content
+                .sample-row Sample row 1
+                .sample-row Sample row 2
+                .sample-row Sample row 3
+          .code-snippet
+            .call-out.first-call-out
+              strong.icon +
+              strong Example Code
+            .snippet-container.min.max
+              .snippet-header
+                label Jade
+              .code-field
+                pre
+                  | 1
+                  br
+                  | 2
+                  br
+                  | 3
+                pre
+                  span.grey-500 //- Drawer
+                  br
+                  span.mp-red mp-drawer(
+                  span.mp-purple attrs={hide: false}
+                  span.mp-red )
+                  br
+                  |   .drawer-content

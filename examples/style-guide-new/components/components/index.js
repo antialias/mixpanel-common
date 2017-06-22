@@ -8,6 +8,9 @@ import './index.styl';
 document.registerElement(`components-section`, class extends Component {
   get config() {
     return {
+      defaultState: {
+	drawerOpen: false,
+      },
       template,
       helpers: {
         openModal: key => {
@@ -46,6 +49,7 @@ document.registerElement(`components-section`, class extends Component {
           }
           return match;
         },
+	shouldShowDrawer: drawerOpen => this.update({drawerOpen}),
       },
     };
   }
