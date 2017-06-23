@@ -1,3 +1,4 @@
 examples/index.css
 node_modules
 npm-debug.log
+.babelrc
