@@ -1,0 +1,77 @@
+@import '../mixins/common.styl'
+
+table-border-style = 1px solid grey-200
+table-cell-padding = 22px
+
+.mp-table
+  background-color white
+  border-radius 6px
+  box-shadow 0 1px 4px 0 rgba(0, 0, 0, 0.1)
+  color grey-700
+  cursor default
+
++prefix-classes('mp-table-')
+  .header
+    align-items center
+    border-bottom table-border-style
+    display flex
+    font-size-large()
+    font-weight weight-bold
+    height 58px
+
+  .titles
+    background-color grey-50
+    border-bottom table-border-style
+    display flex
+    height 40px
+
+  .title-cell
+    align-items center
+    border-right table-border-style
+    display flex
+    flex 1 1
+    font-size-small()
+    font-weight weight-bold
+    padding 0 table-cell-padding
+
+    &:last-child
+      border-right none
+
+  .body
+    cursor pointer
+    display flex
+    flex-direction column
+
+  .row
+    align-items center
+    border-bottom table-border-style
+    display flex
+    flex-direction row
+    height 60px
+
+    &:last-child
+      border-bottom none
+
+  .cell
+    align-items center
+    display flex
+    flex 1 1
+    font-size-default()
+    font-weight weight-regular
+    height 20px
+    line-height 1.4
+    padding 0 table-cell-padding
+
+    &.action-cell
+      font-weight weight-medium
+
+  .body-clickable
+    .row:hover
+      background-color grey-50
+
+      &:last-child
+        border-bottom-left-radius 6px
+        border-bottom-right-radius 6px
+
+      .action-cell
+        color mp-blue
