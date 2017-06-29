@@ -56,7 +56,7 @@
 
 	__webpack_require__(317);
 
-	var _colors = __webpack_require__(569);
+	var _colors = __webpack_require__(688);
 
 	var _colors2 = _interopRequireDefault(_colors);
 
@@ -68,15 +68,15 @@
 
 	var _itemsMenu2 = _interopRequireDefault(_itemsMenu);
 
-	var _bookmarkData = __webpack_require__(614);
+	var _bookmarkData = __webpack_require__(733);
 
 	var _bookmarkData2 = _interopRequireDefault(_bookmarkData);
 
-	var _index = __webpack_require__(615);
+	var _index = __webpack_require__(734);
 
 	var _index2 = _interopRequireDefault(_index);
 
-	__webpack_require__(616);
+	__webpack_require__(735);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -46904,15 +46904,15 @@
 
 	__webpack_require__(549);
 
-	__webpack_require__(552);
+	__webpack_require__(670);
 
-	__webpack_require__(557);
+	__webpack_require__(676);
 
-	__webpack_require__(560);
+	__webpack_require__(679);
 
-	__webpack_require__(563);
+	__webpack_require__(682);
 
-	__webpack_require__(566);
+	__webpack_require__(685);
 
 /***/ },
 /* 528 */
@@ -49432,21 +49432,18 @@
 	        return _units === 1 ? _units + ' day ago' : _units + ' days ago';
 	      }
 	    }
-
-	    /* eslint-disable camelcase */
-
 	  }, {
 	    key: 'generatePermalink',
 	    value: function generatePermalink(alerts) {
 	      var firstAlert = alerts[0];
-	      var projectUrl = this.state.mixpanelHost + '/report/' + this.state.projectId;
-	      var alertContentIds = alerts.map(function (alert) {
-	        return alert.alertContentId;
+	      var projectUrl = '/report/' + this.state.projectId;
+	      var alertIds = alerts.map(function (alert) {
+	        return alert.alertId;
 	      });
 
 	      if (firstAlert.insightsQuery) {
 	        var urlParams = (0, _util.extend)((0, _utils.insightsQueryToUrlParams)(firstAlert.insightsQuery), {
-	          smartHub: { alertContentIds: alertContentIds }
+	          smartHub: { alertIds: alertIds }
 	        });
 	        return projectUrl + '/insights/#' + _jsurl2.default.stringify(urlParams);
 	      } else if (firstAlert.funnelsQuery) {
@@ -49455,21 +49452,19 @@
 	        // TODO(mack): Support isOverallConversion
 	        var startStepIdx = firstAlert.anomaly.funnelsDetails.startStepIdx;
 	        var _urlParams = (0, _util.extend)((0, _utils.funnelsQueryToUrlParams)(funnelsQuery), {
-	          smart_sub: { alert_content_ids: alertContentIds },
-	          event_index: startStepIdx + 1
+	          smart_hub: { alert_ids: alertIds }, // eslint-disable-line camelcase
+	          event_index: startStepIdx + 1 // eslint-disable-line camelcase
 	        });
 	        var urlHash = _rison2.default.encode(_urlParams);
 	        return projectUrl + '/funnels/#view/' + funnelsQuery.bookmarkId + '/' + urlHash.substring(1, urlHash.length - 1);
 	      } else if (firstAlert.retentionQuery) {
 	        var _urlParams2 = (0, _util.extend)((0, _utils.retentionQueryToUrlParams)(firstAlert.retentionQuery), {
-	          smart_hub: { alert_content_ids: alertContentIds }
+	          smart_hub: { alert_ids: alertIds } // eslint-disable-line camelcase
 	        });
 	        var _urlHash = _rison2.default.encode(_urlParams2);
 	        return projectUrl + '/retention/#' + _urlHash.substring(1, _urlHash.length - 1);
 	      }
 	    }
-	    /* eslint-enable camelcase */
-
 	  }, {
 	    key: 'updateAlertState',
 	    value: function updateAlertState() {
@@ -49478,6 +49473,7 @@
 	        return;
 	      }
 
+	      var isLink = this.state.displayContext !== 'VISUALIZED';
 	      var alertId = void 0,
 	          alertMetadata = void 0,
 	          groupedAlertId = void 0,
@@ -49486,14 +49482,14 @@
 	        var alert = smartHubAlert.alert;
 	        alertMetadata = alert.alertMetadata;
 	        alertId = alert.alertId;
-	        if (this.state.isLink) {
+	        if (isLink) {
 	          permalink = this.generatePermalink([alert]);
 	        }
 	      } else {
 	        var groupedAlert = smartHubAlert.groupedAlert;
 	        alertMetadata = groupedAlert.alertMetadata;
 	        groupedAlertId = groupedAlert.groupedAlertId;
-	        if (this.state.isLink) {
+	        if (isLink) {
 	          permalink = this.generatePermalink(groupedAlert.alerts);
 	        }
 	      }
@@ -49503,11 +49499,12 @@
 	        alertId: alertId,
 	        groupedAlertId: groupedAlertId,
 	        permalink: permalink,
-	        type: alertMetadata.type,
-	        isRead: !!alertMetadata.readAtMs,
+	        alertType: alertMetadata.type,
+	        isRead: smartHubAlert.isRead,
 	        isMarkedUseful: !!alertMetadata.markedUsefulAtMs,
+	        isAlertOwner: alertMetadata.isAlertOwner,
 	        message: alertMetadata.message,
-	        ingestedTimeStr: this.generateTimeStr(alertMetadata.ingestedAtMs)
+	        ingestedTimeStr: this.generateTimeStr(Number(alertMetadata.ingestedAtMs))
 	      });
 	    }
 	  }, {
@@ -49518,13 +49515,43 @@
 	        this.update({ smartHubAlert: this.getJSONAttribute(name) });
 	      } else if (name === 'project-id') {
 	        this.update({ projectId: Number(value) });
-	      } else if (name === 'mixpanel-host') {
-	        this.update({ mixpanelHost: value });
-	      } else if (name === 'is-link') {
-	        this.update({ isLink: this.isAttributeEnabled(name) });
+	      } else if (name === 'access-token') {
+	        this.update({ accessToken: value });
+	      } else if (name === 'display-context') {
+	        this.update({ displayContext: value });
 	      }
 	      this.updateAlertState();
 	    }
+	  }, {
+	    key: 'fetch',
+	    value: function (_fetch) {
+	      function fetch(_x) {
+	        return _fetch.apply(this, arguments);
+	      }
+
+	      fetch.toString = function () {
+	        return _fetch.toString();
+	      };
+
+	      return fetch;
+	    }(function (method) {
+	      var body = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+
+	      var smartHubAlert = this.state.smartHubAlert;
+	      var url = '/api/app/projects/' + this.state.projectId + '/smart-hub';
+	      if (smartHubAlert.groupedAlert) {
+	        url = url + '/grouped-alerts/' + smartHubAlert.groupedAlert.groupedAlertId;
+	      } else {
+	        url = url + '/alerts/' + smartHubAlert.alert.alertId;
+	      }
+	      return fetch(url, {
+	        headers: { Authorization: 'Bearer ' + this.state.accessToken },
+	        method: method,
+	        body: body ? JSON.stringify(body) : null
+	      }).then(function (response) {
+	        return response.ok || response.body ? response.json() : Promise.reject(response.statusText);
+	      });
+	    })
 	  }, {
 	    key: 'config',
 	    get: function get() {
@@ -49536,25 +49563,36 @@
 	        useShadowDom: true,
 	        defaultState: {
 	          projectId: null,
-	          mixpanelHost: '',
+	          accessToken: null,
+	          displayContext: null,
 	          isLink: false,
 	          alert: null,
 	          alertId: null,
 	          groupedAlertId: null,
-	          permalink: '',
-	          type: '',
-	          hasSentFeedback: false,
+	          permalink: null,
+	          type: null,
 	          isRead: false,
+	          isAlertOwner: false,
+	          hasSentFeedback: false,
 	          isMarkedUseful: false,
 	          message: '',
 	          ingestedTimeStr: ''
 	        },
 	        helpers: {
-	          handleSendFeedback: function handleSendFeedback(ev, isMarkedUseful) {
+	          handleClickAlert: function handleClickAlert(ev) {
+	            // Don't propagate any clicks on the alert, since custom events are fired for different interactions
 	            ev.stopPropagation();
+	          },
+	          handleMarkUsefulness: function handleMarkUsefulness(ev, isMarkedUseful) {
+	            ev.preventDefault();
+	            ev.stopPropagation();
+	            _this2.fetch('PATCH', {
+	              is_useful: isMarkedUseful, // eslint-disable-line camelcase
+	              display_context: _this2.state.displayContext // eslint-disable-line camelcase
+	            });
+	            // TODO(mack): Animation when marked useful, and second screen for marked unuseful
 	            _this2.update({ hasSentFeedback: true, isMarkedUseful: isMarkedUseful });
-	            _this2.dispatchEvent(new CustomEvent('sentFeedback', {
-	              bubbles: true,
+	            _this2.dispatchEvent(new CustomEvent('markedUsefulness', {
 	              detail: {
 	                alertId: _this2.state.alertId,
 	                groupedAlertId: _this2.state.groupedAlertId,
@@ -49562,10 +49600,17 @@
 	              }
 	            }));
 	          },
-	          handleRemoveAlert: function handleRemoveAlert(ev) {
+	          handleClickLink: function handleClickLink(ev) {
 	            ev.stopPropagation();
+	            _this2.dispatchEvent(new CustomEvent('clickedLink'));
+	          },
+	          handleRemoveAlert: function handleRemoveAlert(ev) {
+	            ev.preventDefault();
+	            ev.stopPropagation();
+	            if (_this2.state.displayContext !== 'VISUALIZED') {
+	              _this2.fetch('DELETE');
+	            }
 	            _this2.dispatchEvent(new CustomEvent('removedAlert', {
-	              bubbles: true,
 	              detail: {
 	                alertId: _this2.state.alertId,
 	                groupedAlertId: _this2.state.groupedAlertId
@@ -50294,7 +50339,7 @@
 
 	function _jade_template_fn(locals) {
 	  locals = locals || {};;;
-	  var result_of_with = function ($helpers, Object, alertId, hasSentFeedback, ingestedTimeStr, isLink, isRead, markedUseful, message, permalink, smartHubAlert, type) {
+	  var result_of_with = function ($helpers, Object, alertId, alertType, displayContext, hasSentFeedback, ingestedTimeStr, isAlertOwner, isRead, message, permalink, smartHubAlert) {
 	    var h = __webpack_require__(299).h;
 	    var jade_mixins = {};
 	    jade_mixins['alert-content'] = function () {
@@ -50315,7 +50360,7 @@
 	            }
 	          }, function () {
 	            var __jade_nodes = [];
-	            __jade_nodes = __jade_nodes.concat(type == 'ANOMALY' ? function () {
+	            __jade_nodes = __jade_nodes.concat(alertType == 'ANOMALY' ? function () {
 	              var __jade_nodes = [];
 	              __jade_nodes = __jade_nodes.concat(h("div", {
 	                "class": {
@@ -50399,103 +50444,117 @@
 	            __jade_nodes = __jade_nodes.concat("" + ingestedTimeStr + "");;
 	            return __jade_nodes;
 	          }.call(this).filter(Boolean)));
-	          __jade_nodes = __jade_nodes.concat(h("div", {
-	            "class": {
-	              'mp-sh-alert-footer-useful': true
-	            }
-	          }, function () {
+	          __jade_nodes = __jade_nodes.concat(isAlertOwner ? function () {
 	            var __jade_nodes = [];
-	            __jade_nodes = __jade_nodes.concat(!markedUseful ? function () {
+	            __jade_nodes = __jade_nodes.concat(h("div", {
+	              "class": {
+	                'mp-sh-alert-footer-useful': true
+	              }
+	            }, function () {
 	              var __jade_nodes = [];
-	              __jade_nodes = __jade_nodes.concat(h("div", {
-	                "on": {
-	                  click: function click(ev) {
-	                    return $helpers.handleSendFeedback(ev, true);
-	                  }
-	                },
-	                "class": {
-	                  'mp-sh-alert-footer-good': true
-	                }
-	              }, function () {
+	              __jade_nodes = __jade_nodes.concat(hasSentFeedback ? function () {
 	                var __jade_nodes = [];
-	                __jade_nodes = __jade_nodes.concat(h('div', {
-	                  props: {
-	                    innerHTML: '<?xml version="1.0" encoding="UTF-8"?><svg width="22px" height="22px" viewBox="0 0 22 22" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">    <title>thumbs-up</title>    <desc>Anamoly Detection Thumbs Up Icon</desc>    <defs></defs>    <g id="thumbs-up" stroke="none" stroke-width="1" fill-rule="evenodd">        <g id="16-x-16" fill-rule="nonzero" transform="translate(3.000000, 3.000000)">            <path d="M1.33333333,12.9999656 L1.33333333,7.99998471 C3.71668467,6.66127956 5.33339754,4.58605115 6.0471433,2.31392737 L6.09434927,2.15549385 C6.21939618,1.68325067 6.65293291,1.33333333 7.16669533,1.33333333 C7.78055643,1.33333333 8.27780899,1.83055532 8.27780899,2.44438584 C8.27780899,2.55833446 8.26099339,2.66956201 8.22754563,2.77479709 L7.87793404,5.08327314 C7.87793404,5.46660766 8.18874746,5.7777574 8.57241829,5.7777574 L13.5556142,5.7777574 C14.1694753,5.7777574 14.6666667,6.27494881 14.6666667,6.88884048 C14.6666667,7.50270158 14.1694753,7.99995414 13.5556142,7.99995414 C14.1694753,7.99995414 14.6666667,8.49714555 14.6666667,9.11103722 C14.6666667,9.72489832 14.1694753,10.222212 13.5556142,10.222212 L12.9999962,10.222212 C13.6138879,10.222212 14.1110793,10.719434 14.1110793,11.3333257 C14.1110793,11.9471562 13.6138879,12.4443782 12.9999962,12.4443782 L12.9029243,12.4443782 C13.1335426,12.6472966 13.2777899,12.9474092 13.2777899,13.2777593 C13.2777899,13.6361762 13.1082886,13.9554585 12.8442532,14.158377 C12.6554904,14.3026242 12.2192632,14.4276406 11.8834098,14.4832543 C11.0249276,14.6249334 10.1443405,14.6666361 9.24996465,14.6666361 C6.49147258,14.6666361 3.69167528,14.069346 1.33333333,12.9999656 Z M14.2513318,9.23289838 C14.0308386,9.29822156 13.7973302,9.33328747 13.5556142,9.33328747 L13.5556142,6.66662081 C14.5057424,6.66662081 15.329055,7.2083901 15.7335697,7.99993533 C15.903921,8.33327494 16,8.71091142 16,9.11103722 C16,9.73952919 15.7629405,10.3125699 15.3733342,10.7456087 C14.9943702,11.1668188 14.4710795,11.4555709 13.8812365,11.5340553 C13.8176005,11.5425227 13.7531899,11.5485427 13.6881023,11.5520176 C13.6442371,11.5543595 13.6000644,11.5555454 13.5556142,11.5555454 L12.9999962,11.5555454 L12.9999962,8.8888787 C13.1911264,8.8888787 13.3771246,8.91080181 13.5556142,8.95227112 C13.8042284,9.01003283 14.0382751,9.10571633 14.2513318,9.23289838 C14.8037848,9.56267983 15.2151093,10.1042445 15.3733342,10.7456087 C15.419776,10.9338603 15.4444126,11.1307099 15.4444126,11.3333257 C15.4444126,12.0673704 15.1210324,12.7257349 14.6089281,13.173758 C14.1790513,13.5498429 13.6161909,13.7777115 12.9999962,13.7777115 L12.9029243,13.7777115 L12.9029243,12.4443782 L13.7836987,11.4433716 C13.8171073,11.4727674 13.8496276,11.5030097 13.8812365,11.5340553 C14.3194913,11.9644997 14.5825458,12.549369 14.6089281,13.173758 C14.610388,13.2083105 14.6111232,13.2429841 14.6111232,13.2777593 C14.6111232,14.0453211 14.2534737,14.7569572 13.6538299,15.2177934 C13.2640393,15.5156606 12.6857512,15.7018847 12.1005189,15.7987928 C11.2338288,15.9418264 10.326097,15.9999694 9.24996465,15.9999694 C6.31735285,15.9999694 3.32796714,15.3684296 0.782702925,14.2142901 L0,13.8593767 L0,7.21963741 L0.680366905,6.83748197 C2.69872198,5.70379165 4.13965129,3.93719758 4.76932443,1.93319554 L4.8054369,1.81419826 C5.08665823,0.752157991 6.053029,0 7.16669533,0 C8.51692018,0 9.61114232,1.09415974 9.61114232,2.44438584 C9.61114232,2.65187057 9.58522818,2.85768098 9.5333117,3.05721524 L9.32322319,4.44442406 L13.5556142,4.44442406 C14.9058653,4.44442406 16,5.53857954 16,6.88884048 C16,7.28895713 15.903921,7.66659261 15.7335697,7.99993533 C15.4319651,8.59011397 14.8975448,9.04145163 14.2513318,9.23289838 Z" id="glove-outside" fill="#3391E9"></path>            <path d="M1.33666671,12.9999656 C3.69500866,14.069346 6.49480596,14.6666361 9.25329803,14.6666361 C10.1476739,14.6666361 11.028261,14.6249334 11.8867432,14.4832543 C12.2225966,14.4276406 12.6588238,14.3026242 12.8475866,14.158377 C13.111622,13.9554585 13.2811233,13.6361762 13.2811233,13.2777593 C13.2811233,12.9474092 13.136876,12.6472966 12.9062577,12.4443782 L13.0033296,12.4443782 C13.6172213,12.4443782 14.1144127,11.9471562 14.1144127,11.3333257 C14.1144127,10.719434 13.6172213,10.222212 13.0033296,10.222212 L13.5589476,10.222212 C14.1728087,10.222212 14.6700001,9.72489832 14.6700001,9.11103722 C14.6700001,8.49714555 14.1728087,7.99995414 13.5589476,7.99995414 C14.1728087,7.99995414 14.6700001,7.50270158 14.6700001,6.88884048 C14.6700001,6.27494881 14.1728087,5.7777574 13.5589476,5.7777574 L8.57575167,5.7777574 C8.19208084,5.7777574 7.88126742,5.46660766 7.88126742,5.08327314 L8.23087901,2.77479709 C8.26432677,2.66956201 8.28114237,2.55833446 8.28114237,2.44438584 C8.28114237,1.83055532 7.78388981,1.33333333 7.17002871,1.33333333 C6.65626629,1.33333333 6.22272956,1.68325067 6.09768265,2.15549385 L6.05047668,2.31392737 C5.33673092,4.58605115 3.72001805,6.66127956 1.33666671,7.99998471 L1.33666671,12.9999656 Z" id="glove-inside" fill="#FFFFFF"></path>        </g>    </g></svg>'
-	                  }
-	                }));
 	                __jade_nodes = __jade_nodes.concat(h("div", {
 	                  "class": {
-	                    'mp-sh-alert-footer-good-text': true
+	                    'mp-sh-alert-footer-thank-you': true
 	                  }
 	                }, function () {
 	                  var __jade_nodes = [];
-	                  __jade_nodes = __jade_nodes.concat("Useful");;
+	                  __jade_nodes = __jade_nodes.concat("Thank you for your feedback");;
 	                  return __jade_nodes;
 	                }.call(this).filter(Boolean)));;
 	                return __jade_nodes;
-	              }.call(this).filter(Boolean)));
-	              __jade_nodes = __jade_nodes.concat(h("div", {
-	                "on": {
-	                  click: function click(ev) {
-	                    return $helpers.handleSendFeedback(ev, false);
-	                  }
-	                },
-	                "class": {
-	                  'mp-sh-alert-footer-bad': true
-	                }
-	              }, function () {
+	              }.call(this) : function () {
 	                var __jade_nodes = [];
-	                __jade_nodes = __jade_nodes.concat(h('div', {
-	                  props: {
-	                    innerHTML: '<?xml version="1.0" encoding="UTF-8"?><svg width="22px" height="22px" viewBox="0 0 22 22" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">    <title>thumbs-down</title>    <desc>Anamoly Detection Thumbs Down Icon</desc>    <defs></defs>    <g id="thumbs-down" stroke="none" stroke-width="1" fill-rule="evenodd">        <g id="16-x-16" fill-rule="nonzero" transform="translate(11.000000, 11.000000) rotate(180.000000) translate(-11.000000, -11.000000) translate(3.000000, 3.000000)">            <path d="M1.33333333,12.9999656 L1.33333333,7.99998471 C3.71668467,6.66127956 5.33339754,4.58605115 6.0471433,2.31392737 L6.09434927,2.15549385 C6.21939618,1.68325067 6.65293291,1.33333333 7.16669533,1.33333333 C7.78055643,1.33333333 8.27780899,1.83055532 8.27780899,2.44438584 C8.27780899,2.55833446 8.26099339,2.66956201 8.22754563,2.77479709 L7.87793404,5.08327314 C7.87793404,5.46660766 8.18874746,5.7777574 8.57241829,5.7777574 L13.5556142,5.7777574 C14.1694753,5.7777574 14.6666667,6.27494881 14.6666667,6.88884048 C14.6666667,7.50270158 14.1694753,7.99995414 13.5556142,7.99995414 C14.1694753,7.99995414 14.6666667,8.49714555 14.6666667,9.11103722 C14.6666667,9.72489832 14.1694753,10.222212 13.5556142,10.222212 L12.9999962,10.222212 C13.6138879,10.222212 14.1110793,10.719434 14.1110793,11.3333257 C14.1110793,11.9471562 13.6138879,12.4443782 12.9999962,12.4443782 L12.9029243,12.4443782 C13.1335426,12.6472966 13.2777899,12.9474092 13.2777899,13.2777593 C13.2777899,13.6361762 13.1082886,13.9554585 12.8442532,14.158377 C12.6554904,14.3026242 12.2192632,14.4276406 11.8834098,14.4832543 C11.0249276,14.6249334 10.1443405,14.6666361 9.24996465,14.6666361 C6.49147258,14.6666361 3.69167528,14.069346 1.33333333,12.9999656 Z M14.2513318,9.23289838 C14.0308386,9.29822156 13.7973302,9.33328747 13.5556142,9.33328747 L13.5556142,6.66662081 C14.5057424,6.66662081 15.329055,7.2083901 15.7335697,7.99993533 C15.903921,8.33327494 16,8.71091142 16,9.11103722 C16,9.73952919 15.7629405,10.3125699 15.3733342,10.7456087 C14.9943702,11.1668188 14.4710795,11.4555709 13.8812365,11.5340553 C13.8176005,11.5425227 13.7531899,11.5485427 13.6881023,11.5520176 C13.6442371,11.5543595 13.6000644,11.5555454 13.5556142,11.5555454 L12.9999962,11.5555454 L12.9999962,8.8888787 C13.1911264,8.8888787 13.3771246,8.91080181 13.5556142,8.95227112 C13.8042284,9.01003283 14.0382751,9.10571633 14.2513318,9.23289838 C14.8037848,9.56267983 15.2151093,10.1042445 15.3733342,10.7456087 C15.419776,10.9338603 15.4444126,11.1307099 15.4444126,11.3333257 C15.4444126,12.0673704 15.1210324,12.7257349 14.6089281,13.173758 C14.1790513,13.5498429 13.6161909,13.7777115 12.9999962,13.7777115 L12.9029243,13.7777115 L12.9029243,12.4443782 L13.7836987,11.4433716 C13.8171073,11.4727674 13.8496276,11.5030097 13.8812365,11.5340553 C14.3194913,11.9644997 14.5825458,12.549369 14.6089281,13.173758 C14.610388,13.2083105 14.6111232,13.2429841 14.6111232,13.2777593 C14.6111232,14.0453211 14.2534737,14.7569572 13.6538299,15.2177934 C13.2640393,15.5156606 12.6857512,15.7018847 12.1005189,15.7987928 C11.2338288,15.9418264 10.326097,15.9999694 9.24996465,15.9999694 C6.31735285,15.9999694 3.32796714,15.3684296 0.782702925,14.2142901 L0,13.8593767 L0,7.21963741 L0.680366905,6.83748197 C2.69872198,5.70379165 4.13965129,3.93719758 4.76932443,1.93319554 L4.8054369,1.81419826 C5.08665823,0.752157991 6.053029,0 7.16669533,0 C8.51692018,0 9.61114232,1.09415974 9.61114232,2.44438584 C9.61114232,2.65187057 9.58522818,2.85768098 9.5333117,3.05721524 L9.32322319,4.44442406 L13.5556142,4.44442406 C14.9058653,4.44442406 16,5.53857954 16,6.88884048 C16,7.28895713 15.903921,7.66659261 15.7335697,7.99993533 C15.4319651,8.59011397 14.8975448,9.04145163 14.2513318,9.23289838 Z" id="glove-outside" fill="#3391E9"></path>            <path d="M1.33666671,12.9999656 C3.69500866,14.069346 6.49480596,14.6666361 9.25329803,14.6666361 C10.1476739,14.6666361 11.028261,14.6249334 11.8867432,14.4832543 C12.2225966,14.4276406 12.6588238,14.3026242 12.8475866,14.158377 C13.111622,13.9554585 13.2811233,13.6361762 13.2811233,13.2777593 C13.2811233,12.9474092 13.136876,12.6472966 12.9062577,12.4443782 L13.0033296,12.4443782 C13.6172213,12.4443782 14.1144127,11.9471562 14.1144127,11.3333257 C14.1144127,10.719434 13.6172213,10.222212 13.0033296,10.222212 L13.5589476,10.222212 C14.1728087,10.222212 14.6700001,9.72489832 14.6700001,9.11103722 C14.6700001,8.49714555 14.1728087,7.99995414 13.5589476,7.99995414 C14.1728087,7.99995414 14.6700001,7.50270158 14.6700001,6.88884048 C14.6700001,6.27494881 14.1728087,5.7777574 13.5589476,5.7777574 L8.57575167,5.7777574 C8.19208084,5.7777574 7.88126742,5.46660766 7.88126742,5.08327314 L8.23087901,2.77479709 C8.26432677,2.66956201 8.28114237,2.55833446 8.28114237,2.44438584 C8.28114237,1.83055532 7.78388981,1.33333333 7.17002871,1.33333333 C6.65626629,1.33333333 6.22272956,1.68325067 6.09768265,2.15549385 L6.05047668,2.31392737 C5.33673092,4.58605115 3.72001805,6.66127956 1.33666671,7.99998471 L1.33666671,12.9999656 Z" id="glove-inside" fill="#FFFFFF"></path>        </g>    </g></svg>'
-	                  }
-	                }));
 	                __jade_nodes = __jade_nodes.concat(h("div", {
+	                  "on": {
+	                    click: function click(ev) {
+	                      return $helpers.handleMarkUsefulness(ev, true);
+	                    }
+	                  },
 	                  "class": {
-	                    'mp-sh-alert-footer-bad-text': true
+	                    'mp-sh-alert-footer-good': true
 	                  }
 	                }, function () {
 	                  var __jade_nodes = [];
-	                  __jade_nodes = __jade_nodes.concat("Not useful");;
+	                  __jade_nodes = __jade_nodes.concat(h('div', {
+	                    props: {
+	                      innerHTML: '<?xml version="1.0" encoding="UTF-8"?><svg width="22px" height="22px" viewBox="0 0 22 22" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">    <title>thumbs-up</title>    <desc>Anamoly Detection Thumbs Up Icon</desc>    <defs></defs>    <g id="thumbs-up" stroke="none" stroke-width="1" fill-rule="evenodd">        <g id="16-x-16" fill-rule="nonzero" transform="translate(3.000000, 3.000000)">            <path d="M1.33333333,12.9999656 L1.33333333,7.99998471 C3.71668467,6.66127956 5.33339754,4.58605115 6.0471433,2.31392737 L6.09434927,2.15549385 C6.21939618,1.68325067 6.65293291,1.33333333 7.16669533,1.33333333 C7.78055643,1.33333333 8.27780899,1.83055532 8.27780899,2.44438584 C8.27780899,2.55833446 8.26099339,2.66956201 8.22754563,2.77479709 L7.87793404,5.08327314 C7.87793404,5.46660766 8.18874746,5.7777574 8.57241829,5.7777574 L13.5556142,5.7777574 C14.1694753,5.7777574 14.6666667,6.27494881 14.6666667,6.88884048 C14.6666667,7.50270158 14.1694753,7.99995414 13.5556142,7.99995414 C14.1694753,7.99995414 14.6666667,8.49714555 14.6666667,9.11103722 C14.6666667,9.72489832 14.1694753,10.222212 13.5556142,10.222212 L12.9999962,10.222212 C13.6138879,10.222212 14.1110793,10.719434 14.1110793,11.3333257 C14.1110793,11.9471562 13.6138879,12.4443782 12.9999962,12.4443782 L12.9029243,12.4443782 C13.1335426,12.6472966 13.2777899,12.9474092 13.2777899,13.2777593 C13.2777899,13.6361762 13.1082886,13.9554585 12.8442532,14.158377 C12.6554904,14.3026242 12.2192632,14.4276406 11.8834098,14.4832543 C11.0249276,14.6249334 10.1443405,14.6666361 9.24996465,14.6666361 C6.49147258,14.6666361 3.69167528,14.069346 1.33333333,12.9999656 Z M14.2513318,9.23289838 C14.0308386,9.29822156 13.7973302,9.33328747 13.5556142,9.33328747 L13.5556142,6.66662081 C14.5057424,6.66662081 15.329055,7.2083901 15.7335697,7.99993533 C15.903921,8.33327494 16,8.71091142 16,9.11103722 C16,9.73952919 15.7629405,10.3125699 15.3733342,10.7456087 C14.9943702,11.1668188 14.4710795,11.4555709 13.8812365,11.5340553 C13.8176005,11.5425227 13.7531899,11.5485427 13.6881023,11.5520176 C13.6442371,11.5543595 13.6000644,11.5555454 13.5556142,11.5555454 L12.9999962,11.5555454 L12.9999962,8.8888787 C13.1911264,8.8888787 13.3771246,8.91080181 13.5556142,8.95227112 C13.8042284,9.01003283 14.0382751,9.10571633 14.2513318,9.23289838 C14.8037848,9.56267983 15.2151093,10.1042445 15.3733342,10.7456087 C15.419776,10.9338603 15.4444126,11.1307099 15.4444126,11.3333257 C15.4444126,12.0673704 15.1210324,12.7257349 14.6089281,13.173758 C14.1790513,13.5498429 13.6161909,13.7777115 12.9999962,13.7777115 L12.9029243,13.7777115 L12.9029243,12.4443782 L13.7836987,11.4433716 C13.8171073,11.4727674 13.8496276,11.5030097 13.8812365,11.5340553 C14.3194913,11.9644997 14.5825458,12.549369 14.6089281,13.173758 C14.610388,13.2083105 14.6111232,13.2429841 14.6111232,13.2777593 C14.6111232,14.0453211 14.2534737,14.7569572 13.6538299,15.2177934 C13.2640393,15.5156606 12.6857512,15.7018847 12.1005189,15.7987928 C11.2338288,15.9418264 10.326097,15.9999694 9.24996465,15.9999694 C6.31735285,15.9999694 3.32796714,15.3684296 0.782702925,14.2142901 L0,13.8593767 L0,7.21963741 L0.680366905,6.83748197 C2.69872198,5.70379165 4.13965129,3.93719758 4.76932443,1.93319554 L4.8054369,1.81419826 C5.08665823,0.752157991 6.053029,0 7.16669533,0 C8.51692018,0 9.61114232,1.09415974 9.61114232,2.44438584 C9.61114232,2.65187057 9.58522818,2.85768098 9.5333117,3.05721524 L9.32322319,4.44442406 L13.5556142,4.44442406 C14.9058653,4.44442406 16,5.53857954 16,6.88884048 C16,7.28895713 15.903921,7.66659261 15.7335697,7.99993533 C15.4319651,8.59011397 14.8975448,9.04145163 14.2513318,9.23289838 Z" id="glove-outside" fill="#3391E9"></path>            <path d="M1.33666671,12.9999656 C3.69500866,14.069346 6.49480596,14.6666361 9.25329803,14.6666361 C10.1476739,14.6666361 11.028261,14.6249334 11.8867432,14.4832543 C12.2225966,14.4276406 12.6588238,14.3026242 12.8475866,14.158377 C13.111622,13.9554585 13.2811233,13.6361762 13.2811233,13.2777593 C13.2811233,12.9474092 13.136876,12.6472966 12.9062577,12.4443782 L13.0033296,12.4443782 C13.6172213,12.4443782 14.1144127,11.9471562 14.1144127,11.3333257 C14.1144127,10.719434 13.6172213,10.222212 13.0033296,10.222212 L13.5589476,10.222212 C14.1728087,10.222212 14.6700001,9.72489832 14.6700001,9.11103722 C14.6700001,8.49714555 14.1728087,7.99995414 13.5589476,7.99995414 C14.1728087,7.99995414 14.6700001,7.50270158 14.6700001,6.88884048 C14.6700001,6.27494881 14.1728087,5.7777574 13.5589476,5.7777574 L8.57575167,5.7777574 C8.19208084,5.7777574 7.88126742,5.46660766 7.88126742,5.08327314 L8.23087901,2.77479709 C8.26432677,2.66956201 8.28114237,2.55833446 8.28114237,2.44438584 C8.28114237,1.83055532 7.78388981,1.33333333 7.17002871,1.33333333 C6.65626629,1.33333333 6.22272956,1.68325067 6.09768265,2.15549385 L6.05047668,2.31392737 C5.33673092,4.58605115 3.72001805,6.66127956 1.33666671,7.99998471 L1.33666671,12.9999656 Z" id="glove-inside" fill="#FFFFFF"></path>        </g>    </g></svg>'
+	                    }
+	                  }));
+	                  __jade_nodes = __jade_nodes.concat(h("div", {
+	                    "class": {
+	                      'mp-sh-alert-footer-good-text': true
+	                    }
+	                  }, function () {
+	                    var __jade_nodes = [];
+	                    __jade_nodes = __jade_nodes.concat("Useful");;
+	                    return __jade_nodes;
+	                  }.call(this).filter(Boolean)));;
+	                  return __jade_nodes;
+	                }.call(this).filter(Boolean)));
+	                __jade_nodes = __jade_nodes.concat(h("div", {
+	                  "on": {
+	                    click: function click(ev) {
+	                      return $helpers.handleMarkUsefulness(ev, false);
+	                    }
+	                  },
+	                  "class": {
+	                    'mp-sh-alert-footer-bad': true
+	                  }
+	                }, function () {
+	                  var __jade_nodes = [];
+	                  __jade_nodes = __jade_nodes.concat(h('div', {
+	                    props: {
+	                      innerHTML: '<?xml version="1.0" encoding="UTF-8"?><svg width="22px" height="22px" viewBox="0 0 22 22" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">    <title>thumbs-down</title>    <desc>Anamoly Detection Thumbs Down Icon</desc>    <defs></defs>    <g id="thumbs-down" stroke="none" stroke-width="1" fill-rule="evenodd">        <g id="16-x-16" fill-rule="nonzero" transform="translate(11.000000, 11.000000) rotate(180.000000) translate(-11.000000, -11.000000) translate(3.000000, 3.000000)">            <path d="M1.33333333,12.9999656 L1.33333333,7.99998471 C3.71668467,6.66127956 5.33339754,4.58605115 6.0471433,2.31392737 L6.09434927,2.15549385 C6.21939618,1.68325067 6.65293291,1.33333333 7.16669533,1.33333333 C7.78055643,1.33333333 8.27780899,1.83055532 8.27780899,2.44438584 C8.27780899,2.55833446 8.26099339,2.66956201 8.22754563,2.77479709 L7.87793404,5.08327314 C7.87793404,5.46660766 8.18874746,5.7777574 8.57241829,5.7777574 L13.5556142,5.7777574 C14.1694753,5.7777574 14.6666667,6.27494881 14.6666667,6.88884048 C14.6666667,7.50270158 14.1694753,7.99995414 13.5556142,7.99995414 C14.1694753,7.99995414 14.6666667,8.49714555 14.6666667,9.11103722 C14.6666667,9.72489832 14.1694753,10.222212 13.5556142,10.222212 L12.9999962,10.222212 C13.6138879,10.222212 14.1110793,10.719434 14.1110793,11.3333257 C14.1110793,11.9471562 13.6138879,12.4443782 12.9999962,12.4443782 L12.9029243,12.4443782 C13.1335426,12.6472966 13.2777899,12.9474092 13.2777899,13.2777593 C13.2777899,13.6361762 13.1082886,13.9554585 12.8442532,14.158377 C12.6554904,14.3026242 12.2192632,14.4276406 11.8834098,14.4832543 C11.0249276,14.6249334 10.1443405,14.6666361 9.24996465,14.6666361 C6.49147258,14.6666361 3.69167528,14.069346 1.33333333,12.9999656 Z M14.2513318,9.23289838 C14.0308386,9.29822156 13.7973302,9.33328747 13.5556142,9.33328747 L13.5556142,6.66662081 C14.5057424,6.66662081 15.329055,7.2083901 15.7335697,7.99993533 C15.903921,8.33327494 16,8.71091142 16,9.11103722 C16,9.73952919 15.7629405,10.3125699 15.3733342,10.7456087 C14.9943702,11.1668188 14.4710795,11.4555709 13.8812365,11.5340553 C13.8176005,11.5425227 13.7531899,11.5485427 13.6881023,11.5520176 C13.6442371,11.5543595 13.6000644,11.5555454 13.5556142,11.5555454 L12.9999962,11.5555454 L12.9999962,8.8888787 C13.1911264,8.8888787 13.3771246,8.91080181 13.5556142,8.95227112 C13.8042284,9.01003283 14.0382751,9.10571633 14.2513318,9.23289838 C14.8037848,9.56267983 15.2151093,10.1042445 15.3733342,10.7456087 C15.419776,10.9338603 15.4444126,11.1307099 15.4444126,11.3333257 C15.4444126,12.0673704 15.1210324,12.7257349 14.6089281,13.173758 C14.1790513,13.5498429 13.6161909,13.7777115 12.9999962,13.7777115 L12.9029243,13.7777115 L12.9029243,12.4443782 L13.7836987,11.4433716 C13.8171073,11.4727674 13.8496276,11.5030097 13.8812365,11.5340553 C14.3194913,11.9644997 14.5825458,12.549369 14.6089281,13.173758 C14.610388,13.2083105 14.6111232,13.2429841 14.6111232,13.2777593 C14.6111232,14.0453211 14.2534737,14.7569572 13.6538299,15.2177934 C13.2640393,15.5156606 12.6857512,15.7018847 12.1005189,15.7987928 C11.2338288,15.9418264 10.326097,15.9999694 9.24996465,15.9999694 C6.31735285,15.9999694 3.32796714,15.3684296 0.782702925,14.2142901 L0,13.8593767 L0,7.21963741 L0.680366905,6.83748197 C2.69872198,5.70379165 4.13965129,3.93719758 4.76932443,1.93319554 L4.8054369,1.81419826 C5.08665823,0.752157991 6.053029,0 7.16669533,0 C8.51692018,0 9.61114232,1.09415974 9.61114232,2.44438584 C9.61114232,2.65187057 9.58522818,2.85768098 9.5333117,3.05721524 L9.32322319,4.44442406 L13.5556142,4.44442406 C14.9058653,4.44442406 16,5.53857954 16,6.88884048 C16,7.28895713 15.903921,7.66659261 15.7335697,7.99993533 C15.4319651,8.59011397 14.8975448,9.04145163 14.2513318,9.23289838 Z" id="glove-outside" fill="#3391E9"></path>            <path d="M1.33666671,12.9999656 C3.69500866,14.069346 6.49480596,14.6666361 9.25329803,14.6666361 C10.1476739,14.6666361 11.028261,14.6249334 11.8867432,14.4832543 C12.2225966,14.4276406 12.6588238,14.3026242 12.8475866,14.158377 C13.111622,13.9554585 13.2811233,13.6361762 13.2811233,13.2777593 C13.2811233,12.9474092 13.136876,12.6472966 12.9062577,12.4443782 L13.0033296,12.4443782 C13.6172213,12.4443782 14.1144127,11.9471562 14.1144127,11.3333257 C14.1144127,10.719434 13.6172213,10.222212 13.0033296,10.222212 L13.5589476,10.222212 C14.1728087,10.222212 14.6700001,9.72489832 14.6700001,9.11103722 C14.6700001,8.49714555 14.1728087,7.99995414 13.5589476,7.99995414 C14.1728087,7.99995414 14.6700001,7.50270158 14.6700001,6.88884048 C14.6700001,6.27494881 14.1728087,5.7777574 13.5589476,5.7777574 L8.57575167,5.7777574 C8.19208084,5.7777574 7.88126742,5.46660766 7.88126742,5.08327314 L8.23087901,2.77479709 C8.26432677,2.66956201 8.28114237,2.55833446 8.28114237,2.44438584 C8.28114237,1.83055532 7.78388981,1.33333333 7.17002871,1.33333333 C6.65626629,1.33333333 6.22272956,1.68325067 6.09768265,2.15549385 L6.05047668,2.31392737 C5.33673092,4.58605115 3.72001805,6.66127956 1.33666671,7.99998471 L1.33666671,12.9999656 Z" id="glove-inside" fill="#FFFFFF"></path>        </g>    </g></svg>'
+	                    }
+	                  }));
+	                  __jade_nodes = __jade_nodes.concat(h("div", {
+	                    "class": {
+	                      'mp-sh-alert-footer-bad-text': true
+	                    }
+	                  }, function () {
+	                    var __jade_nodes = [];
+	                    __jade_nodes = __jade_nodes.concat("Not useful");;
+	                    return __jade_nodes;
+	                  }.call(this).filter(Boolean)));;
 	                  return __jade_nodes;
 	                }.call(this).filter(Boolean)));;
 	                return __jade_nodes;
-	              }.call(this).filter(Boolean)));;
+	              }.call(this));;
 	              return __jade_nodes;
-	            }.call(this) : hasSentFeedback ? function () {
-	              var __jade_nodes = [];
-	              __jade_nodes = __jade_nodes.concat(h("div", {
-	                "class": {
-	                  'mp-sh-alert-footer-thank-you': true
-	                }
-	              }, function () {
-	                var __jade_nodes = [];
-	                __jade_nodes = __jade_nodes.concat("Thank you for your feedback");;
-	                return __jade_nodes;
-	              }.call(this).filter(Boolean)));;
-	              return __jade_nodes;
-	            }.call(this) : undefined);;
+	            }.call(this).filter(Boolean)));;
 	            return __jade_nodes;
-	          }.call(this).filter(Boolean)));;
+	          }.call(this) : undefined);;
 	          return __jade_nodes;
 	        }.call(this).filter(Boolean)));;
 	        return __jade_nodes;
 	      }.call(this);
 	    };
 	    return {
-	      value: h("div", function () {
+	      value: h("div", {
+	        "on": {
+	          click: $helpers.handleClickAlert
+	        },
+	        "class": {
+	          'mp-sh-alert-container': true
+	        }
+	      }, function () {
 	        var __jade_nodes = [];
-	        __jade_nodes = __jade_nodes.concat(isLink ? function () {
+	        __jade_nodes = __jade_nodes.concat(displayContext !== 'VISUALIZED' ? function () {
 	          var __jade_nodes = [];
 	          __jade_nodes = __jade_nodes.concat(h("a", {
 	            "attrs": {
 	              href: permalink
 	            },
+	            "on": {
+	              click: $helpers.handleClickLink
+	            },
 	            "class": Object.assign({}, {
 	              'mp-sh-alert-unread': !isRead,
 	              'mp-sh-alert-hoverable': true
 	            }, {
-	              'mp-sh-alert-container': true
+	              'mp-sh-alert-content': true
 	            })
 	          }, function () {
 	            var __jade_nodes = [];
@@ -50507,7 +50566,7 @@
 	          var __jade_nodes = [];
 	          __jade_nodes = __jade_nodes.concat(h("div", {
 	            "class": {
-	              'mp-sh-alert-container': true
+	              'mp-sh-alert-content': true
 	            }
 	          }, function () {
 	            var __jade_nodes = [];
@@ -50519,7 +50578,7 @@
 	        return __jade_nodes;
 	      }.call(this).filter(Boolean))
 	    };
-	  }.call(this, "$helpers" in locals ? locals.$helpers : typeof $helpers !== "undefined" ? $helpers : undefined, "Object" in locals ? locals.Object : typeof Object !== "undefined" ? Object : undefined, "alertId" in locals ? locals.alertId : typeof alertId !== "undefined" ? alertId : undefined, "hasSentFeedback" in locals ? locals.hasSentFeedback : typeof hasSentFeedback !== "undefined" ? hasSentFeedback : undefined, "ingestedTimeStr" in locals ? locals.ingestedTimeStr : typeof ingestedTimeStr !== "undefined" ? ingestedTimeStr : undefined, "isLink" in locals ? locals.isLink : typeof isLink !== "undefined" ? isLink : undefined, "isRead" in locals ? locals.isRead : typeof isRead !== "undefined" ? isRead : undefined, "markedUseful" in locals ? locals.markedUseful : typeof markedUseful !== "undefined" ? markedUseful : undefined, "message" in locals ? locals.message : typeof message !== "undefined" ? message : undefined, "permalink" in locals ? locals.permalink : typeof permalink !== "undefined" ? permalink : undefined, "smartHubAlert" in locals ? locals.smartHubAlert : typeof smartHubAlert !== "undefined" ? smartHubAlert : undefined, "type" in locals ? locals.type : typeof type !== "undefined" ? type : undefined);
+	  }.call(this, "$helpers" in locals ? locals.$helpers : typeof $helpers !== "undefined" ? $helpers : undefined, "Object" in locals ? locals.Object : typeof Object !== "undefined" ? Object : undefined, "alertId" in locals ? locals.alertId : typeof alertId !== "undefined" ? alertId : undefined, "alertType" in locals ? locals.alertType : typeof alertType !== "undefined" ? alertType : undefined, "displayContext" in locals ? locals.displayContext : typeof displayContext !== "undefined" ? displayContext : undefined, "hasSentFeedback" in locals ? locals.hasSentFeedback : typeof hasSentFeedback !== "undefined" ? hasSentFeedback : undefined, "ingestedTimeStr" in locals ? locals.ingestedTimeStr : typeof ingestedTimeStr !== "undefined" ? ingestedTimeStr : undefined, "isAlertOwner" in locals ? locals.isAlertOwner : typeof isAlertOwner !== "undefined" ? isAlertOwner : undefined, "isRead" in locals ? locals.isRead : typeof isRead !== "undefined" ? isRead : undefined, "message" in locals ? locals.message : typeof message !== "undefined" ? message : undefined, "permalink" in locals ? locals.permalink : typeof permalink !== "undefined" ? permalink : undefined, "smartHubAlert" in locals ? locals.smartHubAlert : typeof smartHubAlert !== "undefined" ? smartHubAlert : undefined);
 	  if (result_of_with) return result_of_with.value;
 	}
 	module.exports = _jade_template_fn;
@@ -50528,7 +50587,7 @@
 /* 547 */
 /***/ function(module, exports) {
 
-	module.exports = "* {   -webkit-font-smoothing: antialiased; } *:focus {   outline: 0; } *::-ms-clear {   height: 0;   width: 0; } body {   color: #6d859e;   font-family: 'Helvetica Neue', 'Helvetica', 'Tahoma', 'Geneva', 'Arial', sans-serif;   font-size: 13px;   font-stretch: normal;   font-weight: 400; } a, .mp-link {   cursor: pointer;   text-decoration: none; } a, .mp-link, a:visited, .mp-link:visited {   color: #3b99f0; } a:hover, .mp-link:hover {   color: #4ba8ff; } .mp-font-size-xl {   font-size: 18px; } .mp-font-size-large {   font-size: 16px; } .mp-font-size-medium {   font-size: 14px; } .mp-font-size-default {   font-size: 13px; } .mp-font-size-xs {   font-size: 11px;   text-transform: uppercase; } .mp-font-weight-bold {   font-weight: 600; } .mp-font-weight-medium {   font-weight: 500; } .mp-font-weight-regular {   font-weight: 400; } .mp-font-paragraph {   color: #6d859e;   font-size: 14px;   font-family: 'Helvetica Neue', 'Helvetica', 'Tahoma', 'Geneva', 'Arial', sans-serif;   font-stretch: normal;   font-weight: 500;   line-height: 18px; } input[type=text], textarea {   border: 1px solid #d8e0ea;   border-radius: 5px;   box-sizing: border-box;   color: #4c6072;   display: inline-block;   font-family: 'Helvetica Neue', 'Helvetica', 'Tahoma', 'Geneva', 'Arial', sans-serif;   font-size: 13px;   font-weight: 400;   padding: 8px;   transition: border-color 150ms ease-out; } input[type=text]::-webkit-input-placeholder, textarea::-webkit-input-placeholder {   color: #9bacbf !important;   font-weight: weight-normal !important; } input[type=text]::-moz-placeholder, textarea::-moz-placeholder {   color: #9bacbf !important;   font-weight: weight-normal !important; } input[type=text]:-ms-input-placeholder, textarea:-ms-input-placeholder {   color: #9bacbf !important;   font-weight: weight-normal !important; } input[type=text]::placeholder, textarea::placeholder {   color: #9bacbf !important;   font-weight: weight-normal !important; } input[type=text]:focus, textarea:focus, input[type=text]:active, textarea:active {   border-color: #3391e9;   transition: border-color 200ms ease-in; } input[type=text] {   height: 36px; } mp-truncated-text {   display: inline-block;   white-space: nowrap;   width: 100%; } svg-icon {   display: inline-block;   height: 22px;   min-height: 22px;   min-width: 22px;   position: relative;   width: 22px; } svg-icon[icon=type-boolean] #left-dot {   color: #fff;   fill: #fff; } svg-icon[icon=type-boolean] #right-dot {   color: #4c6072;   fill: #4c6072; } svg-icon[icon=lightning-bolt] #bolt, svg-icon[icon=lighting-bolt] #bolt {   color: #fff;   fill: #fff; } svg-icon[icon=alert] #circle, svg-icon[icon=alert] #stem {   color: #fff;   fill: #fff; } svg-icon svg {   height: 22px;   left: 0;   min-height: 22px;   min-width: 22px;   position: absolute;   top: 0;   width: 22px; } mp-smart-hub-alert {   display: -webkit-inline-box;   display: -ms-inline-flexbox;   display: inline-flex; } :host {   display: -webkit-inline-box;   display: -ms-inline-flexbox;   display: inline-flex; } .mp-sh-alert-container {   background-color: #fff;   display: -webkit-box;   display: -ms-flexbox;   display: flex;   -webkit-box-orient: vertical;   -webkit-box-direction: normal;       -ms-flex-direction: column;           flex-direction: column;   height: 135px;   -webkit-box-pack: justify;       -ms-flex-pack: justify;           justify-content: space-between;   padding: 0 20px;   width: 320px; } .mp-sh-alert-container.mp-sh-alert-unread {   background-color: #f4f9fd; } .mp-sh-alert-container:hover.mp-sh-alert-hoverable {   background-color: #f4f9fd; } .mp-sh-alert-container .mp-sh-alert-header {   display: -webkit-box;   display: -ms-flexbox;   display: flex;   height: 20px;   -webkit-box-pack: justify;       -ms-flex-pack: justify;           justify-content: space-between;   padding: 15px 0; } .mp-sh-alert-container .mp-sh-alert-header .mp-sh-alert-header-title {   display: -webkit-box;   display: -ms-flexbox;   display: flex; } .mp-sh-alert-container .mp-sh-alert-header .mp-sh-alert-header-title .mp-sh-alert-header-icon {   display: -webkit-box;   display: -ms-flexbox;   display: flex;   margin-right: 6px;   position: relative;   top: -3px; } .mp-sh-alert-container .mp-sh-alert-header .mp-sh-alert-header-title .mp-sh-alert-header-icon .mp-sh-alert-header-icon-background {   border-radius: 30px;   height: 17px;   position: absolute;   width: 17px; } .mp-sh-alert-container .mp-sh-alert-header .mp-sh-alert-header-title .mp-sh-alert-header-icon .mp-sh-alert-header-icon-svg {   left: 1px;   position: relative;   top: 1px; } .mp-sh-alert-container .mp-sh-alert-header .mp-sh-alert-header-title .mp-sh-alert-header-icon .mp-sh-alert-header-icon-svg svg-icon {   display: inline-block;   height: 15px;   min-height: 15px;   min-width: 15px;   position: relative;   width: 15px; } .mp-sh-alert-container .mp-sh-alert-header .mp-sh-alert-header-title .mp-sh-alert-header-icon .mp-sh-alert-header-icon-svg svg-icon[icon=type-boolean] #left-dot {   color: #fff;   fill: #fff; } .mp-sh-alert-container .mp-sh-alert-header .mp-sh-alert-header-title .mp-sh-alert-header-icon .mp-sh-alert-header-icon-svg svg-icon[icon=type-boolean] #right-dot {   color: #4c6072;   fill: #4c6072; } .mp-sh-alert-container .mp-sh-alert-header .mp-sh-alert-header-title .mp-sh-alert-header-icon .mp-sh-alert-header-icon-svg svg-icon[icon=lightning-bolt] #bolt, .mp-sh-alert-container .mp-sh-alert-header .mp-sh-alert-header-title .mp-sh-alert-header-icon .mp-sh-alert-header-icon-svg svg-icon[icon=lighting-bolt] #bolt {   color: #fff;   fill: #fff; } .mp-sh-alert-container .mp-sh-alert-header .mp-sh-alert-header-title .mp-sh-alert-header-icon .mp-sh-alert-header-icon-svg svg-icon[icon=alert] #circle, .mp-sh-alert-container .mp-sh-alert-header .mp-sh-alert-header-title .mp-sh-alert-header-icon .mp-sh-alert-header-icon-svg svg-icon[icon=alert] #stem {   color: #fff;   fill: #fff; } .mp-sh-alert-container .mp-sh-alert-header .mp-sh-alert-header-title .mp-sh-alert-header-icon .mp-sh-alert-header-icon-svg svg-icon svg {   height: 15px;   left: 0;   min-height: 15px;   min-width: 15px;   position: absolute;   top: 0;   width: 15px; } .mp-sh-alert-container .mp-sh-alert-header .mp-sh-alert-header-title .mp-sh-alert-header-icon .mp-sh-alert-header-icon-svg svg-icon svg, .mp-sh-alert-container .mp-sh-alert-header .mp-sh-alert-header-title .mp-sh-alert-header-icon .mp-sh-alert-header-icon-svg svg-icon path {   color: #fff;   fill: #fff;   transition: 0.2s; } .mp-sh-alert-container .mp-sh-alert-header .mp-sh-alert-header-title .mp-sh-alert-header-text {   color: #4c6072;   font-weight: 600;   font-size: 13px; } .mp-sh-alert-container .mp-sh-alert-remove {   cursor: pointer;   display: -webkit-box;   display: -ms-flexbox;   display: flex; } .mp-sh-alert-container .mp-sh-alert-remove svg-icon {   display: inline-block;   height: 20px;   min-height: 20px;   min-width: 20px;   position: relative;   width: 20px; } .mp-sh-alert-container .mp-sh-alert-remove svg-icon[icon=type-boolean] #left-dot {   color: #fff;   fill: #fff; } .mp-sh-alert-container .mp-sh-alert-remove svg-icon[icon=type-boolean] #right-dot {   color: #4c6072;   fill: #4c6072; } .mp-sh-alert-container .mp-sh-alert-remove svg-icon[icon=lightning-bolt] #bolt, .mp-sh-alert-container .mp-sh-alert-remove svg-icon[icon=lighting-bolt] #bolt {   color: #fff;   fill: #fff; } .mp-sh-alert-container .mp-sh-alert-remove svg-icon[icon=alert] #circle, .mp-sh-alert-container .mp-sh-alert-remove svg-icon[icon=alert] #stem {   color: #fff;   fill: #fff; } .mp-sh-alert-container .mp-sh-alert-remove svg-icon svg {   height: 20px;   left: 0;   min-height: 20px;   min-width: 20px;   position: absolute;   top: 0;   width: 20px; } .mp-sh-alert-container .mp-sh-alert-remove svg-icon svg, .mp-sh-alert-container .mp-sh-alert-remove svg-icon path {   color: #9bacbf;   fill: #9bacbf;   transition: 0.2s; } .mp-sh-alert-container .mp-sh-alert-remove:hover svg-icon svg, .mp-sh-alert-container .mp-sh-alert-remove:hover svg-icon path {   color: #e4567b;   fill: #e4567b; } .mp-sh-alert-container .mp-sh-alert-message {   color: #6d859e;   font-weight: 500;   text-align: start;   white-space: normal; } .mp-sh-alert-container .mp-sh-alert-footer {   display: -webkit-box;   display: -ms-flexbox;   display: flex;   -webkit-box-orient: horizontal;   -webkit-box-direction: normal;       -ms-flex-direction: row;           flex-direction: row;   height: 26px;   -webkit-box-pack: justify;       -ms-flex-pack: justify;           justify-content: space-between;   padding: 10px 0; } .mp-sh-alert-container .mp-sh-alert-footer .mp-sh-alert-footer-time {   color: #9bacbf;   display: -webkit-box;   display: -ms-flexbox;   display: flex;   -webkit-box-orient: vertical;   -webkit-box-direction: normal;       -ms-flex-direction: column;           flex-direction: column;   font-size: 12px;   -webkit-box-pack: center;       -ms-flex-pack: center;           justify-content: center; } .mp-sh-alert-container .mp-sh-alert-footer .mp-sh-alert-footer-useful {   color: #4ba8ff;   cursor: pointer;   display: -webkit-box;   display: -ms-flexbox;   display: flex;   -webkit-box-orient: horizontal;   -webkit-box-direction: normal;       -ms-flex-direction: row;           flex-direction: row;   font-size: 12px; } .mp-sh-alert-container .mp-sh-alert-footer .mp-sh-alert-footer-useful .mp-sh-alert-footer-good {   margin-right: 15px; } .mp-sh-alert-container .mp-sh-alert-footer .mp-sh-alert-footer-useful .mp-sh-alert-footer-good, .mp-sh-alert-container .mp-sh-alert-footer .mp-sh-alert-footer-useful .mp-sh-alert-footer-bad {   display: -webkit-box;   display: -ms-flexbox;   display: flex;   padding-bottom: 1px; } .mp-sh-alert-container .mp-sh-alert-footer .mp-sh-alert-footer-useful .mp-sh-alert-footer-good:hover, .mp-sh-alert-container .mp-sh-alert-footer .mp-sh-alert-footer-useful .mp-sh-alert-footer-bad:hover {   border-bottom: 1px solid #4ba8ff;   padding-bottom: 0; } .mp-sh-alert-container .mp-sh-alert-footer .mp-sh-alert-footer-useful .mp-sh-alert-footer-good .mp-sh-alert-footer-good-text, .mp-sh-alert-container .mp-sh-alert-footer .mp-sh-alert-footer-useful .mp-sh-alert-footer-bad .mp-sh-alert-footer-good-text, .mp-sh-alert-container .mp-sh-alert-footer .mp-sh-alert-footer-useful .mp-sh-alert-footer-good .mp-sh-alert-footer-bad-text, .mp-sh-alert-container .mp-sh-alert-footer .mp-sh-alert-footer-useful .mp-sh-alert-footer-bad .mp-sh-alert-footer-bad-text {   position: relative;   top: 5px; } .mp-sh-alert-container .mp-sh-alert-footer .mp-sh-alert-footer-useful .mp-sh-alert-footer-thank-you {   color: #9bacbf;   display: -webkit-box;   display: -ms-flexbox;   display: flex;   -webkit-box-orient: vertical;   -webkit-box-direction: normal;       -ms-flex-direction: column;           flex-direction: column;   font-size: 12px;   -webkit-box-pack: center;       -ms-flex-pack: center;           justify-content: center; } .background-mp-yellow {   background-color: #ffd209; } .background-mp-turquoise {   background-color: #24d2ef; } .background-mp-aquamarine {   background-color: #6fe9aa; } ";
+	module.exports = "* {   -webkit-font-smoothing: antialiased; } *:focus {   outline: 0; } *::-ms-clear {   height: 0;   width: 0; } body {   color: #6d859e;   font-family: 'Helvetica Neue', 'Helvetica', 'Tahoma', 'Geneva', 'Arial', sans-serif;   font-size: 13px;   font-stretch: normal;   font-weight: 400; } a, .mp-link {   cursor: pointer;   text-decoration: none; } a, .mp-link, a:visited, .mp-link:visited {   color: #3b99f0; } a:hover, .mp-link:hover {   color: #4ba8ff; } .mp-font-size-xl {   font-size: 18px; } .mp-font-size-large {   font-size: 16px; } .mp-font-size-medium {   font-size: 14px; } .mp-font-size-default {   font-size: 13px; } .mp-font-size-xs {   font-size: 11px;   text-transform: uppercase; } .mp-font-weight-bold {   font-weight: 600; } .mp-font-weight-medium {   font-weight: 500; } .mp-font-weight-regular {   font-weight: 400; } .mp-font-paragraph {   color: #6d859e;   font-size: 14px;   font-family: 'Helvetica Neue', 'Helvetica', 'Tahoma', 'Geneva', 'Arial', sans-serif;   font-stretch: normal;   font-weight: 500;   line-height: 18px; } input[type=text], textarea {   border: 1px solid #d8e0ea;   border-radius: 5px;   box-sizing: border-box;   color: #4c6072;   display: inline-block;   font-family: 'Helvetica Neue', 'Helvetica', 'Tahoma', 'Geneva', 'Arial', sans-serif;   font-size: 13px;   font-weight: 400;   padding: 8px;   transition: border-color 150ms ease-out; } input[type=text]::-webkit-input-placeholder, textarea::-webkit-input-placeholder {   color: #9bacbf !important;   font-weight: weight-normal !important; } input[type=text]::-moz-placeholder, textarea::-moz-placeholder {   color: #9bacbf !important;   font-weight: weight-normal !important; } input[type=text]:-ms-input-placeholder, textarea:-ms-input-placeholder {   color: #9bacbf !important;   font-weight: weight-normal !important; } input[type=text]::placeholder, textarea::placeholder {   color: #9bacbf !important;   font-weight: weight-normal !important; } input[type=text]:focus, textarea:focus, input[type=text]:active, textarea:active {   border-color: #3391e9;   transition: border-color 200ms ease-in; } input[type=text] {   height: 36px; } mp-truncated-text {   display: inline-block;   white-space: nowrap;   width: 100%; } svg-icon {   display: inline-block;   height: 22px;   min-height: 22px;   min-width: 22px;   position: relative;   width: 22px; } svg-icon[icon=type-boolean] #left-dot {   color: #fff;   fill: #fff; } svg-icon[icon=type-boolean] #right-dot {   color: #4c6072;   fill: #4c6072; } svg-icon[icon=lightning-bolt] #bolt, svg-icon[icon=lighting-bolt] #bolt {   color: #fff;   fill: #fff; } svg-icon[icon=alert] #circle, svg-icon[icon=alert] #stem {   color: #fff;   fill: #fff; } svg-icon svg {   height: 22px;   left: 0;   min-height: 22px;   min-width: 22px;   position: absolute;   top: 0;   width: 22px; } mp-smart-hub-alert {   display: -webkit-inline-box;   display: -ms-inline-flexbox;   display: inline-flex;   width: 360px; } :host {   display: -webkit-inline-box;   display: -ms-inline-flexbox;   display: inline-flex;   width: 360px; } .mp-sh-alert-container {   width: 100%; } .mp-sh-alert-content {   background-color: #fff;   display: -webkit-box;   display: -ms-flexbox;   display: flex;   -webkit-box-orient: vertical;   -webkit-box-direction: normal;       -ms-flex-direction: column;           flex-direction: column;   height: 135px;   -webkit-box-pack: justify;       -ms-flex-pack: justify;           justify-content: space-between;   padding: 0 20px; } .mp-sh-alert-content.mp-sh-alert-unread {   background-color: #f4f9fd; } .mp-sh-alert-content:hover.mp-sh-alert-hoverable {   background-color: #ecf3f8; } .mp-sh-alert-content .mp-sh-alert-header {   display: -webkit-box;   display: -ms-flexbox;   display: flex;   height: 20px;   -webkit-box-pack: justify;       -ms-flex-pack: justify;           justify-content: space-between;   padding: 15px 0; } .mp-sh-alert-content .mp-sh-alert-header .mp-sh-alert-header-title {   display: -webkit-box;   display: -ms-flexbox;   display: flex; } .mp-sh-alert-content .mp-sh-alert-header .mp-sh-alert-header-title .mp-sh-alert-header-icon {   display: -webkit-box;   display: -ms-flexbox;   display: flex;   margin-right: 6px;   position: relative;   top: -3px; } .mp-sh-alert-content .mp-sh-alert-header .mp-sh-alert-header-title .mp-sh-alert-header-icon .mp-sh-alert-header-icon-background {   border-radius: 30px;   height: 17px;   position: absolute;   width: 17px; } .mp-sh-alert-content .mp-sh-alert-header .mp-sh-alert-header-title .mp-sh-alert-header-icon .mp-sh-alert-header-icon-svg {   left: 1px;   position: relative;   top: 1px; } .mp-sh-alert-content .mp-sh-alert-header .mp-sh-alert-header-title .mp-sh-alert-header-icon .mp-sh-alert-header-icon-svg svg-icon {   display: inline-block;   height: 15px;   min-height: 15px;   min-width: 15px;   position: relative;   width: 15px; } .mp-sh-alert-content .mp-sh-alert-header .mp-sh-alert-header-title .mp-sh-alert-header-icon .mp-sh-alert-header-icon-svg svg-icon[icon=type-boolean] #left-dot {   color: #fff;   fill: #fff; } .mp-sh-alert-content .mp-sh-alert-header .mp-sh-alert-header-title .mp-sh-alert-header-icon .mp-sh-alert-header-icon-svg svg-icon[icon=type-boolean] #right-dot {   color: #4c6072;   fill: #4c6072; } .mp-sh-alert-content .mp-sh-alert-header .mp-sh-alert-header-title .mp-sh-alert-header-icon .mp-sh-alert-header-icon-svg svg-icon[icon=lightning-bolt] #bolt, .mp-sh-alert-content .mp-sh-alert-header .mp-sh-alert-header-title .mp-sh-alert-header-icon .mp-sh-alert-header-icon-svg svg-icon[icon=lighting-bolt] #bolt {   color: #fff;   fill: #fff; } .mp-sh-alert-content .mp-sh-alert-header .mp-sh-alert-header-title .mp-sh-alert-header-icon .mp-sh-alert-header-icon-svg svg-icon[icon=alert] #circle, .mp-sh-alert-content .mp-sh-alert-header .mp-sh-alert-header-title .mp-sh-alert-header-icon .mp-sh-alert-header-icon-svg svg-icon[icon=alert] #stem {   color: #fff;   fill: #fff; } .mp-sh-alert-content .mp-sh-alert-header .mp-sh-alert-header-title .mp-sh-alert-header-icon .mp-sh-alert-header-icon-svg svg-icon svg {   height: 15px;   left: 0;   min-height: 15px;   min-width: 15px;   position: absolute;   top: 0;   width: 15px; } .mp-sh-alert-content .mp-sh-alert-header .mp-sh-alert-header-title .mp-sh-alert-header-icon .mp-sh-alert-header-icon-svg svg-icon svg, .mp-sh-alert-content .mp-sh-alert-header .mp-sh-alert-header-title .mp-sh-alert-header-icon .mp-sh-alert-header-icon-svg svg-icon path {   color: #fff;   fill: #fff;   transition: 0.2s; } .mp-sh-alert-content .mp-sh-alert-header .mp-sh-alert-header-title .mp-sh-alert-header-text {   color: #4c6072;   font-weight: 600;   font-size: 13px; } .mp-sh-alert-content .mp-sh-alert-remove {   cursor: pointer;   display: -webkit-box;   display: -ms-flexbox;   display: flex; } .mp-sh-alert-content .mp-sh-alert-remove svg-icon {   display: inline-block;   height: 20px;   min-height: 20px;   min-width: 20px;   position: relative;   width: 20px; } .mp-sh-alert-content .mp-sh-alert-remove svg-icon[icon=type-boolean] #left-dot {   color: #fff;   fill: #fff; } .mp-sh-alert-content .mp-sh-alert-remove svg-icon[icon=type-boolean] #right-dot {   color: #4c6072;   fill: #4c6072; } .mp-sh-alert-content .mp-sh-alert-remove svg-icon[icon=lightning-bolt] #bolt, .mp-sh-alert-content .mp-sh-alert-remove svg-icon[icon=lighting-bolt] #bolt {   color: #fff;   fill: #fff; } .mp-sh-alert-content .mp-sh-alert-remove svg-icon[icon=alert] #circle, .mp-sh-alert-content .mp-sh-alert-remove svg-icon[icon=alert] #stem {   color: #fff;   fill: #fff; } .mp-sh-alert-content .mp-sh-alert-remove svg-icon svg {   height: 20px;   left: 0;   min-height: 20px;   min-width: 20px;   position: absolute;   top: 0;   width: 20px; } .mp-sh-alert-content .mp-sh-alert-remove svg-icon svg, .mp-sh-alert-content .mp-sh-alert-remove svg-icon path {   color: #9bacbf;   fill: #9bacbf;   transition: 0.2s; } .mp-sh-alert-content .mp-sh-alert-remove:hover svg-icon svg, .mp-sh-alert-content .mp-sh-alert-remove:hover svg-icon path {   color: #e4567b;   fill: #e4567b; } .mp-sh-alert-content .mp-sh-alert-message {   color: #6d859e;   font-weight: 500;   text-align: start;   white-space: normal; } .mp-sh-alert-content .mp-sh-alert-footer {   display: -webkit-box;   display: -ms-flexbox;   display: flex;   -webkit-box-orient: horizontal;   -webkit-box-direction: normal;       -ms-flex-direction: row;           flex-direction: row;   height: 26px;   -webkit-box-pack: justify;       -ms-flex-pack: justify;           justify-content: space-between;   padding: 10px 0; } .mp-sh-alert-content .mp-sh-alert-footer .mp-sh-alert-footer-time {   color: #9bacbf;   display: -webkit-box;   display: -ms-flexbox;   display: flex;   -webkit-box-orient: vertical;   -webkit-box-direction: normal;       -ms-flex-direction: column;           flex-direction: column;   font-size: 12px;   -webkit-box-pack: center;       -ms-flex-pack: center;           justify-content: center; } .mp-sh-alert-content .mp-sh-alert-footer .mp-sh-alert-footer-useful {   color: #4ba8ff;   display: -webkit-box;   display: -ms-flexbox;   display: flex;   -webkit-box-orient: horizontal;   -webkit-box-direction: normal;       -ms-flex-direction: row;           flex-direction: row;   font-size: 12px; } .mp-sh-alert-content .mp-sh-alert-footer .mp-sh-alert-footer-useful .mp-sh-alert-footer-good {   margin-right: 15px; } .mp-sh-alert-content .mp-sh-alert-footer .mp-sh-alert-footer-useful .mp-sh-alert-footer-good, .mp-sh-alert-content .mp-sh-alert-footer .mp-sh-alert-footer-useful .mp-sh-alert-footer-bad {   cursor: pointer;   display: -webkit-box;   display: -ms-flexbox;   display: flex;   padding-bottom: 1px; } .mp-sh-alert-content .mp-sh-alert-footer .mp-sh-alert-footer-useful .mp-sh-alert-footer-good:hover, .mp-sh-alert-content .mp-sh-alert-footer .mp-sh-alert-footer-useful .mp-sh-alert-footer-bad:hover {   border-bottom: 1px solid #4ba8ff;   padding-bottom: 0; } .mp-sh-alert-content .mp-sh-alert-footer .mp-sh-alert-footer-useful .mp-sh-alert-footer-good .mp-sh-alert-footer-good-text, .mp-sh-alert-content .mp-sh-alert-footer .mp-sh-alert-footer-useful .mp-sh-alert-footer-bad .mp-sh-alert-footer-good-text, .mp-sh-alert-content .mp-sh-alert-footer .mp-sh-alert-footer-useful .mp-sh-alert-footer-good .mp-sh-alert-footer-bad-text, .mp-sh-alert-content .mp-sh-alert-footer .mp-sh-alert-footer-useful .mp-sh-alert-footer-bad .mp-sh-alert-footer-bad-text {   position: relative;   top: 5px; } .mp-sh-alert-content .mp-sh-alert-footer .mp-sh-alert-footer-useful .mp-sh-alert-footer-thank-you {   color: #9bacbf;   display: -webkit-box;   display: -ms-flexbox;   display: flex;   -webkit-box-orient: vertical;   -webkit-box-direction: normal;       -ms-flex-direction: column;           flex-direction: column;   font-size: 12px;   -webkit-box-pack: center;       -ms-flex-pack: center;           justify-content: center; } ";
 
 
 /***/ },
@@ -50554,6 +50613,10 @@
 
 	/* eslint-disable camelcase */
 	function propertyToSegFilter(property) {
+	  var _ref = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {},
+	      _ref$isTypecastable = _ref.isTypecastable,
+	      isTypecastable = _ref$isTypecastable === undefined ? true : _ref$isTypecastable;
+
 	  var PROPERTY_TYPE_MAP = {
 	    'STRING': 'string',
 	    'NUMBER': 'number',
@@ -50567,20 +50630,27 @@
 	    'PEOPLE': 'user'
 	  };
 
-	  return {
+	  var segFilter = {
 	    dropdown_tab_index: 0,
 	    property: {
 	      name: property.name,
 	      source: PROPERTY_SOURCE_MAP[property.source],
 	      type: PROPERTY_TYPE_MAP[property.type]
 	    },
-	    selected_property_type: PROPERTY_TYPE_MAP[property.type],
 	    type: PROPERTY_TYPE_MAP[property.typecast || property.type]
 	  };
+	  if (isTypecastable) {
+	    segFilter.selected_property_type = PROPERTY_TYPE_MAP[property.type];
+	  }
+	  return segFilter;
 	}
 	/* eslint-enable camelcase */
 
 	function propertyFilterToSegFilter(propertyFilter) {
+	  var _ref2 = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {},
+	      _ref2$isTypecastable = _ref2.isTypecastable,
+	      isTypecastable = _ref2$isTypecastable === undefined ? true : _ref2$isTypecastable;
+
 	  var STRING_FILTER_OPERATOR_MAP = {
 	    'CONTAINS': 'in',
 	    'DOES_NOT_CONTAIN': 'not in',
@@ -50676,7 +50746,7 @@
 	      operand: _operand5
 	    };
 	  }
-	  return (0, _util.extend)(propertyToSegFilter(propertyFilter.property), { filter: filter });
+	  return (0, _util.extend)(propertyToSegFilter(propertyFilter.property, { isTypecastable: isTypecastable }), { filter: filter });
 	}
 
 	/* eslint-disable camelcase */
@@ -50729,7 +50799,9 @@
 	  var urlParams = {};
 
 	  urlParams.event = query.event;
-	  urlParams.filters = query.propertyFilters.map(propertyFilterToSegFilter);
+	  urlParams.filters = query.propertyFilters.map(function (filter) {
+	    return propertyFilterToSegFilter(filter, { isTypecastable: false });
+	  });
 
 	  if (query.segmentEvent) {
 	    urlParams.segmentation_event = query.segmentEvent;
@@ -50742,7 +50814,9 @@
 	  urlParams.retention_type = RETENTION_TYPE_MAP[query.retentionType];
 	  if (query.bornEvent) {
 	    urlParams.born_event = query.bornEvent;
-	    urlParams.born_filters = query.bornPropertyFilters.map(propertyFilterToSegFilter);
+	    urlParams.born_filters = query.bornPropertyFilters.map(function (filter) {
+	      return propertyFilterToSegFilter(filter, { isTypecastable: false });
+	    });
 	  }
 
 	  // TODO(mack): Figure out how to handle timezones
@@ -50816,7 +50890,8 @@
 
 	  var RELATIVE_DATE_FILTER_OPERATOR_MAP = {
 	    'LESS_THAN': 'was in the',
-	    'GREATER_THAN': null };
+	    'GREATER_THAN': null // from segmentation, but not supported in insights
+	  };
 
 	  var BOOLEAN_FILTER_OPERATOR_MAP = {
 	    'true': 'is true',
@@ -50990,13 +51065,27 @@
 
 	var _panel = __webpack_require__(299);
 
+	var _queryString = __webpack_require__(550);
+
+	var _queryString2 = _interopRequireDefault(_queryString);
+
+	var _throttle = __webpack_require__(505);
+
+	var _throttle2 = _interopRequireDefault(_throttle);
+
+	var _uniqBy = __webpack_require__(553);
+
+	var _uniqBy2 = _interopRequireDefault(_uniqBy);
+
+	var _array = __webpack_require__(485);
+
 	var _registerElement = __webpack_require__(320);
 
-	var _index = __webpack_require__(550);
+	var _index = __webpack_require__(668);
 
 	var _index2 = _interopRequireDefault(_index);
 
-	var _index3 = __webpack_require__(551);
+	var _index3 = __webpack_require__(669);
 
 	var _index4 = _interopRequireDefault(_index3);
 
@@ -51008,6 +51097,8 @@
 
 	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
+	var REQUEST_LIMIT = 5;
+
 	exports.default = (0, _registerElement.registerMPElement)('mp-smart-hub-dropdown', function (_Component) {
 	  _inherits(_class, _Component);
 
@@ -51018,69 +51109,220 @@
 	  }
 
 	  _createClass(_class, [{
-	    key: '_removeAlert',
-	    value: function _removeAlert(params) {
-	      var alerts = void 0;
-	      if (params.alertId) {
-	        alerts = this.state.alerts.filter(function (alert) {
-	          return !!alert.groupedAlert || alert.alert.alertId !== params.alertId;
-	        });
-	      } else {
-	        alerts = this.state.alerts.filter(function (alert) {
-	          return !!alert.alert || alert.groupedAlert.groupedAlertId !== params.groupedAlertId;
-	        });
-	      }
-	      this.update({ alerts: alerts });
+	    key: 'animateRemoveAlert',
+	    value: function animateRemoveAlert(e) {
+	      var smartHubAlert = this.state.smartHubAlerts.find(function (alert) {
+	        if (e.detail.alertId) {
+	          return alert.alert && alert.alert.alertId === e.detail.alertId;
+	        } else {
+	          return alert.groupedAlert && alert.groupedAlert.groupedAlertId === e.detail.groupedAlertId;
+	        }
+	      });
+	      smartHubAlert.isDeleted = true;
+	      smartHubAlert.height = e.target.getBoundingClientRect().height;
+	      this.update();
+	    }
+	  }, {
+	    key: 'removeAlert',
+	    value: function removeAlert(el, smartHubAlert) {
+	      el.removeEventListener('transitionend', smartHubAlert.removeAlertHandler);
+	      var smartHubAlerts = this.state.smartHubAlerts.filter(function (alert) {
+	        if (smartHubAlert.alert) {
+	          return !alert.alert || alert.alert.alertId !== smartHubAlert.alert.alertId;
+	        } else {
+	          return !alert.groupedAlert || alert.groupedAlert.groupedAlertId !== smartHubAlert.groupedAlert.groupedAlertId;
+	        }
+	      });
+	      this.update({ smartHubAlerts: smartHubAlerts });
 	    }
 	  }, {
 	    key: 'attachedCallback',
 	    value: function attachedCallback() {
+	      var _this2 = this;
+
 	      _get(_class.prototype.__proto__ || Object.getPrototypeOf(_class.prototype), 'attachedCallback', this).apply(this, arguments);
 	      // TODO(mack): Check if it's necessary to do this in both attachedCallback and attributeChangedCallback
 	      // bootstrap the widget's state from attributes
 	      this.update({
 	        open: this.isAttributeEnabled('open')
 	      });
+
+	      this.fetchAlertsIfNeeded = (0, _throttle2.default)(function () {
+	        var containerEl = _this2.el.querySelector('.mp-sh-alerts-container');
+	        var alertEl = containerEl.querySelector('mp-smart-hub-alert:last-of-type');
+	        if (!alertEl) {
+	          return;
+	        }
+
+	        var containerElBottom = containerEl.getBoundingClientRect().bottom;
+	        var alertElTop = alertEl.getBoundingClientRect().top;
+	        if (alertEl && containerElBottom - alertElTop > 20) {
+	          _this2.fetchAlerts();
+	        }
+	      }, 100);
+
+	      // For marking as read, and clear all, only affect alerts older than the current time.
+	      // Also, alerts that are marked as read more recently than the current time should continue
+	      // to be shown as unread.
+	      this.attachedAtMs = new Date().getTime();
+
+	      this.fetchAlerts();
 	    }
 	  }, {
 	    key: 'attributeChangedCallback',
-	    value: function attributeChangedCallback(name, oldValue, value) {
+	    value: function attributeChangedCallback(name) {
 	      _get(_class.prototype.__proto__ || Object.getPrototypeOf(_class.prototype), 'attributeChangedCallback', this).apply(this, arguments);
 	      if (name === 'open') {
 	        // TODO(mack): Improve how open/close is handled.
 	        var open = this.isAttributeEnabled('open');
+	        if (open) {
+	          this.markAlertsRead();
+	        }
 	        this.dispatchEvent(new CustomEvent('change', { detail: { open: open } }));
 	        this.update({ open: open });
-	      } else if (name === 'smart-hub-alerts') {
-	        this.update({ smartHubAlerts: this.getJSONAttribute('smart-hub-alerts') });
-	      } else if (name === 'mixpanel-host') {
-	        this.update({ mixpanelHost: value });
-	      } else if (name === 'project-id') {
-	        this.update({ projectId: Number(value) });
 	      }
 	    }
 	  }, {
+	    key: 'clearAllAlerts',
+	    value: function clearAllAlerts() {
+	      this.hasClearedAllAlerts = true;
+	      this.fetch('DELETE', { max_inclusive_ms: this.attachedAtMs // eslint-disable-line camelcase
+	      });
+	    }
+	  }, {
+	    key: 'markAlertsRead',
+	    value: function markAlertsRead() {
+	      this.fetch('PATCH', { max_inclusive_ms: this.attachedAtMs }, // eslint-disable-line camelcase
+	      { is_read: true // eslint-disable-line camelcase
+	      });
+	    }
+	  }, {
+	    key: 'fetchAlerts',
+	    value: function fetchAlerts() {
+	      var _this3 = this;
+
+	      if (this.pendingGetRequest || this.allAlertsFetched || this.hasClearedAllAlerts) {
+	        return;
+	      }
+	      var queryParams = {};
+	      queryParams.limit = REQUEST_LIMIT;
+	      if (this.minIngestedAtMs) {
+	        // eslint-disable-next-line camelcase
+	        queryParams.max_exclusive_ms = this.minIngestedAtMs;
+	      }
+
+	      this.pendingGetRequest = this.fetch('GET', queryParams);
+	      if (!this.pendingGetRequest) {
+	        return;
+	      }
+
+	      this.pendingGetRequest.then(function (smartHubAlerts) {
+	        _this3.pendingGetRequest = null;
+	        if (!smartHubAlerts.length || _this3.hasClearedAllAlerts) {
+	          _this3.allAlertsFetched = true;
+	        } else {
+	          _this3.appendSmartHubAlerts(smartHubAlerts);
+	        }
+	      });
+	    }
+	  }, {
+	    key: 'getAlertMetadata',
+	    value: function getAlertMetadata(smartHubAlert) {
+	      if (smartHubAlert.groupedAlert) {
+	        return smartHubAlert.groupedAlert.alertMetadata;
+	      } else {
+	        return smartHubAlert.alert.alertMetadata;
+	      }
+	    }
+	  }, {
+	    key: 'appendSmartHubAlerts',
+	    value: function appendSmartHubAlerts(smartHubAlerts) {
+	      var _this4 = this;
+
+	      smartHubAlerts = (0, _uniqBy2.default)(this.state.smartHubAlerts.concat(smartHubAlerts), function (smartHubAlert) {
+	        if (smartHubAlert.groupedAlert) {
+	          return 'grouped:' + smartHubAlert.groupedAlert.groupedAlertId;
+	        } else {
+	          return 'single:' + smartHubAlert.alert.alertContentId;
+	        }
+	      });
+
+	      smartHubAlerts = (0, _array.sorted)(smartHubAlerts, {
+	        order: 'desc',
+	        transform: function transform(smartHubAlert) {
+	          return _this4.getAlertMetadata(smartHubAlert).ingestedAtMs;
+	        }
+	      });
+
+	      smartHubAlerts.forEach(function (smartHubAlert) {
+	        var alertMetadata = _this4.getAlertMetadata(smartHubAlert);
+	        smartHubAlert.isRead = !!alertMetadata.readAtMs && Number(alertMetadata.readAtMs) < _this4.attachedAtMs;
+	      });
+
+	      if (smartHubAlerts) {
+	        this.minIngestedAtMs = this.getAlertMetadata(smartHubAlerts[smartHubAlerts.length - 1]).ingestedAtMs;
+	      }
+
+	      this.update({ smartHubAlerts: smartHubAlerts });
+	    }
+	  }, {
+	    key: 'fetch',
+	    value: function (_fetch) {
+	      function fetch(_x) {
+	        return _fetch.apply(this, arguments);
+	      }
+
+	      fetch.toString = function () {
+	        return _fetch.toString();
+	      };
+
+	      return fetch;
+	    }(function (method) {
+	      var query = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+	      var body = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
+
+	      var accessToken = this.getAttribute('access-token');
+	      var projectId = Number(this.getAttribute('project-id'));
+	      if (!accessToken || !projectId) {
+	        return null;
+	      }
+
+	      var url = '/api/app/projects/' + projectId + '/smart-hub/alerts?' + _queryString2.default.stringify(query);
+	      return fetch(url, {
+	        headers: { Authorization: 'Bearer ' + accessToken },
+	        method: method,
+	        body: body ? JSON.stringify(body) : null
+	      }).then(function (response) {
+	        if (response.ok) {
+	          return response.json().then(function (resp) {
+	            return resp.results;
+	          });
+	        } else {
+	          return Promise.reject(response.statusText);
+	        }
+	      });
+	    })
+	  }, {
 	    key: 'config',
 	    get: function get() {
-	      var _this2 = this;
+	      var _this5 = this;
 
 	      return {
 	        css: _index4.default,
 	        template: _index2.default,
 	        useShadowDom: true,
 	        defaultState: {
-	          mixpanelHost: '',
-	          projectId: null,
-	          alerts: [],
 	          open: false,
-	          confirmDeleteOpen: false
+	          smartHubAlerts: []
 	        },
 	        helpers: {
-	          clearAllAlerts: function clearAllAlerts(e) {
-	            if (e.detail.action === 'confirm') {
-	              _this2.update({ alerts: [], open: true });
-	              _this2.dispatchEvent(new CustomEvent('clearAllAlerts'));
-	            }
+	          fetchAlertsIfNeeded: function fetchAlertsIfNeeded() {
+	            return _this5.fetchAlertsIfNeeded();
+	          },
+	          handleClearAllAlerts: function handleClearAllAlerts() {
+	            _this5.update({ smartHubAlerts: [] });
+	            _this5.clearAllAlerts();
+	            _this5.dispatchEvent(new CustomEvent('clearedAllAlerts'));
 	          },
 	          handleDropMenuChange: function handleDropMenuChange(e) {
 	            var state = e.detail.state;
@@ -51088,22 +51330,25 @@
 	              return;
 	            }
 	            var open = e.detail.state === 'open';
-	            _this2.setAttribute('open', open);
+	            _this5.setAttribute('open', open);
 	          },
-	          handleModalChange: function handleModalChange(key, state) {
-	            _this2.state.confirmDeleteOpen = state === 'open';
-	            _this2.update();
+	          handleClickedLink: function handleClickedLink() {
+	            _this5.update({ open: false });
 	          },
-	          handleSentFeedback: function handleSentFeedback(e) {
+	          handleMarkedUsefulness: function handleMarkedUsefulness(e) {
 	            if (!e.detail.isMarkedUseful) {
-	              _this2._removeAlert(e.detail);
+	              _this5.animateRemoveAlert(e);
 	            }
 	          },
 	          handleRemovedAlert: function handleRemovedAlert(e) {
-	            _this2._removeAlert(e.detail);
+	            _this5.animateRemoveAlert(e);
 	          },
-	          openConfirmDelete: function openConfirmDelete() {
-	            return _this2.update({ confirmDeleteOpen: true });
+	          insertedDeletedAlert: function insertedDeletedAlert(el, smartHubAlert) {
+	            smartHubAlert.removeAlertHandler = function () {
+	              return _this5.removeAlert(el, smartHubAlert);
+	            };
+	            el.addEventListener('transitionend', smartHubAlert.removeAlertHandler);
+	            el.style.height = 0;
 	          }
 	        }
 	      };
@@ -51117,11 +51362,4071 @@
 /* 550 */
 /***/ function(module, exports, __webpack_require__) {
 
+	'use strict';
+	var strictUriEncode = __webpack_require__(551);
+	var objectAssign = __webpack_require__(552);
+
+	function encoderForArrayFormat(opts) {
+		switch (opts.arrayFormat) {
+			case 'index':
+				return function (key, value, index) {
+					return value === null ? [
+						encode(key, opts),
+						'[',
+						index,
+						']'
+					].join('') : [
+						encode(key, opts),
+						'[',
+						encode(index, opts),
+						']=',
+						encode(value, opts)
+					].join('');
+				};
+
+			case 'bracket':
+				return function (key, value) {
+					return value === null ? encode(key, opts) : [
+						encode(key, opts),
+						'[]=',
+						encode(value, opts)
+					].join('');
+				};
+
+			default:
+				return function (key, value) {
+					return value === null ? encode(key, opts) : [
+						encode(key, opts),
+						'=',
+						encode(value, opts)
+					].join('');
+				};
+		}
+	}
+
+	function parserForArrayFormat(opts) {
+		var result;
+
+		switch (opts.arrayFormat) {
+			case 'index':
+				return function (key, value, accumulator) {
+					result = /\[(\d*)\]$/.exec(key);
+
+					key = key.replace(/\[\d*\]$/, '');
+
+					if (!result) {
+						accumulator[key] = value;
+						return;
+					}
+
+					if (accumulator[key] === undefined) {
+						accumulator[key] = {};
+					}
+
+					accumulator[key][result[1]] = value;
+				};
+
+			case 'bracket':
+				return function (key, value, accumulator) {
+					result = /(\[\])$/.exec(key);
+					key = key.replace(/\[\]$/, '');
+
+					if (!result) {
+						accumulator[key] = value;
+						return;
+					} else if (accumulator[key] === undefined) {
+						accumulator[key] = [value];
+						return;
+					}
+
+					accumulator[key] = [].concat(accumulator[key], value);
+				};
+
+			default:
+				return function (key, value, accumulator) {
+					if (accumulator[key] === undefined) {
+						accumulator[key] = value;
+						return;
+					}
+
+					accumulator[key] = [].concat(accumulator[key], value);
+				};
+		}
+	}
+
+	function encode(value, opts) {
+		if (opts.encode) {
+			return opts.strict ? strictUriEncode(value) : encodeURIComponent(value);
+		}
+
+		return value;
+	}
+
+	function keysSorter(input) {
+		if (Array.isArray(input)) {
+			return input.sort();
+		} else if (typeof input === 'object') {
+			return keysSorter(Object.keys(input)).sort(function (a, b) {
+				return Number(a) - Number(b);
+			}).map(function (key) {
+				return input[key];
+			});
+		}
+
+		return input;
+	}
+
+	exports.extract = function (str) {
+		return str.split('?')[1] || '';
+	};
+
+	exports.parse = function (str, opts) {
+		opts = objectAssign({arrayFormat: 'none'}, opts);
+
+		var formatter = parserForArrayFormat(opts);
+
+		// Create an object with no prototype
+		// https://github.com/sindresorhus/query-string/issues/47
+		var ret = Object.create(null);
+
+		if (typeof str !== 'string') {
+			return ret;
+		}
+
+		str = str.trim().replace(/^(\?|#|&)/, '');
+
+		if (!str) {
+			return ret;
+		}
+
+		str.split('&').forEach(function (param) {
+			var parts = param.replace(/\+/g, ' ').split('=');
+			// Firefox (pre 40) decodes `%3D` to `=`
+			// https://github.com/sindresorhus/query-string/pull/37
+			var key = parts.shift();
+			var val = parts.length > 0 ? parts.join('=') : undefined;
+
+			// missing `=` should be `null`:
+			// http://w3.org/TR/2012/WD-url-20120524/#collect-url-parameters
+			val = val === undefined ? null : decodeURIComponent(val);
+
+			formatter(decodeURIComponent(key), val, ret);
+		});
+
+		return Object.keys(ret).sort().reduce(function (result, key) {
+			var val = ret[key];
+			if (Boolean(val) && typeof val === 'object' && !Array.isArray(val)) {
+				// Sort object keys, not values
+				result[key] = keysSorter(val);
+			} else {
+				result[key] = val;
+			}
+
+			return result;
+		}, Object.create(null));
+	};
+
+	exports.stringify = function (obj, opts) {
+		var defaults = {
+			encode: true,
+			strict: true,
+			arrayFormat: 'none'
+		};
+
+		opts = objectAssign(defaults, opts);
+
+		var formatter = encoderForArrayFormat(opts);
+
+		return obj ? Object.keys(obj).sort().map(function (key) {
+			var val = obj[key];
+
+			if (val === undefined) {
+				return '';
+			}
+
+			if (val === null) {
+				return encode(key, opts);
+			}
+
+			if (Array.isArray(val)) {
+				var result = [];
+
+				val.slice().forEach(function (val2) {
+					if (val2 === undefined) {
+						return;
+					}
+
+					result.push(formatter(key, val2, result.length));
+				});
+
+				return result.join('&');
+			}
+
+			return encode(key, opts) + '=' + encode(val, opts);
+		}).filter(function (x) {
+			return x.length > 0;
+		}).join('&') : '';
+	};
+
+
+/***/ },
+/* 551 */
+/***/ function(module, exports) {
+
+	'use strict';
+	module.exports = function (str) {
+		return encodeURIComponent(str).replace(/[!'()*]/g, function (c) {
+			return '%' + c.charCodeAt(0).toString(16).toUpperCase();
+		});
+	};
+
+
+/***/ },
+/* 552 */
+/***/ function(module, exports) {
+
+	/*
+	object-assign
+	(c) Sindre Sorhus
+	@license MIT
+	*/
+
+	'use strict';
+	/* eslint-disable no-unused-vars */
+	var getOwnPropertySymbols = Object.getOwnPropertySymbols;
+	var hasOwnProperty = Object.prototype.hasOwnProperty;
+	var propIsEnumerable = Object.prototype.propertyIsEnumerable;
+
+	function toObject(val) {
+		if (val === null || val === undefined) {
+			throw new TypeError('Object.assign cannot be called with null or undefined');
+		}
+
+		return Object(val);
+	}
+
+	function shouldUseNative() {
+		try {
+			if (!Object.assign) {
+				return false;
+			}
+
+			// Detect buggy property enumeration order in older V8 versions.
+
+			// https://bugs.chromium.org/p/v8/issues/detail?id=4118
+			var test1 = new String('abc');  // eslint-disable-line no-new-wrappers
+			test1[5] = 'de';
+			if (Object.getOwnPropertyNames(test1)[0] === '5') {
+				return false;
+			}
+
+			// https://bugs.chromium.org/p/v8/issues/detail?id=3056
+			var test2 = {};
+			for (var i = 0; i < 10; i++) {
+				test2['_' + String.fromCharCode(i)] = i;
+			}
+			var order2 = Object.getOwnPropertyNames(test2).map(function (n) {
+				return test2[n];
+			});
+			if (order2.join('') !== '0123456789') {
+				return false;
+			}
+
+			// https://bugs.chromium.org/p/v8/issues/detail?id=3056
+			var test3 = {};
+			'abcdefghijklmnopqrst'.split('').forEach(function (letter) {
+				test3[letter] = letter;
+			});
+			if (Object.keys(Object.assign({}, test3)).join('') !==
+					'abcdefghijklmnopqrst') {
+				return false;
+			}
+
+			return true;
+		} catch (err) {
+			// We don't expect any of the above to throw, but better to be safe.
+			return false;
+		}
+	}
+
+	module.exports = shouldUseNative() ? Object.assign : function (target, source) {
+		var from;
+		var to = toObject(target);
+		var symbols;
+
+		for (var s = 1; s < arguments.length; s++) {
+			from = Object(arguments[s]);
+
+			for (var key in from) {
+				if (hasOwnProperty.call(from, key)) {
+					to[key] = from[key];
+				}
+			}
+
+			if (getOwnPropertySymbols) {
+				symbols = getOwnPropertySymbols(from);
+				for (var i = 0; i < symbols.length; i++) {
+					if (propIsEnumerable.call(from, symbols[i])) {
+						to[symbols[i]] = from[symbols[i]];
+					}
+				}
+			}
+		}
+
+		return to;
+	};
+
+
+/***/ },
+/* 553 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var baseIteratee = __webpack_require__(554),
+	    baseUniq = __webpack_require__(659);
+
+	/**
+	 * This method is like `_.uniq` except that it accepts `iteratee` which is
+	 * invoked for each element in `array` to generate the criterion by which
+	 * uniqueness is computed. The order of result values is determined by the
+	 * order they occur in the array. The iteratee is invoked with one argument:
+	 * (value).
+	 *
+	 * @static
+	 * @memberOf _
+	 * @since 4.0.0
+	 * @category Array
+	 * @param {Array} array The array to inspect.
+	 * @param {Function} [iteratee=_.identity] The iteratee invoked per element.
+	 * @returns {Array} Returns the new duplicate free array.
+	 * @example
+	 *
+	 * _.uniqBy([2.1, 1.2, 2.3], Math.floor);
+	 * // => [2.1, 1.2]
+	 *
+	 * // The `_.property` iteratee shorthand.
+	 * _.uniqBy([{ 'x': 1 }, { 'x': 2 }, { 'x': 1 }], 'x');
+	 * // => [{ 'x': 1 }, { 'x': 2 }]
+	 */
+	function uniqBy(array, iteratee) {
+	  return (array && array.length) ? baseUniq(array, baseIteratee(iteratee, 2)) : [];
+	}
+
+	module.exports = uniqBy;
+
+
+/***/ },
+/* 554 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var baseMatches = __webpack_require__(555),
+	    baseMatchesProperty = __webpack_require__(640),
+	    identity = __webpack_require__(655),
+	    isArray = __webpack_require__(610),
+	    property = __webpack_require__(656);
+
+	/**
+	 * The base implementation of `_.iteratee`.
+	 *
+	 * @private
+	 * @param {*} [value=_.identity] The value to convert to an iteratee.
+	 * @returns {Function} Returns the iteratee.
+	 */
+	function baseIteratee(value) {
+	  // Don't store the `typeof` result in a variable to avoid a JIT bug in Safari 9.
+	  // See https://bugs.webkit.org/show_bug.cgi?id=156034 for more details.
+	  if (typeof value == 'function') {
+	    return value;
+	  }
+	  if (value == null) {
+	    return identity;
+	  }
+	  if (typeof value == 'object') {
+	    return isArray(value)
+	      ? baseMatchesProperty(value[0], value[1])
+	      : baseMatches(value);
+	  }
+	  return property(value);
+	}
+
+	module.exports = baseIteratee;
+
+
+/***/ },
+/* 555 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var baseIsMatch = __webpack_require__(556),
+	    getMatchData = __webpack_require__(637),
+	    matchesStrictComparable = __webpack_require__(639);
+
+	/**
+	 * The base implementation of `_.matches` which doesn't clone `source`.
+	 *
+	 * @private
+	 * @param {Object} source The object of property values to match.
+	 * @returns {Function} Returns the new spec function.
+	 */
+	function baseMatches(source) {
+	  var matchData = getMatchData(source);
+	  if (matchData.length == 1 && matchData[0][2]) {
+	    return matchesStrictComparable(matchData[0][0], matchData[0][1]);
+	  }
+	  return function(object) {
+	    return object === source || baseIsMatch(object, source, matchData);
+	  };
+	}
+
+	module.exports = baseMatches;
+
+
+/***/ },
+/* 556 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var Stack = __webpack_require__(557),
+	    baseIsEqual = __webpack_require__(594);
+
+	/** Used to compose bitmasks for value comparisons. */
+	var COMPARE_PARTIAL_FLAG = 1,
+	    COMPARE_UNORDERED_FLAG = 2;
+
+	/**
+	 * The base implementation of `_.isMatch` without support for iteratee shorthands.
+	 *
+	 * @private
+	 * @param {Object} object The object to inspect.
+	 * @param {Object} source The object of property values to match.
+	 * @param {Array} matchData The property names, values, and compare flags to match.
+	 * @param {Function} [customizer] The function to customize comparisons.
+	 * @returns {boolean} Returns `true` if `object` is a match, else `false`.
+	 */
+	function baseIsMatch(object, source, matchData, customizer) {
+	  var index = matchData.length,
+	      length = index,
+	      noCustomizer = !customizer;
+
+	  if (object == null) {
+	    return !length;
+	  }
+	  object = Object(object);
+	  while (index--) {
+	    var data = matchData[index];
+	    if ((noCustomizer && data[2])
+	          ? data[1] !== object[data[0]]
+	          : !(data[0] in object)
+	        ) {
+	      return false;
+	    }
+	  }
+	  while (++index < length) {
+	    data = matchData[index];
+	    var key = data[0],
+	        objValue = object[key],
+	        srcValue = data[1];
+
+	    if (noCustomizer && data[2]) {
+	      if (objValue === undefined && !(key in object)) {
+	        return false;
+	      }
+	    } else {
+	      var stack = new Stack;
+	      if (customizer) {
+	        var result = customizer(objValue, srcValue, key, object, source, stack);
+	      }
+	      if (!(result === undefined
+	            ? baseIsEqual(srcValue, objValue, COMPARE_PARTIAL_FLAG | COMPARE_UNORDERED_FLAG, customizer, stack)
+	            : result
+	          )) {
+	        return false;
+	      }
+	    }
+	  }
+	  return true;
+	}
+
+	module.exports = baseIsMatch;
+
+
+/***/ },
+/* 557 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var ListCache = __webpack_require__(558),
+	    stackClear = __webpack_require__(566),
+	    stackDelete = __webpack_require__(567),
+	    stackGet = __webpack_require__(568),
+	    stackHas = __webpack_require__(569),
+	    stackSet = __webpack_require__(570);
+
+	/**
+	 * Creates a stack cache object to store key-value pairs.
+	 *
+	 * @private
+	 * @constructor
+	 * @param {Array} [entries] The key-value pairs to cache.
+	 */
+	function Stack(entries) {
+	  var data = this.__data__ = new ListCache(entries);
+	  this.size = data.size;
+	}
+
+	// Add methods to `Stack`.
+	Stack.prototype.clear = stackClear;
+	Stack.prototype['delete'] = stackDelete;
+	Stack.prototype.get = stackGet;
+	Stack.prototype.has = stackHas;
+	Stack.prototype.set = stackSet;
+
+	module.exports = Stack;
+
+
+/***/ },
+/* 558 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var listCacheClear = __webpack_require__(559),
+	    listCacheDelete = __webpack_require__(560),
+	    listCacheGet = __webpack_require__(563),
+	    listCacheHas = __webpack_require__(564),
+	    listCacheSet = __webpack_require__(565);
+
+	/**
+	 * Creates an list cache object.
+	 *
+	 * @private
+	 * @constructor
+	 * @param {Array} [entries] The key-value pairs to cache.
+	 */
+	function ListCache(entries) {
+	  var index = -1,
+	      length = entries == null ? 0 : entries.length;
+
+	  this.clear();
+	  while (++index < length) {
+	    var entry = entries[index];
+	    this.set(entry[0], entry[1]);
+	  }
+	}
+
+	// Add methods to `ListCache`.
+	ListCache.prototype.clear = listCacheClear;
+	ListCache.prototype['delete'] = listCacheDelete;
+	ListCache.prototype.get = listCacheGet;
+	ListCache.prototype.has = listCacheHas;
+	ListCache.prototype.set = listCacheSet;
+
+	module.exports = ListCache;
+
+
+/***/ },
+/* 559 */
+/***/ function(module, exports) {
+
+	/**
+	 * Removes all key-value entries from the list cache.
+	 *
+	 * @private
+	 * @name clear
+	 * @memberOf ListCache
+	 */
+	function listCacheClear() {
+	  this.__data__ = [];
+	  this.size = 0;
+	}
+
+	module.exports = listCacheClear;
+
+
+/***/ },
+/* 560 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var assocIndexOf = __webpack_require__(561);
+
+	/** Used for built-in method references. */
+	var arrayProto = Array.prototype;
+
+	/** Built-in value references. */
+	var splice = arrayProto.splice;
+
+	/**
+	 * Removes `key` and its value from the list cache.
+	 *
+	 * @private
+	 * @name delete
+	 * @memberOf ListCache
+	 * @param {string} key The key of the value to remove.
+	 * @returns {boolean} Returns `true` if the entry was removed, else `false`.
+	 */
+	function listCacheDelete(key) {
+	  var data = this.__data__,
+	      index = assocIndexOf(data, key);
+
+	  if (index < 0) {
+	    return false;
+	  }
+	  var lastIndex = data.length - 1;
+	  if (index == lastIndex) {
+	    data.pop();
+	  } else {
+	    splice.call(data, index, 1);
+	  }
+	  --this.size;
+	  return true;
+	}
+
+	module.exports = listCacheDelete;
+
+
+/***/ },
+/* 561 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var eq = __webpack_require__(562);
+
+	/**
+	 * Gets the index at which the `key` is found in `array` of key-value pairs.
+	 *
+	 * @private
+	 * @param {Array} array The array to inspect.
+	 * @param {*} key The key to search for.
+	 * @returns {number} Returns the index of the matched value, else `-1`.
+	 */
+	function assocIndexOf(array, key) {
+	  var length = array.length;
+	  while (length--) {
+	    if (eq(array[length][0], key)) {
+	      return length;
+	    }
+	  }
+	  return -1;
+	}
+
+	module.exports = assocIndexOf;
+
+
+/***/ },
+/* 562 */
+/***/ function(module, exports) {
+
+	/**
+	 * Performs a
+	 * [`SameValueZero`](http://ecma-international.org/ecma-262/7.0/#sec-samevaluezero)
+	 * comparison between two values to determine if they are equivalent.
+	 *
+	 * @static
+	 * @memberOf _
+	 * @since 4.0.0
+	 * @category Lang
+	 * @param {*} value The value to compare.
+	 * @param {*} other The other value to compare.
+	 * @returns {boolean} Returns `true` if the values are equivalent, else `false`.
+	 * @example
+	 *
+	 * var object = { 'a': 1 };
+	 * var other = { 'a': 1 };
+	 *
+	 * _.eq(object, object);
+	 * // => true
+	 *
+	 * _.eq(object, other);
+	 * // => false
+	 *
+	 * _.eq('a', 'a');
+	 * // => true
+	 *
+	 * _.eq('a', Object('a'));
+	 * // => false
+	 *
+	 * _.eq(NaN, NaN);
+	 * // => true
+	 */
+	function eq(value, other) {
+	  return value === other || (value !== value && other !== other);
+	}
+
+	module.exports = eq;
+
+
+/***/ },
+/* 563 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var assocIndexOf = __webpack_require__(561);
+
+	/**
+	 * Gets the list cache value for `key`.
+	 *
+	 * @private
+	 * @name get
+	 * @memberOf ListCache
+	 * @param {string} key The key of the value to get.
+	 * @returns {*} Returns the entry value.
+	 */
+	function listCacheGet(key) {
+	  var data = this.__data__,
+	      index = assocIndexOf(data, key);
+
+	  return index < 0 ? undefined : data[index][1];
+	}
+
+	module.exports = listCacheGet;
+
+
+/***/ },
+/* 564 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var assocIndexOf = __webpack_require__(561);
+
+	/**
+	 * Checks if a list cache value for `key` exists.
+	 *
+	 * @private
+	 * @name has
+	 * @memberOf ListCache
+	 * @param {string} key The key of the entry to check.
+	 * @returns {boolean} Returns `true` if an entry for `key` exists, else `false`.
+	 */
+	function listCacheHas(key) {
+	  return assocIndexOf(this.__data__, key) > -1;
+	}
+
+	module.exports = listCacheHas;
+
+
+/***/ },
+/* 565 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var assocIndexOf = __webpack_require__(561);
+
+	/**
+	 * Sets the list cache `key` to `value`.
+	 *
+	 * @private
+	 * @name set
+	 * @memberOf ListCache
+	 * @param {string} key The key of the value to set.
+	 * @param {*} value The value to set.
+	 * @returns {Object} Returns the list cache instance.
+	 */
+	function listCacheSet(key, value) {
+	  var data = this.__data__,
+	      index = assocIndexOf(data, key);
+
+	  if (index < 0) {
+	    ++this.size;
+	    data.push([key, value]);
+	  } else {
+	    data[index][1] = value;
+	  }
+	  return this;
+	}
+
+	module.exports = listCacheSet;
+
+
+/***/ },
+/* 566 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var ListCache = __webpack_require__(558);
+
+	/**
+	 * Removes all key-value entries from the stack.
+	 *
+	 * @private
+	 * @name clear
+	 * @memberOf Stack
+	 */
+	function stackClear() {
+	  this.__data__ = new ListCache;
+	  this.size = 0;
+	}
+
+	module.exports = stackClear;
+
+
+/***/ },
+/* 567 */
+/***/ function(module, exports) {
+
+	/**
+	 * Removes `key` and its value from the stack.
+	 *
+	 * @private
+	 * @name delete
+	 * @memberOf Stack
+	 * @param {string} key The key of the value to remove.
+	 * @returns {boolean} Returns `true` if the entry was removed, else `false`.
+	 */
+	function stackDelete(key) {
+	  var data = this.__data__,
+	      result = data['delete'](key);
+
+	  this.size = data.size;
+	  return result;
+	}
+
+	module.exports = stackDelete;
+
+
+/***/ },
+/* 568 */
+/***/ function(module, exports) {
+
+	/**
+	 * Gets the stack value for `key`.
+	 *
+	 * @private
+	 * @name get
+	 * @memberOf Stack
+	 * @param {string} key The key of the value to get.
+	 * @returns {*} Returns the entry value.
+	 */
+	function stackGet(key) {
+	  return this.__data__.get(key);
+	}
+
+	module.exports = stackGet;
+
+
+/***/ },
+/* 569 */
+/***/ function(module, exports) {
+
+	/**
+	 * Checks if a stack value for `key` exists.
+	 *
+	 * @private
+	 * @name has
+	 * @memberOf Stack
+	 * @param {string} key The key of the entry to check.
+	 * @returns {boolean} Returns `true` if an entry for `key` exists, else `false`.
+	 */
+	function stackHas(key) {
+	  return this.__data__.has(key);
+	}
+
+	module.exports = stackHas;
+
+
+/***/ },
+/* 570 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var ListCache = __webpack_require__(558),
+	    Map = __webpack_require__(571),
+	    MapCache = __webpack_require__(579);
+
+	/** Used as the size to enable large array optimizations. */
+	var LARGE_ARRAY_SIZE = 200;
+
+	/**
+	 * Sets the stack `key` to `value`.
+	 *
+	 * @private
+	 * @name set
+	 * @memberOf Stack
+	 * @param {string} key The key of the value to set.
+	 * @param {*} value The value to set.
+	 * @returns {Object} Returns the stack cache instance.
+	 */
+	function stackSet(key, value) {
+	  var data = this.__data__;
+	  if (data instanceof ListCache) {
+	    var pairs = data.__data__;
+	    if (!Map || (pairs.length < LARGE_ARRAY_SIZE - 1)) {
+	      pairs.push([key, value]);
+	      this.size = ++data.size;
+	      return this;
+	    }
+	    data = this.__data__ = new MapCache(pairs);
+	  }
+	  data.set(key, value);
+	  this.size = data.size;
+	  return this;
+	}
+
+	module.exports = stackSet;
+
+
+/***/ },
+/* 571 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var getNative = __webpack_require__(572),
+	    root = __webpack_require__(509);
+
+	/* Built-in method references that are verified to be native. */
+	var Map = getNative(root, 'Map');
+
+	module.exports = Map;
+
+
+/***/ },
+/* 572 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var baseIsNative = __webpack_require__(573),
+	    getValue = __webpack_require__(578);
+
+	/**
+	 * Gets the native function at `key` of `object`.
+	 *
+	 * @private
+	 * @param {Object} object The object to query.
+	 * @param {string} key The key of the method to get.
+	 * @returns {*} Returns the function if it's native, else `undefined`.
+	 */
+	function getNative(object, key) {
+	  var value = getValue(object, key);
+	  return baseIsNative(value) ? value : undefined;
+	}
+
+	module.exports = getNative;
+
+
+/***/ },
+/* 573 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var isFunction = __webpack_require__(574),
+	    isMasked = __webpack_require__(575),
+	    isObject = __webpack_require__(507),
+	    toSource = __webpack_require__(577);
+
+	/**
+	 * Used to match `RegExp`
+	 * [syntax characters](http://ecma-international.org/ecma-262/7.0/#sec-patterns).
+	 */
+	var reRegExpChar = /[\\^$.*+?()[\]{}|]/g;
+
+	/** Used to detect host constructors (Safari). */
+	var reIsHostCtor = /^\[object .+?Constructor\]$/;
+
+	/** Used for built-in method references. */
+	var funcProto = Function.prototype,
+	    objectProto = Object.prototype;
+
+	/** Used to resolve the decompiled source of functions. */
+	var funcToString = funcProto.toString;
+
+	/** Used to check objects for own properties. */
+	var hasOwnProperty = objectProto.hasOwnProperty;
+
+	/** Used to detect if a method is native. */
+	var reIsNative = RegExp('^' +
+	  funcToString.call(hasOwnProperty).replace(reRegExpChar, '\\$&')
+	  .replace(/hasOwnProperty|(function).*?(?=\\\()| for .+?(?=\\\])/g, '$1.*?') + '$'
+	);
+
+	/**
+	 * The base implementation of `_.isNative` without bad shim checks.
+	 *
+	 * @private
+	 * @param {*} value The value to check.
+	 * @returns {boolean} Returns `true` if `value` is a native function,
+	 *  else `false`.
+	 */
+	function baseIsNative(value) {
+	  if (!isObject(value) || isMasked(value)) {
+	    return false;
+	  }
+	  var pattern = isFunction(value) ? reIsNative : reIsHostCtor;
+	  return pattern.test(toSource(value));
+	}
+
+	module.exports = baseIsNative;
+
+
+/***/ },
+/* 574 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var baseGetTag = __webpack_require__(513),
+	    isObject = __webpack_require__(507);
+
+	/** `Object#toString` result references. */
+	var asyncTag = '[object AsyncFunction]',
+	    funcTag = '[object Function]',
+	    genTag = '[object GeneratorFunction]',
+	    proxyTag = '[object Proxy]';
+
+	/**
+	 * Checks if `value` is classified as a `Function` object.
+	 *
+	 * @static
+	 * @memberOf _
+	 * @since 0.1.0
+	 * @category Lang
+	 * @param {*} value The value to check.
+	 * @returns {boolean} Returns `true` if `value` is a function, else `false`.
+	 * @example
+	 *
+	 * _.isFunction(_);
+	 * // => true
+	 *
+	 * _.isFunction(/abc/);
+	 * // => false
+	 */
+	function isFunction(value) {
+	  if (!isObject(value)) {
+	    return false;
+	  }
+	  // The use of `Object#toString` avoids issues with the `typeof` operator
+	  // in Safari 9 which returns 'object' for typed arrays and other constructors.
+	  var tag = baseGetTag(value);
+	  return tag == funcTag || tag == genTag || tag == asyncTag || tag == proxyTag;
+	}
+
+	module.exports = isFunction;
+
+
+/***/ },
+/* 575 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var coreJsData = __webpack_require__(576);
+
+	/** Used to detect methods masquerading as native. */
+	var maskSrcKey = (function() {
+	  var uid = /[^.]+$/.exec(coreJsData && coreJsData.keys && coreJsData.keys.IE_PROTO || '');
+	  return uid ? ('Symbol(src)_1.' + uid) : '';
+	}());
+
+	/**
+	 * Checks if `func` has its source masked.
+	 *
+	 * @private
+	 * @param {Function} func The function to check.
+	 * @returns {boolean} Returns `true` if `func` is masked, else `false`.
+	 */
+	function isMasked(func) {
+	  return !!maskSrcKey && (maskSrcKey in func);
+	}
+
+	module.exports = isMasked;
+
+
+/***/ },
+/* 576 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var root = __webpack_require__(509);
+
+	/** Used to detect overreaching core-js shims. */
+	var coreJsData = root['__core-js_shared__'];
+
+	module.exports = coreJsData;
+
+
+/***/ },
+/* 577 */
+/***/ function(module, exports) {
+
+	/** Used for built-in method references. */
+	var funcProto = Function.prototype;
+
+	/** Used to resolve the decompiled source of functions. */
+	var funcToString = funcProto.toString;
+
+	/**
+	 * Converts `func` to its source code.
+	 *
+	 * @private
+	 * @param {Function} func The function to convert.
+	 * @returns {string} Returns the source code.
+	 */
+	function toSource(func) {
+	  if (func != null) {
+	    try {
+	      return funcToString.call(func);
+	    } catch (e) {}
+	    try {
+	      return (func + '');
+	    } catch (e) {}
+	  }
+	  return '';
+	}
+
+	module.exports = toSource;
+
+
+/***/ },
+/* 578 */
+/***/ function(module, exports) {
+
+	/**
+	 * Gets the value at `key` of `object`.
+	 *
+	 * @private
+	 * @param {Object} [object] The object to query.
+	 * @param {string} key The key of the property to get.
+	 * @returns {*} Returns the property value.
+	 */
+	function getValue(object, key) {
+	  return object == null ? undefined : object[key];
+	}
+
+	module.exports = getValue;
+
+
+/***/ },
+/* 579 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var mapCacheClear = __webpack_require__(580),
+	    mapCacheDelete = __webpack_require__(588),
+	    mapCacheGet = __webpack_require__(591),
+	    mapCacheHas = __webpack_require__(592),
+	    mapCacheSet = __webpack_require__(593);
+
+	/**
+	 * Creates a map cache object to store key-value pairs.
+	 *
+	 * @private
+	 * @constructor
+	 * @param {Array} [entries] The key-value pairs to cache.
+	 */
+	function MapCache(entries) {
+	  var index = -1,
+	      length = entries == null ? 0 : entries.length;
+
+	  this.clear();
+	  while (++index < length) {
+	    var entry = entries[index];
+	    this.set(entry[0], entry[1]);
+	  }
+	}
+
+	// Add methods to `MapCache`.
+	MapCache.prototype.clear = mapCacheClear;
+	MapCache.prototype['delete'] = mapCacheDelete;
+	MapCache.prototype.get = mapCacheGet;
+	MapCache.prototype.has = mapCacheHas;
+	MapCache.prototype.set = mapCacheSet;
+
+	module.exports = MapCache;
+
+
+/***/ },
+/* 580 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var Hash = __webpack_require__(581),
+	    ListCache = __webpack_require__(558),
+	    Map = __webpack_require__(571);
+
+	/**
+	 * Removes all key-value entries from the map.
+	 *
+	 * @private
+	 * @name clear
+	 * @memberOf MapCache
+	 */
+	function mapCacheClear() {
+	  this.size = 0;
+	  this.__data__ = {
+	    'hash': new Hash,
+	    'map': new (Map || ListCache),
+	    'string': new Hash
+	  };
+	}
+
+	module.exports = mapCacheClear;
+
+
+/***/ },
+/* 581 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var hashClear = __webpack_require__(582),
+	    hashDelete = __webpack_require__(584),
+	    hashGet = __webpack_require__(585),
+	    hashHas = __webpack_require__(586),
+	    hashSet = __webpack_require__(587);
+
+	/**
+	 * Creates a hash object.
+	 *
+	 * @private
+	 * @constructor
+	 * @param {Array} [entries] The key-value pairs to cache.
+	 */
+	function Hash(entries) {
+	  var index = -1,
+	      length = entries == null ? 0 : entries.length;
+
+	  this.clear();
+	  while (++index < length) {
+	    var entry = entries[index];
+	    this.set(entry[0], entry[1]);
+	  }
+	}
+
+	// Add methods to `Hash`.
+	Hash.prototype.clear = hashClear;
+	Hash.prototype['delete'] = hashDelete;
+	Hash.prototype.get = hashGet;
+	Hash.prototype.has = hashHas;
+	Hash.prototype.set = hashSet;
+
+	module.exports = Hash;
+
+
+/***/ },
+/* 582 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var nativeCreate = __webpack_require__(583);
+
+	/**
+	 * Removes all key-value entries from the hash.
+	 *
+	 * @private
+	 * @name clear
+	 * @memberOf Hash
+	 */
+	function hashClear() {
+	  this.__data__ = nativeCreate ? nativeCreate(null) : {};
+	  this.size = 0;
+	}
+
+	module.exports = hashClear;
+
+
+/***/ },
+/* 583 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var getNative = __webpack_require__(572);
+
+	/* Built-in method references that are verified to be native. */
+	var nativeCreate = getNative(Object, 'create');
+
+	module.exports = nativeCreate;
+
+
+/***/ },
+/* 584 */
+/***/ function(module, exports) {
+
+	/**
+	 * Removes `key` and its value from the hash.
+	 *
+	 * @private
+	 * @name delete
+	 * @memberOf Hash
+	 * @param {Object} hash The hash to modify.
+	 * @param {string} key The key of the value to remove.
+	 * @returns {boolean} Returns `true` if the entry was removed, else `false`.
+	 */
+	function hashDelete(key) {
+	  var result = this.has(key) && delete this.__data__[key];
+	  this.size -= result ? 1 : 0;
+	  return result;
+	}
+
+	module.exports = hashDelete;
+
+
+/***/ },
+/* 585 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var nativeCreate = __webpack_require__(583);
+
+	/** Used to stand-in for `undefined` hash values. */
+	var HASH_UNDEFINED = '__lodash_hash_undefined__';
+
+	/** Used for built-in method references. */
+	var objectProto = Object.prototype;
+
+	/** Used to check objects for own properties. */
+	var hasOwnProperty = objectProto.hasOwnProperty;
+
+	/**
+	 * Gets the hash value for `key`.
+	 *
+	 * @private
+	 * @name get
+	 * @memberOf Hash
+	 * @param {string} key The key of the value to get.
+	 * @returns {*} Returns the entry value.
+	 */
+	function hashGet(key) {
+	  var data = this.__data__;
+	  if (nativeCreate) {
+	    var result = data[key];
+	    return result === HASH_UNDEFINED ? undefined : result;
+	  }
+	  return hasOwnProperty.call(data, key) ? data[key] : undefined;
+	}
+
+	module.exports = hashGet;
+
+
+/***/ },
+/* 586 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var nativeCreate = __webpack_require__(583);
+
+	/** Used for built-in method references. */
+	var objectProto = Object.prototype;
+
+	/** Used to check objects for own properties. */
+	var hasOwnProperty = objectProto.hasOwnProperty;
+
+	/**
+	 * Checks if a hash value for `key` exists.
+	 *
+	 * @private
+	 * @name has
+	 * @memberOf Hash
+	 * @param {string} key The key of the entry to check.
+	 * @returns {boolean} Returns `true` if an entry for `key` exists, else `false`.
+	 */
+	function hashHas(key) {
+	  var data = this.__data__;
+	  return nativeCreate ? (data[key] !== undefined) : hasOwnProperty.call(data, key);
+	}
+
+	module.exports = hashHas;
+
+
+/***/ },
+/* 587 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var nativeCreate = __webpack_require__(583);
+
+	/** Used to stand-in for `undefined` hash values. */
+	var HASH_UNDEFINED = '__lodash_hash_undefined__';
+
+	/**
+	 * Sets the hash `key` to `value`.
+	 *
+	 * @private
+	 * @name set
+	 * @memberOf Hash
+	 * @param {string} key The key of the value to set.
+	 * @param {*} value The value to set.
+	 * @returns {Object} Returns the hash instance.
+	 */
+	function hashSet(key, value) {
+	  var data = this.__data__;
+	  this.size += this.has(key) ? 0 : 1;
+	  data[key] = (nativeCreate && value === undefined) ? HASH_UNDEFINED : value;
+	  return this;
+	}
+
+	module.exports = hashSet;
+
+
+/***/ },
+/* 588 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var getMapData = __webpack_require__(589);
+
+	/**
+	 * Removes `key` and its value from the map.
+	 *
+	 * @private
+	 * @name delete
+	 * @memberOf MapCache
+	 * @param {string} key The key of the value to remove.
+	 * @returns {boolean} Returns `true` if the entry was removed, else `false`.
+	 */
+	function mapCacheDelete(key) {
+	  var result = getMapData(this, key)['delete'](key);
+	  this.size -= result ? 1 : 0;
+	  return result;
+	}
+
+	module.exports = mapCacheDelete;
+
+
+/***/ },
+/* 589 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var isKeyable = __webpack_require__(590);
+
+	/**
+	 * Gets the data for `map`.
+	 *
+	 * @private
+	 * @param {Object} map The map to query.
+	 * @param {string} key The reference key.
+	 * @returns {*} Returns the map data.
+	 */
+	function getMapData(map, key) {
+	  var data = map.__data__;
+	  return isKeyable(key)
+	    ? data[typeof key == 'string' ? 'string' : 'hash']
+	    : data.map;
+	}
+
+	module.exports = getMapData;
+
+
+/***/ },
+/* 590 */
+/***/ function(module, exports) {
+
+	/**
+	 * Checks if `value` is suitable for use as unique object key.
+	 *
+	 * @private
+	 * @param {*} value The value to check.
+	 * @returns {boolean} Returns `true` if `value` is suitable, else `false`.
+	 */
+	function isKeyable(value) {
+	  var type = typeof value;
+	  return (type == 'string' || type == 'number' || type == 'symbol' || type == 'boolean')
+	    ? (value !== '__proto__')
+	    : (value === null);
+	}
+
+	module.exports = isKeyable;
+
+
+/***/ },
+/* 591 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var getMapData = __webpack_require__(589);
+
+	/**
+	 * Gets the map value for `key`.
+	 *
+	 * @private
+	 * @name get
+	 * @memberOf MapCache
+	 * @param {string} key The key of the value to get.
+	 * @returns {*} Returns the entry value.
+	 */
+	function mapCacheGet(key) {
+	  return getMapData(this, key).get(key);
+	}
+
+	module.exports = mapCacheGet;
+
+
+/***/ },
+/* 592 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var getMapData = __webpack_require__(589);
+
+	/**
+	 * Checks if a map value for `key` exists.
+	 *
+	 * @private
+	 * @name has
+	 * @memberOf MapCache
+	 * @param {string} key The key of the entry to check.
+	 * @returns {boolean} Returns `true` if an entry for `key` exists, else `false`.
+	 */
+	function mapCacheHas(key) {
+	  return getMapData(this, key).has(key);
+	}
+
+	module.exports = mapCacheHas;
+
+
+/***/ },
+/* 593 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var getMapData = __webpack_require__(589);
+
+	/**
+	 * Sets the map `key` to `value`.
+	 *
+	 * @private
+	 * @name set
+	 * @memberOf MapCache
+	 * @param {string} key The key of the value to set.
+	 * @param {*} value The value to set.
+	 * @returns {Object} Returns the map cache instance.
+	 */
+	function mapCacheSet(key, value) {
+	  var data = getMapData(this, key),
+	      size = data.size;
+
+	  data.set(key, value);
+	  this.size += data.size == size ? 0 : 1;
+	  return this;
+	}
+
+	module.exports = mapCacheSet;
+
+
+/***/ },
+/* 594 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var baseIsEqualDeep = __webpack_require__(595),
+	    isObjectLike = __webpack_require__(517);
+
+	/**
+	 * The base implementation of `_.isEqual` which supports partial comparisons
+	 * and tracks traversed objects.
+	 *
+	 * @private
+	 * @param {*} value The value to compare.
+	 * @param {*} other The other value to compare.
+	 * @param {boolean} bitmask The bitmask flags.
+	 *  1 - Unordered comparison
+	 *  2 - Partial comparison
+	 * @param {Function} [customizer] The function to customize comparisons.
+	 * @param {Object} [stack] Tracks traversed `value` and `other` objects.
+	 * @returns {boolean} Returns `true` if the values are equivalent, else `false`.
+	 */
+	function baseIsEqual(value, other, bitmask, customizer, stack) {
+	  if (value === other) {
+	    return true;
+	  }
+	  if (value == null || other == null || (!isObjectLike(value) && !isObjectLike(other))) {
+	    return value !== value && other !== other;
+	  }
+	  return baseIsEqualDeep(value, other, bitmask, customizer, baseIsEqual, stack);
+	}
+
+	module.exports = baseIsEqual;
+
+
+/***/ },
+/* 595 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var Stack = __webpack_require__(557),
+	    equalArrays = __webpack_require__(596),
+	    equalByTag = __webpack_require__(602),
+	    equalObjects = __webpack_require__(606),
+	    getTag = __webpack_require__(632),
+	    isArray = __webpack_require__(610),
+	    isBuffer = __webpack_require__(619),
+	    isTypedArray = __webpack_require__(622);
+
+	/** Used to compose bitmasks for value comparisons. */
+	var COMPARE_PARTIAL_FLAG = 1;
+
+	/** `Object#toString` result references. */
+	var argsTag = '[object Arguments]',
+	    arrayTag = '[object Array]',
+	    objectTag = '[object Object]';
+
+	/** Used for built-in method references. */
+	var objectProto = Object.prototype;
+
+	/** Used to check objects for own properties. */
+	var hasOwnProperty = objectProto.hasOwnProperty;
+
+	/**
+	 * A specialized version of `baseIsEqual` for arrays and objects which performs
+	 * deep comparisons and tracks traversed objects enabling objects with circular
+	 * references to be compared.
+	 *
+	 * @private
+	 * @param {Object} object The object to compare.
+	 * @param {Object} other The other object to compare.
+	 * @param {number} bitmask The bitmask flags. See `baseIsEqual` for more details.
+	 * @param {Function} customizer The function to customize comparisons.
+	 * @param {Function} equalFunc The function to determine equivalents of values.
+	 * @param {Object} [stack] Tracks traversed `object` and `other` objects.
+	 * @returns {boolean} Returns `true` if the objects are equivalent, else `false`.
+	 */
+	function baseIsEqualDeep(object, other, bitmask, customizer, equalFunc, stack) {
+	  var objIsArr = isArray(object),
+	      othIsArr = isArray(other),
+	      objTag = objIsArr ? arrayTag : getTag(object),
+	      othTag = othIsArr ? arrayTag : getTag(other);
+
+	  objTag = objTag == argsTag ? objectTag : objTag;
+	  othTag = othTag == argsTag ? objectTag : othTag;
+
+	  var objIsObj = objTag == objectTag,
+	      othIsObj = othTag == objectTag,
+	      isSameTag = objTag == othTag;
+
+	  if (isSameTag && isBuffer(object)) {
+	    if (!isBuffer(other)) {
+	      return false;
+	    }
+	    objIsArr = true;
+	    objIsObj = false;
+	  }
+	  if (isSameTag && !objIsObj) {
+	    stack || (stack = new Stack);
+	    return (objIsArr || isTypedArray(object))
+	      ? equalArrays(object, other, bitmask, customizer, equalFunc, stack)
+	      : equalByTag(object, other, objTag, bitmask, customizer, equalFunc, stack);
+	  }
+	  if (!(bitmask & COMPARE_PARTIAL_FLAG)) {
+	    var objIsWrapped = objIsObj && hasOwnProperty.call(object, '__wrapped__'),
+	        othIsWrapped = othIsObj && hasOwnProperty.call(other, '__wrapped__');
+
+	    if (objIsWrapped || othIsWrapped) {
+	      var objUnwrapped = objIsWrapped ? object.value() : object,
+	          othUnwrapped = othIsWrapped ? other.value() : other;
+
+	      stack || (stack = new Stack);
+	      return equalFunc(objUnwrapped, othUnwrapped, bitmask, customizer, stack);
+	    }
+	  }
+	  if (!isSameTag) {
+	    return false;
+	  }
+	  stack || (stack = new Stack);
+	  return equalObjects(object, other, bitmask, customizer, equalFunc, stack);
+	}
+
+	module.exports = baseIsEqualDeep;
+
+
+/***/ },
+/* 596 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var SetCache = __webpack_require__(597),
+	    arraySome = __webpack_require__(600),
+	    cacheHas = __webpack_require__(601);
+
+	/** Used to compose bitmasks for value comparisons. */
+	var COMPARE_PARTIAL_FLAG = 1,
+	    COMPARE_UNORDERED_FLAG = 2;
+
+	/**
+	 * A specialized version of `baseIsEqualDeep` for arrays with support for
+	 * partial deep comparisons.
+	 *
+	 * @private
+	 * @param {Array} array The array to compare.
+	 * @param {Array} other The other array to compare.
+	 * @param {number} bitmask The bitmask flags. See `baseIsEqual` for more details.
+	 * @param {Function} customizer The function to customize comparisons.
+	 * @param {Function} equalFunc The function to determine equivalents of values.
+	 * @param {Object} stack Tracks traversed `array` and `other` objects.
+	 * @returns {boolean} Returns `true` if the arrays are equivalent, else `false`.
+	 */
+	function equalArrays(array, other, bitmask, customizer, equalFunc, stack) {
+	  var isPartial = bitmask & COMPARE_PARTIAL_FLAG,
+	      arrLength = array.length,
+	      othLength = other.length;
+
+	  if (arrLength != othLength && !(isPartial && othLength > arrLength)) {
+	    return false;
+	  }
+	  // Assume cyclic values are equal.
+	  var stacked = stack.get(array);
+	  if (stacked && stack.get(other)) {
+	    return stacked == other;
+	  }
+	  var index = -1,
+	      result = true,
+	      seen = (bitmask & COMPARE_UNORDERED_FLAG) ? new SetCache : undefined;
+
+	  stack.set(array, other);
+	  stack.set(other, array);
+
+	  // Ignore non-index properties.
+	  while (++index < arrLength) {
+	    var arrValue = array[index],
+	        othValue = other[index];
+
+	    if (customizer) {
+	      var compared = isPartial
+	        ? customizer(othValue, arrValue, index, other, array, stack)
+	        : customizer(arrValue, othValue, index, array, other, stack);
+	    }
+	    if (compared !== undefined) {
+	      if (compared) {
+	        continue;
+	      }
+	      result = false;
+	      break;
+	    }
+	    // Recursively compare arrays (susceptible to call stack limits).
+	    if (seen) {
+	      if (!arraySome(other, function(othValue, othIndex) {
+	            if (!cacheHas(seen, othIndex) &&
+	                (arrValue === othValue || equalFunc(arrValue, othValue, bitmask, customizer, stack))) {
+	              return seen.push(othIndex);
+	            }
+	          })) {
+	        result = false;
+	        break;
+	      }
+	    } else if (!(
+	          arrValue === othValue ||
+	            equalFunc(arrValue, othValue, bitmask, customizer, stack)
+	        )) {
+	      result = false;
+	      break;
+	    }
+	  }
+	  stack['delete'](array);
+	  stack['delete'](other);
+	  return result;
+	}
+
+	module.exports = equalArrays;
+
+
+/***/ },
+/* 597 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var MapCache = __webpack_require__(579),
+	    setCacheAdd = __webpack_require__(598),
+	    setCacheHas = __webpack_require__(599);
+
+	/**
+	 *
+	 * Creates an array cache object to store unique values.
+	 *
+	 * @private
+	 * @constructor
+	 * @param {Array} [values] The values to cache.
+	 */
+	function SetCache(values) {
+	  var index = -1,
+	      length = values == null ? 0 : values.length;
+
+	  this.__data__ = new MapCache;
+	  while (++index < length) {
+	    this.add(values[index]);
+	  }
+	}
+
+	// Add methods to `SetCache`.
+	SetCache.prototype.add = SetCache.prototype.push = setCacheAdd;
+	SetCache.prototype.has = setCacheHas;
+
+	module.exports = SetCache;
+
+
+/***/ },
+/* 598 */
+/***/ function(module, exports) {
+
+	/** Used to stand-in for `undefined` hash values. */
+	var HASH_UNDEFINED = '__lodash_hash_undefined__';
+
+	/**
+	 * Adds `value` to the array cache.
+	 *
+	 * @private
+	 * @name add
+	 * @memberOf SetCache
+	 * @alias push
+	 * @param {*} value The value to cache.
+	 * @returns {Object} Returns the cache instance.
+	 */
+	function setCacheAdd(value) {
+	  this.__data__.set(value, HASH_UNDEFINED);
+	  return this;
+	}
+
+	module.exports = setCacheAdd;
+
+
+/***/ },
+/* 599 */
+/***/ function(module, exports) {
+
+	/**
+	 * Checks if `value` is in the array cache.
+	 *
+	 * @private
+	 * @name has
+	 * @memberOf SetCache
+	 * @param {*} value The value to search for.
+	 * @returns {number} Returns `true` if `value` is found, else `false`.
+	 */
+	function setCacheHas(value) {
+	  return this.__data__.has(value);
+	}
+
+	module.exports = setCacheHas;
+
+
+/***/ },
+/* 600 */
+/***/ function(module, exports) {
+
+	/**
+	 * A specialized version of `_.some` for arrays without support for iteratee
+	 * shorthands.
+	 *
+	 * @private
+	 * @param {Array} [array] The array to iterate over.
+	 * @param {Function} predicate The function invoked per iteration.
+	 * @returns {boolean} Returns `true` if any element passes the predicate check,
+	 *  else `false`.
+	 */
+	function arraySome(array, predicate) {
+	  var index = -1,
+	      length = array == null ? 0 : array.length;
+
+	  while (++index < length) {
+	    if (predicate(array[index], index, array)) {
+	      return true;
+	    }
+	  }
+	  return false;
+	}
+
+	module.exports = arraySome;
+
+
+/***/ },
+/* 601 */
+/***/ function(module, exports) {
+
+	/**
+	 * Checks if a `cache` value for `key` exists.
+	 *
+	 * @private
+	 * @param {Object} cache The cache to query.
+	 * @param {string} key The key of the entry to check.
+	 * @returns {boolean} Returns `true` if an entry for `key` exists, else `false`.
+	 */
+	function cacheHas(cache, key) {
+	  return cache.has(key);
+	}
+
+	module.exports = cacheHas;
+
+
+/***/ },
+/* 602 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var Symbol = __webpack_require__(514),
+	    Uint8Array = __webpack_require__(603),
+	    eq = __webpack_require__(562),
+	    equalArrays = __webpack_require__(596),
+	    mapToArray = __webpack_require__(604),
+	    setToArray = __webpack_require__(605);
+
+	/** Used to compose bitmasks for value comparisons. */
+	var COMPARE_PARTIAL_FLAG = 1,
+	    COMPARE_UNORDERED_FLAG = 2;
+
+	/** `Object#toString` result references. */
+	var boolTag = '[object Boolean]',
+	    dateTag = '[object Date]',
+	    errorTag = '[object Error]',
+	    mapTag = '[object Map]',
+	    numberTag = '[object Number]',
+	    regexpTag = '[object RegExp]',
+	    setTag = '[object Set]',
+	    stringTag = '[object String]',
+	    symbolTag = '[object Symbol]';
+
+	var arrayBufferTag = '[object ArrayBuffer]',
+	    dataViewTag = '[object DataView]';
+
+	/** Used to convert symbols to primitives and strings. */
+	var symbolProto = Symbol ? Symbol.prototype : undefined,
+	    symbolValueOf = symbolProto ? symbolProto.valueOf : undefined;
+
+	/**
+	 * A specialized version of `baseIsEqualDeep` for comparing objects of
+	 * the same `toStringTag`.
+	 *
+	 * **Note:** This function only supports comparing values with tags of
+	 * `Boolean`, `Date`, `Error`, `Number`, `RegExp`, or `String`.
+	 *
+	 * @private
+	 * @param {Object} object The object to compare.
+	 * @param {Object} other The other object to compare.
+	 * @param {string} tag The `toStringTag` of the objects to compare.
+	 * @param {number} bitmask The bitmask flags. See `baseIsEqual` for more details.
+	 * @param {Function} customizer The function to customize comparisons.
+	 * @param {Function} equalFunc The function to determine equivalents of values.
+	 * @param {Object} stack Tracks traversed `object` and `other` objects.
+	 * @returns {boolean} Returns `true` if the objects are equivalent, else `false`.
+	 */
+	function equalByTag(object, other, tag, bitmask, customizer, equalFunc, stack) {
+	  switch (tag) {
+	    case dataViewTag:
+	      if ((object.byteLength != other.byteLength) ||
+	          (object.byteOffset != other.byteOffset)) {
+	        return false;
+	      }
+	      object = object.buffer;
+	      other = other.buffer;
+
+	    case arrayBufferTag:
+	      if ((object.byteLength != other.byteLength) ||
+	          !equalFunc(new Uint8Array(object), new Uint8Array(other))) {
+	        return false;
+	      }
+	      return true;
+
+	    case boolTag:
+	    case dateTag:
+	    case numberTag:
+	      // Coerce booleans to `1` or `0` and dates to milliseconds.
+	      // Invalid dates are coerced to `NaN`.
+	      return eq(+object, +other);
+
+	    case errorTag:
+	      return object.name == other.name && object.message == other.message;
+
+	    case regexpTag:
+	    case stringTag:
+	      // Coerce regexes to strings and treat strings, primitives and objects,
+	      // as equal. See http://www.ecma-international.org/ecma-262/7.0/#sec-regexp.prototype.tostring
+	      // for more details.
+	      return object == (other + '');
+
+	    case mapTag:
+	      var convert = mapToArray;
+
+	    case setTag:
+	      var isPartial = bitmask & COMPARE_PARTIAL_FLAG;
+	      convert || (convert = setToArray);
+
+	      if (object.size != other.size && !isPartial) {
+	        return false;
+	      }
+	      // Assume cyclic values are equal.
+	      var stacked = stack.get(object);
+	      if (stacked) {
+	        return stacked == other;
+	      }
+	      bitmask |= COMPARE_UNORDERED_FLAG;
+
+	      // Recursively compare objects (susceptible to call stack limits).
+	      stack.set(object, other);
+	      var result = equalArrays(convert(object), convert(other), bitmask, customizer, equalFunc, stack);
+	      stack['delete'](object);
+	      return result;
+
+	    case symbolTag:
+	      if (symbolValueOf) {
+	        return symbolValueOf.call(object) == symbolValueOf.call(other);
+	      }
+	  }
+	  return false;
+	}
+
+	module.exports = equalByTag;
+
+
+/***/ },
+/* 603 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var root = __webpack_require__(509);
+
+	/** Built-in value references. */
+	var Uint8Array = root.Uint8Array;
+
+	module.exports = Uint8Array;
+
+
+/***/ },
+/* 604 */
+/***/ function(module, exports) {
+
+	/**
+	 * Converts `map` to its key-value pairs.
+	 *
+	 * @private
+	 * @param {Object} map The map to convert.
+	 * @returns {Array} Returns the key-value pairs.
+	 */
+	function mapToArray(map) {
+	  var index = -1,
+	      result = Array(map.size);
+
+	  map.forEach(function(value, key) {
+	    result[++index] = [key, value];
+	  });
+	  return result;
+	}
+
+	module.exports = mapToArray;
+
+
+/***/ },
+/* 605 */
+/***/ function(module, exports) {
+
+	/**
+	 * Converts `set` to an array of its values.
+	 *
+	 * @private
+	 * @param {Object} set The set to convert.
+	 * @returns {Array} Returns the values.
+	 */
+	function setToArray(set) {
+	  var index = -1,
+	      result = Array(set.size);
+
+	  set.forEach(function(value) {
+	    result[++index] = value;
+	  });
+	  return result;
+	}
+
+	module.exports = setToArray;
+
+
+/***/ },
+/* 606 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var getAllKeys = __webpack_require__(607);
+
+	/** Used to compose bitmasks for value comparisons. */
+	var COMPARE_PARTIAL_FLAG = 1;
+
+	/** Used for built-in method references. */
+	var objectProto = Object.prototype;
+
+	/** Used to check objects for own properties. */
+	var hasOwnProperty = objectProto.hasOwnProperty;
+
+	/**
+	 * A specialized version of `baseIsEqualDeep` for objects with support for
+	 * partial deep comparisons.
+	 *
+	 * @private
+	 * @param {Object} object The object to compare.
+	 * @param {Object} other The other object to compare.
+	 * @param {number} bitmask The bitmask flags. See `baseIsEqual` for more details.
+	 * @param {Function} customizer The function to customize comparisons.
+	 * @param {Function} equalFunc The function to determine equivalents of values.
+	 * @param {Object} stack Tracks traversed `object` and `other` objects.
+	 * @returns {boolean} Returns `true` if the objects are equivalent, else `false`.
+	 */
+	function equalObjects(object, other, bitmask, customizer, equalFunc, stack) {
+	  var isPartial = bitmask & COMPARE_PARTIAL_FLAG,
+	      objProps = getAllKeys(object),
+	      objLength = objProps.length,
+	      othProps = getAllKeys(other),
+	      othLength = othProps.length;
+
+	  if (objLength != othLength && !isPartial) {
+	    return false;
+	  }
+	  var index = objLength;
+	  while (index--) {
+	    var key = objProps[index];
+	    if (!(isPartial ? key in other : hasOwnProperty.call(other, key))) {
+	      return false;
+	    }
+	  }
+	  // Assume cyclic values are equal.
+	  var stacked = stack.get(object);
+	  if (stacked && stack.get(other)) {
+	    return stacked == other;
+	  }
+	  var result = true;
+	  stack.set(object, other);
+	  stack.set(other, object);
+
+	  var skipCtor = isPartial;
+	  while (++index < objLength) {
+	    key = objProps[index];
+	    var objValue = object[key],
+	        othValue = other[key];
+
+	    if (customizer) {
+	      var compared = isPartial
+	        ? customizer(othValue, objValue, key, other, object, stack)
+	        : customizer(objValue, othValue, key, object, other, stack);
+	    }
+	    // Recursively compare objects (susceptible to call stack limits).
+	    if (!(compared === undefined
+	          ? (objValue === othValue || equalFunc(objValue, othValue, bitmask, customizer, stack))
+	          : compared
+	        )) {
+	      result = false;
+	      break;
+	    }
+	    skipCtor || (skipCtor = key == 'constructor');
+	  }
+	  if (result && !skipCtor) {
+	    var objCtor = object.constructor,
+	        othCtor = other.constructor;
+
+	    // Non `Object` object instances with different constructors are not equal.
+	    if (objCtor != othCtor &&
+	        ('constructor' in object && 'constructor' in other) &&
+	        !(typeof objCtor == 'function' && objCtor instanceof objCtor &&
+	          typeof othCtor == 'function' && othCtor instanceof othCtor)) {
+	      result = false;
+	    }
+	  }
+	  stack['delete'](object);
+	  stack['delete'](other);
+	  return result;
+	}
+
+	module.exports = equalObjects;
+
+
+/***/ },
+/* 607 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var baseGetAllKeys = __webpack_require__(608),
+	    getSymbols = __webpack_require__(611),
+	    keys = __webpack_require__(614);
+
+	/**
+	 * Creates an array of own enumerable property names and symbols of `object`.
+	 *
+	 * @private
+	 * @param {Object} object The object to query.
+	 * @returns {Array} Returns the array of property names and symbols.
+	 */
+	function getAllKeys(object) {
+	  return baseGetAllKeys(object, keys, getSymbols);
+	}
+
+	module.exports = getAllKeys;
+
+
+/***/ },
+/* 608 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var arrayPush = __webpack_require__(609),
+	    isArray = __webpack_require__(610);
+
+	/**
+	 * The base implementation of `getAllKeys` and `getAllKeysIn` which uses
+	 * `keysFunc` and `symbolsFunc` to get the enumerable property names and
+	 * symbols of `object`.
+	 *
+	 * @private
+	 * @param {Object} object The object to query.
+	 * @param {Function} keysFunc The function to get the keys of `object`.
+	 * @param {Function} symbolsFunc The function to get the symbols of `object`.
+	 * @returns {Array} Returns the array of property names and symbols.
+	 */
+	function baseGetAllKeys(object, keysFunc, symbolsFunc) {
+	  var result = keysFunc(object);
+	  return isArray(object) ? result : arrayPush(result, symbolsFunc(object));
+	}
+
+	module.exports = baseGetAllKeys;
+
+
+/***/ },
+/* 609 */
+/***/ function(module, exports) {
+
+	/**
+	 * Appends the elements of `values` to `array`.
+	 *
+	 * @private
+	 * @param {Array} array The array to modify.
+	 * @param {Array} values The values to append.
+	 * @returns {Array} Returns `array`.
+	 */
+	function arrayPush(array, values) {
+	  var index = -1,
+	      length = values.length,
+	      offset = array.length;
+
+	  while (++index < length) {
+	    array[offset + index] = values[index];
+	  }
+	  return array;
+	}
+
+	module.exports = arrayPush;
+
+
+/***/ },
+/* 610 */
+/***/ function(module, exports) {
+
+	/**
+	 * Checks if `value` is classified as an `Array` object.
+	 *
+	 * @static
+	 * @memberOf _
+	 * @since 0.1.0
+	 * @category Lang
+	 * @param {*} value The value to check.
+	 * @returns {boolean} Returns `true` if `value` is an array, else `false`.
+	 * @example
+	 *
+	 * _.isArray([1, 2, 3]);
+	 * // => true
+	 *
+	 * _.isArray(document.body.children);
+	 * // => false
+	 *
+	 * _.isArray('abc');
+	 * // => false
+	 *
+	 * _.isArray(_.noop);
+	 * // => false
+	 */
+	var isArray = Array.isArray;
+
+	module.exports = isArray;
+
+
+/***/ },
+/* 611 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var arrayFilter = __webpack_require__(612),
+	    stubArray = __webpack_require__(613);
+
+	/** Used for built-in method references. */
+	var objectProto = Object.prototype;
+
+	/** Built-in value references. */
+	var propertyIsEnumerable = objectProto.propertyIsEnumerable;
+
+	/* Built-in method references for those with the same name as other `lodash` methods. */
+	var nativeGetSymbols = Object.getOwnPropertySymbols;
+
+	/**
+	 * Creates an array of the own enumerable symbols of `object`.
+	 *
+	 * @private
+	 * @param {Object} object The object to query.
+	 * @returns {Array} Returns the array of symbols.
+	 */
+	var getSymbols = !nativeGetSymbols ? stubArray : function(object) {
+	  if (object == null) {
+	    return [];
+	  }
+	  object = Object(object);
+	  return arrayFilter(nativeGetSymbols(object), function(symbol) {
+	    return propertyIsEnumerable.call(object, symbol);
+	  });
+	};
+
+	module.exports = getSymbols;
+
+
+/***/ },
+/* 612 */
+/***/ function(module, exports) {
+
+	/**
+	 * A specialized version of `_.filter` for arrays without support for
+	 * iteratee shorthands.
+	 *
+	 * @private
+	 * @param {Array} [array] The array to iterate over.
+	 * @param {Function} predicate The function invoked per iteration.
+	 * @returns {Array} Returns the new filtered array.
+	 */
+	function arrayFilter(array, predicate) {
+	  var index = -1,
+	      length = array == null ? 0 : array.length,
+	      resIndex = 0,
+	      result = [];
+
+	  while (++index < length) {
+	    var value = array[index];
+	    if (predicate(value, index, array)) {
+	      result[resIndex++] = value;
+	    }
+	  }
+	  return result;
+	}
+
+	module.exports = arrayFilter;
+
+
+/***/ },
+/* 613 */
+/***/ function(module, exports) {
+
+	/**
+	 * This method returns a new empty array.
+	 *
+	 * @static
+	 * @memberOf _
+	 * @since 4.13.0
+	 * @category Util
+	 * @returns {Array} Returns the new empty array.
+	 * @example
+	 *
+	 * var arrays = _.times(2, _.stubArray);
+	 *
+	 * console.log(arrays);
+	 * // => [[], []]
+	 *
+	 * console.log(arrays[0] === arrays[1]);
+	 * // => false
+	 */
+	function stubArray() {
+	  return [];
+	}
+
+	module.exports = stubArray;
+
+
+/***/ },
+/* 614 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var arrayLikeKeys = __webpack_require__(615),
+	    baseKeys = __webpack_require__(627),
+	    isArrayLike = __webpack_require__(631);
+
+	/**
+	 * Creates an array of the own enumerable property names of `object`.
+	 *
+	 * **Note:** Non-object values are coerced to objects. See the
+	 * [ES spec](http://ecma-international.org/ecma-262/7.0/#sec-object.keys)
+	 * for more details.
+	 *
+	 * @static
+	 * @since 0.1.0
+	 * @memberOf _
+	 * @category Object
+	 * @param {Object} object The object to query.
+	 * @returns {Array} Returns the array of property names.
+	 * @example
+	 *
+	 * function Foo() {
+	 *   this.a = 1;
+	 *   this.b = 2;
+	 * }
+	 *
+	 * Foo.prototype.c = 3;
+	 *
+	 * _.keys(new Foo);
+	 * // => ['a', 'b'] (iteration order is not guaranteed)
+	 *
+	 * _.keys('hi');
+	 * // => ['0', '1']
+	 */
+	function keys(object) {
+	  return isArrayLike(object) ? arrayLikeKeys(object) : baseKeys(object);
+	}
+
+	module.exports = keys;
+
+
+/***/ },
+/* 615 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var baseTimes = __webpack_require__(616),
+	    isArguments = __webpack_require__(617),
+	    isArray = __webpack_require__(610),
+	    isBuffer = __webpack_require__(619),
+	    isIndex = __webpack_require__(621),
+	    isTypedArray = __webpack_require__(622);
+
+	/** Used for built-in method references. */
+	var objectProto = Object.prototype;
+
+	/** Used to check objects for own properties. */
+	var hasOwnProperty = objectProto.hasOwnProperty;
+
+	/**
+	 * Creates an array of the enumerable property names of the array-like `value`.
+	 *
+	 * @private
+	 * @param {*} value The value to query.
+	 * @param {boolean} inherited Specify returning inherited property names.
+	 * @returns {Array} Returns the array of property names.
+	 */
+	function arrayLikeKeys(value, inherited) {
+	  var isArr = isArray(value),
+	      isArg = !isArr && isArguments(value),
+	      isBuff = !isArr && !isArg && isBuffer(value),
+	      isType = !isArr && !isArg && !isBuff && isTypedArray(value),
+	      skipIndexes = isArr || isArg || isBuff || isType,
+	      result = skipIndexes ? baseTimes(value.length, String) : [],
+	      length = result.length;
+
+	  for (var key in value) {
+	    if ((inherited || hasOwnProperty.call(value, key)) &&
+	        !(skipIndexes && (
+	           // Safari 9 has enumerable `arguments.length` in strict mode.
+	           key == 'length' ||
+	           // Node.js 0.10 has enumerable non-index properties on buffers.
+	           (isBuff && (key == 'offset' || key == 'parent')) ||
+	           // PhantomJS 2 has enumerable non-index properties on typed arrays.
+	           (isType && (key == 'buffer' || key == 'byteLength' || key == 'byteOffset')) ||
+	           // Skip index properties.
+	           isIndex(key, length)
+	        ))) {
+	      result.push(key);
+	    }
+	  }
+	  return result;
+	}
+
+	module.exports = arrayLikeKeys;
+
+
+/***/ },
+/* 616 */
+/***/ function(module, exports) {
+
+	/**
+	 * The base implementation of `_.times` without support for iteratee shorthands
+	 * or max array length checks.
+	 *
+	 * @private
+	 * @param {number} n The number of times to invoke `iteratee`.
+	 * @param {Function} iteratee The function invoked per iteration.
+	 * @returns {Array} Returns the array of results.
+	 */
+	function baseTimes(n, iteratee) {
+	  var index = -1,
+	      result = Array(n);
+
+	  while (++index < n) {
+	    result[index] = iteratee(index);
+	  }
+	  return result;
+	}
+
+	module.exports = baseTimes;
+
+
+/***/ },
+/* 617 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var baseIsArguments = __webpack_require__(618),
+	    isObjectLike = __webpack_require__(517);
+
+	/** Used for built-in method references. */
+	var objectProto = Object.prototype;
+
+	/** Used to check objects for own properties. */
+	var hasOwnProperty = objectProto.hasOwnProperty;
+
+	/** Built-in value references. */
+	var propertyIsEnumerable = objectProto.propertyIsEnumerable;
+
+	/**
+	 * Checks if `value` is likely an `arguments` object.
+	 *
+	 * @static
+	 * @memberOf _
+	 * @since 0.1.0
+	 * @category Lang
+	 * @param {*} value The value to check.
+	 * @returns {boolean} Returns `true` if `value` is an `arguments` object,
+	 *  else `false`.
+	 * @example
+	 *
+	 * _.isArguments(function() { return arguments; }());
+	 * // => true
+	 *
+	 * _.isArguments([1, 2, 3]);
+	 * // => false
+	 */
+	var isArguments = baseIsArguments(function() { return arguments; }()) ? baseIsArguments : function(value) {
+	  return isObjectLike(value) && hasOwnProperty.call(value, 'callee') &&
+	    !propertyIsEnumerable.call(value, 'callee');
+	};
+
+	module.exports = isArguments;
+
+
+/***/ },
+/* 618 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var baseGetTag = __webpack_require__(513),
+	    isObjectLike = __webpack_require__(517);
+
+	/** `Object#toString` result references. */
+	var argsTag = '[object Arguments]';
+
+	/**
+	 * The base implementation of `_.isArguments`.
+	 *
+	 * @private
+	 * @param {*} value The value to check.
+	 * @returns {boolean} Returns `true` if `value` is an `arguments` object,
+	 */
+	function baseIsArguments(value) {
+	  return isObjectLike(value) && baseGetTag(value) == argsTag;
+	}
+
+	module.exports = baseIsArguments;
+
+
+/***/ },
+/* 619 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/* WEBPACK VAR INJECTION */(function(module) {var root = __webpack_require__(509),
+	    stubFalse = __webpack_require__(620);
+
+	/** Detect free variable `exports`. */
+	var freeExports = typeof exports == 'object' && exports && !exports.nodeType && exports;
+
+	/** Detect free variable `module`. */
+	var freeModule = freeExports && typeof module == 'object' && module && !module.nodeType && module;
+
+	/** Detect the popular CommonJS extension `module.exports`. */
+	var moduleExports = freeModule && freeModule.exports === freeExports;
+
+	/** Built-in value references. */
+	var Buffer = moduleExports ? root.Buffer : undefined;
+
+	/* Built-in method references for those with the same name as other `lodash` methods. */
+	var nativeIsBuffer = Buffer ? Buffer.isBuffer : undefined;
+
+	/**
+	 * Checks if `value` is a buffer.
+	 *
+	 * @static
+	 * @memberOf _
+	 * @since 4.3.0
+	 * @category Lang
+	 * @param {*} value The value to check.
+	 * @returns {boolean} Returns `true` if `value` is a buffer, else `false`.
+	 * @example
+	 *
+	 * _.isBuffer(new Buffer(2));
+	 * // => true
+	 *
+	 * _.isBuffer(new Uint8Array(2));
+	 * // => false
+	 */
+	var isBuffer = nativeIsBuffer || stubFalse;
+
+	module.exports = isBuffer;
+
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(334)(module)))
+
+/***/ },
+/* 620 */
+/***/ function(module, exports) {
+
+	/**
+	 * This method returns `false`.
+	 *
+	 * @static
+	 * @memberOf _
+	 * @since 4.13.0
+	 * @category Util
+	 * @returns {boolean} Returns `false`.
+	 * @example
+	 *
+	 * _.times(2, _.stubFalse);
+	 * // => [false, false]
+	 */
+	function stubFalse() {
+	  return false;
+	}
+
+	module.exports = stubFalse;
+
+
+/***/ },
+/* 621 */
+/***/ function(module, exports) {
+
+	/** Used as references for various `Number` constants. */
+	var MAX_SAFE_INTEGER = 9007199254740991;
+
+	/** Used to detect unsigned integer values. */
+	var reIsUint = /^(?:0|[1-9]\d*)$/;
+
+	/**
+	 * Checks if `value` is a valid array-like index.
+	 *
+	 * @private
+	 * @param {*} value The value to check.
+	 * @param {number} [length=MAX_SAFE_INTEGER] The upper bounds of a valid index.
+	 * @returns {boolean} Returns `true` if `value` is a valid index, else `false`.
+	 */
+	function isIndex(value, length) {
+	  length = length == null ? MAX_SAFE_INTEGER : length;
+	  return !!length &&
+	    (typeof value == 'number' || reIsUint.test(value)) &&
+	    (value > -1 && value % 1 == 0 && value < length);
+	}
+
+	module.exports = isIndex;
+
+
+/***/ },
+/* 622 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var baseIsTypedArray = __webpack_require__(623),
+	    baseUnary = __webpack_require__(625),
+	    nodeUtil = __webpack_require__(626);
+
+	/* Node.js helper references. */
+	var nodeIsTypedArray = nodeUtil && nodeUtil.isTypedArray;
+
+	/**
+	 * Checks if `value` is classified as a typed array.
+	 *
+	 * @static
+	 * @memberOf _
+	 * @since 3.0.0
+	 * @category Lang
+	 * @param {*} value The value to check.
+	 * @returns {boolean} Returns `true` if `value` is a typed array, else `false`.
+	 * @example
+	 *
+	 * _.isTypedArray(new Uint8Array);
+	 * // => true
+	 *
+	 * _.isTypedArray([]);
+	 * // => false
+	 */
+	var isTypedArray = nodeIsTypedArray ? baseUnary(nodeIsTypedArray) : baseIsTypedArray;
+
+	module.exports = isTypedArray;
+
+
+/***/ },
+/* 623 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var baseGetTag = __webpack_require__(513),
+	    isLength = __webpack_require__(624),
+	    isObjectLike = __webpack_require__(517);
+
+	/** `Object#toString` result references. */
+	var argsTag = '[object Arguments]',
+	    arrayTag = '[object Array]',
+	    boolTag = '[object Boolean]',
+	    dateTag = '[object Date]',
+	    errorTag = '[object Error]',
+	    funcTag = '[object Function]',
+	    mapTag = '[object Map]',
+	    numberTag = '[object Number]',
+	    objectTag = '[object Object]',
+	    regexpTag = '[object RegExp]',
+	    setTag = '[object Set]',
+	    stringTag = '[object String]',
+	    weakMapTag = '[object WeakMap]';
+
+	var arrayBufferTag = '[object ArrayBuffer]',
+	    dataViewTag = '[object DataView]',
+	    float32Tag = '[object Float32Array]',
+	    float64Tag = '[object Float64Array]',
+	    int8Tag = '[object Int8Array]',
+	    int16Tag = '[object Int16Array]',
+	    int32Tag = '[object Int32Array]',
+	    uint8Tag = '[object Uint8Array]',
+	    uint8ClampedTag = '[object Uint8ClampedArray]',
+	    uint16Tag = '[object Uint16Array]',
+	    uint32Tag = '[object Uint32Array]';
+
+	/** Used to identify `toStringTag` values of typed arrays. */
+	var typedArrayTags = {};
+	typedArrayTags[float32Tag] = typedArrayTags[float64Tag] =
+	typedArrayTags[int8Tag] = typedArrayTags[int16Tag] =
+	typedArrayTags[int32Tag] = typedArrayTags[uint8Tag] =
+	typedArrayTags[uint8ClampedTag] = typedArrayTags[uint16Tag] =
+	typedArrayTags[uint32Tag] = true;
+	typedArrayTags[argsTag] = typedArrayTags[arrayTag] =
+	typedArrayTags[arrayBufferTag] = typedArrayTags[boolTag] =
+	typedArrayTags[dataViewTag] = typedArrayTags[dateTag] =
+	typedArrayTags[errorTag] = typedArrayTags[funcTag] =
+	typedArrayTags[mapTag] = typedArrayTags[numberTag] =
+	typedArrayTags[objectTag] = typedArrayTags[regexpTag] =
+	typedArrayTags[setTag] = typedArrayTags[stringTag] =
+	typedArrayTags[weakMapTag] = false;
+
+	/**
+	 * The base implementation of `_.isTypedArray` without Node.js optimizations.
+	 *
+	 * @private
+	 * @param {*} value The value to check.
+	 * @returns {boolean} Returns `true` if `value` is a typed array, else `false`.
+	 */
+	function baseIsTypedArray(value) {
+	  return isObjectLike(value) &&
+	    isLength(value.length) && !!typedArrayTags[baseGetTag(value)];
+	}
+
+	module.exports = baseIsTypedArray;
+
+
+/***/ },
+/* 624 */
+/***/ function(module, exports) {
+
+	/** Used as references for various `Number` constants. */
+	var MAX_SAFE_INTEGER = 9007199254740991;
+
+	/**
+	 * Checks if `value` is a valid array-like length.
+	 *
+	 * **Note:** This method is loosely based on
+	 * [`ToLength`](http://ecma-international.org/ecma-262/7.0/#sec-tolength).
+	 *
+	 * @static
+	 * @memberOf _
+	 * @since 4.0.0
+	 * @category Lang
+	 * @param {*} value The value to check.
+	 * @returns {boolean} Returns `true` if `value` is a valid length, else `false`.
+	 * @example
+	 *
+	 * _.isLength(3);
+	 * // => true
+	 *
+	 * _.isLength(Number.MIN_VALUE);
+	 * // => false
+	 *
+	 * _.isLength(Infinity);
+	 * // => false
+	 *
+	 * _.isLength('3');
+	 * // => false
+	 */
+	function isLength(value) {
+	  return typeof value == 'number' &&
+	    value > -1 && value % 1 == 0 && value <= MAX_SAFE_INTEGER;
+	}
+
+	module.exports = isLength;
+
+
+/***/ },
+/* 625 */
+/***/ function(module, exports) {
+
+	/**
+	 * The base implementation of `_.unary` without support for storing metadata.
+	 *
+	 * @private
+	 * @param {Function} func The function to cap arguments for.
+	 * @returns {Function} Returns the new capped function.
+	 */
+	function baseUnary(func) {
+	  return function(value) {
+	    return func(value);
+	  };
+	}
+
+	module.exports = baseUnary;
+
+
+/***/ },
+/* 626 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/* WEBPACK VAR INJECTION */(function(module) {var freeGlobal = __webpack_require__(510);
+
+	/** Detect free variable `exports`. */
+	var freeExports = typeof exports == 'object' && exports && !exports.nodeType && exports;
+
+	/** Detect free variable `module`. */
+	var freeModule = freeExports && typeof module == 'object' && module && !module.nodeType && module;
+
+	/** Detect the popular CommonJS extension `module.exports`. */
+	var moduleExports = freeModule && freeModule.exports === freeExports;
+
+	/** Detect free variable `process` from Node.js. */
+	var freeProcess = moduleExports && freeGlobal.process;
+
+	/** Used to access faster Node.js helpers. */
+	var nodeUtil = (function() {
+	  try {
+	    return freeProcess && freeProcess.binding && freeProcess.binding('util');
+	  } catch (e) {}
+	}());
+
+	module.exports = nodeUtil;
+
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(334)(module)))
+
+/***/ },
+/* 627 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var isPrototype = __webpack_require__(628),
+	    nativeKeys = __webpack_require__(629);
+
+	/** Used for built-in method references. */
+	var objectProto = Object.prototype;
+
+	/** Used to check objects for own properties. */
+	var hasOwnProperty = objectProto.hasOwnProperty;
+
+	/**
+	 * The base implementation of `_.keys` which doesn't treat sparse arrays as dense.
+	 *
+	 * @private
+	 * @param {Object} object The object to query.
+	 * @returns {Array} Returns the array of property names.
+	 */
+	function baseKeys(object) {
+	  if (!isPrototype(object)) {
+	    return nativeKeys(object);
+	  }
+	  var result = [];
+	  for (var key in Object(object)) {
+	    if (hasOwnProperty.call(object, key) && key != 'constructor') {
+	      result.push(key);
+	    }
+	  }
+	  return result;
+	}
+
+	module.exports = baseKeys;
+
+
+/***/ },
+/* 628 */
+/***/ function(module, exports) {
+
+	/** Used for built-in method references. */
+	var objectProto = Object.prototype;
+
+	/**
+	 * Checks if `value` is likely a prototype object.
+	 *
+	 * @private
+	 * @param {*} value The value to check.
+	 * @returns {boolean} Returns `true` if `value` is a prototype, else `false`.
+	 */
+	function isPrototype(value) {
+	  var Ctor = value && value.constructor,
+	      proto = (typeof Ctor == 'function' && Ctor.prototype) || objectProto;
+
+	  return value === proto;
+	}
+
+	module.exports = isPrototype;
+
+
+/***/ },
+/* 629 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var overArg = __webpack_require__(630);
+
+	/* Built-in method references for those with the same name as other `lodash` methods. */
+	var nativeKeys = overArg(Object.keys, Object);
+
+	module.exports = nativeKeys;
+
+
+/***/ },
+/* 630 */
+/***/ function(module, exports) {
+
+	/**
+	 * Creates a unary function that invokes `func` with its argument transformed.
+	 *
+	 * @private
+	 * @param {Function} func The function to wrap.
+	 * @param {Function} transform The argument transform.
+	 * @returns {Function} Returns the new function.
+	 */
+	function overArg(func, transform) {
+	  return function(arg) {
+	    return func(transform(arg));
+	  };
+	}
+
+	module.exports = overArg;
+
+
+/***/ },
+/* 631 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var isFunction = __webpack_require__(574),
+	    isLength = __webpack_require__(624);
+
+	/**
+	 * Checks if `value` is array-like. A value is considered array-like if it's
+	 * not a function and has a `value.length` that's an integer greater than or
+	 * equal to `0` and less than or equal to `Number.MAX_SAFE_INTEGER`.
+	 *
+	 * @static
+	 * @memberOf _
+	 * @since 4.0.0
+	 * @category Lang
+	 * @param {*} value The value to check.
+	 * @returns {boolean} Returns `true` if `value` is array-like, else `false`.
+	 * @example
+	 *
+	 * _.isArrayLike([1, 2, 3]);
+	 * // => true
+	 *
+	 * _.isArrayLike(document.body.children);
+	 * // => true
+	 *
+	 * _.isArrayLike('abc');
+	 * // => true
+	 *
+	 * _.isArrayLike(_.noop);
+	 * // => false
+	 */
+	function isArrayLike(value) {
+	  return value != null && isLength(value.length) && !isFunction(value);
+	}
+
+	module.exports = isArrayLike;
+
+
+/***/ },
+/* 632 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var DataView = __webpack_require__(633),
+	    Map = __webpack_require__(571),
+	    Promise = __webpack_require__(634),
+	    Set = __webpack_require__(635),
+	    WeakMap = __webpack_require__(636),
+	    baseGetTag = __webpack_require__(513),
+	    toSource = __webpack_require__(577);
+
+	/** `Object#toString` result references. */
+	var mapTag = '[object Map]',
+	    objectTag = '[object Object]',
+	    promiseTag = '[object Promise]',
+	    setTag = '[object Set]',
+	    weakMapTag = '[object WeakMap]';
+
+	var dataViewTag = '[object DataView]';
+
+	/** Used to detect maps, sets, and weakmaps. */
+	var dataViewCtorString = toSource(DataView),
+	    mapCtorString = toSource(Map),
+	    promiseCtorString = toSource(Promise),
+	    setCtorString = toSource(Set),
+	    weakMapCtorString = toSource(WeakMap);
+
+	/**
+	 * Gets the `toStringTag` of `value`.
+	 *
+	 * @private
+	 * @param {*} value The value to query.
+	 * @returns {string} Returns the `toStringTag`.
+	 */
+	var getTag = baseGetTag;
+
+	// Fallback for data views, maps, sets, and weak maps in IE 11 and promises in Node.js < 6.
+	if ((DataView && getTag(new DataView(new ArrayBuffer(1))) != dataViewTag) ||
+	    (Map && getTag(new Map) != mapTag) ||
+	    (Promise && getTag(Promise.resolve()) != promiseTag) ||
+	    (Set && getTag(new Set) != setTag) ||
+	    (WeakMap && getTag(new WeakMap) != weakMapTag)) {
+	  getTag = function(value) {
+	    var result = baseGetTag(value),
+	        Ctor = result == objectTag ? value.constructor : undefined,
+	        ctorString = Ctor ? toSource(Ctor) : '';
+
+	    if (ctorString) {
+	      switch (ctorString) {
+	        case dataViewCtorString: return dataViewTag;
+	        case mapCtorString: return mapTag;
+	        case promiseCtorString: return promiseTag;
+	        case setCtorString: return setTag;
+	        case weakMapCtorString: return weakMapTag;
+	      }
+	    }
+	    return result;
+	  };
+	}
+
+	module.exports = getTag;
+
+
+/***/ },
+/* 633 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var getNative = __webpack_require__(572),
+	    root = __webpack_require__(509);
+
+	/* Built-in method references that are verified to be native. */
+	var DataView = getNative(root, 'DataView');
+
+	module.exports = DataView;
+
+
+/***/ },
+/* 634 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var getNative = __webpack_require__(572),
+	    root = __webpack_require__(509);
+
+	/* Built-in method references that are verified to be native. */
+	var Promise = getNative(root, 'Promise');
+
+	module.exports = Promise;
+
+
+/***/ },
+/* 635 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var getNative = __webpack_require__(572),
+	    root = __webpack_require__(509);
+
+	/* Built-in method references that are verified to be native. */
+	var Set = getNative(root, 'Set');
+
+	module.exports = Set;
+
+
+/***/ },
+/* 636 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var getNative = __webpack_require__(572),
+	    root = __webpack_require__(509);
+
+	/* Built-in method references that are verified to be native. */
+	var WeakMap = getNative(root, 'WeakMap');
+
+	module.exports = WeakMap;
+
+
+/***/ },
+/* 637 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var isStrictComparable = __webpack_require__(638),
+	    keys = __webpack_require__(614);
+
+	/**
+	 * Gets the property names, values, and compare flags of `object`.
+	 *
+	 * @private
+	 * @param {Object} object The object to query.
+	 * @returns {Array} Returns the match data of `object`.
+	 */
+	function getMatchData(object) {
+	  var result = keys(object),
+	      length = result.length;
+
+	  while (length--) {
+	    var key = result[length],
+	        value = object[key];
+
+	    result[length] = [key, value, isStrictComparable(value)];
+	  }
+	  return result;
+	}
+
+	module.exports = getMatchData;
+
+
+/***/ },
+/* 638 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var isObject = __webpack_require__(507);
+
+	/**
+	 * Checks if `value` is suitable for strict equality comparisons, i.e. `===`.
+	 *
+	 * @private
+	 * @param {*} value The value to check.
+	 * @returns {boolean} Returns `true` if `value` if suitable for strict
+	 *  equality comparisons, else `false`.
+	 */
+	function isStrictComparable(value) {
+	  return value === value && !isObject(value);
+	}
+
+	module.exports = isStrictComparable;
+
+
+/***/ },
+/* 639 */
+/***/ function(module, exports) {
+
+	/**
+	 * A specialized version of `matchesProperty` for source values suitable
+	 * for strict equality comparisons, i.e. `===`.
+	 *
+	 * @private
+	 * @param {string} key The key of the property to get.
+	 * @param {*} srcValue The value to match.
+	 * @returns {Function} Returns the new spec function.
+	 */
+	function matchesStrictComparable(key, srcValue) {
+	  return function(object) {
+	    if (object == null) {
+	      return false;
+	    }
+	    return object[key] === srcValue &&
+	      (srcValue !== undefined || (key in Object(object)));
+	  };
+	}
+
+	module.exports = matchesStrictComparable;
+
+
+/***/ },
+/* 640 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var baseIsEqual = __webpack_require__(594),
+	    get = __webpack_require__(641),
+	    hasIn = __webpack_require__(652),
+	    isKey = __webpack_require__(644),
+	    isStrictComparable = __webpack_require__(638),
+	    matchesStrictComparable = __webpack_require__(639),
+	    toKey = __webpack_require__(651);
+
+	/** Used to compose bitmasks for value comparisons. */
+	var COMPARE_PARTIAL_FLAG = 1,
+	    COMPARE_UNORDERED_FLAG = 2;
+
+	/**
+	 * The base implementation of `_.matchesProperty` which doesn't clone `srcValue`.
+	 *
+	 * @private
+	 * @param {string} path The path of the property to get.
+	 * @param {*} srcValue The value to match.
+	 * @returns {Function} Returns the new spec function.
+	 */
+	function baseMatchesProperty(path, srcValue) {
+	  if (isKey(path) && isStrictComparable(srcValue)) {
+	    return matchesStrictComparable(toKey(path), srcValue);
+	  }
+	  return function(object) {
+	    var objValue = get(object, path);
+	    return (objValue === undefined && objValue === srcValue)
+	      ? hasIn(object, path)
+	      : baseIsEqual(srcValue, objValue, COMPARE_PARTIAL_FLAG | COMPARE_UNORDERED_FLAG);
+	  };
+	}
+
+	module.exports = baseMatchesProperty;
+
+
+/***/ },
+/* 641 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var baseGet = __webpack_require__(642);
+
+	/**
+	 * Gets the value at `path` of `object`. If the resolved value is
+	 * `undefined`, the `defaultValue` is returned in its place.
+	 *
+	 * @static
+	 * @memberOf _
+	 * @since 3.7.0
+	 * @category Object
+	 * @param {Object} object The object to query.
+	 * @param {Array|string} path The path of the property to get.
+	 * @param {*} [defaultValue] The value returned for `undefined` resolved values.
+	 * @returns {*} Returns the resolved value.
+	 * @example
+	 *
+	 * var object = { 'a': [{ 'b': { 'c': 3 } }] };
+	 *
+	 * _.get(object, 'a[0].b.c');
+	 * // => 3
+	 *
+	 * _.get(object, ['a', '0', 'b', 'c']);
+	 * // => 3
+	 *
+	 * _.get(object, 'a.b.c', 'default');
+	 * // => 'default'
+	 */
+	function get(object, path, defaultValue) {
+	  var result = object == null ? undefined : baseGet(object, path);
+	  return result === undefined ? defaultValue : result;
+	}
+
+	module.exports = get;
+
+
+/***/ },
+/* 642 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var castPath = __webpack_require__(643),
+	    toKey = __webpack_require__(651);
+
+	/**
+	 * The base implementation of `_.get` without support for default values.
+	 *
+	 * @private
+	 * @param {Object} object The object to query.
+	 * @param {Array|string} path The path of the property to get.
+	 * @returns {*} Returns the resolved value.
+	 */
+	function baseGet(object, path) {
+	  path = castPath(path, object);
+
+	  var index = 0,
+	      length = path.length;
+
+	  while (object != null && index < length) {
+	    object = object[toKey(path[index++])];
+	  }
+	  return (index && index == length) ? object : undefined;
+	}
+
+	module.exports = baseGet;
+
+
+/***/ },
+/* 643 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var isArray = __webpack_require__(610),
+	    isKey = __webpack_require__(644),
+	    stringToPath = __webpack_require__(645),
+	    toString = __webpack_require__(648);
+
+	/**
+	 * Casts `value` to a path array if it's not one.
+	 *
+	 * @private
+	 * @param {*} value The value to inspect.
+	 * @param {Object} [object] The object to query keys on.
+	 * @returns {Array} Returns the cast property path array.
+	 */
+	function castPath(value, object) {
+	  if (isArray(value)) {
+	    return value;
+	  }
+	  return isKey(value, object) ? [value] : stringToPath(toString(value));
+	}
+
+	module.exports = castPath;
+
+
+/***/ },
+/* 644 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var isArray = __webpack_require__(610),
+	    isSymbol = __webpack_require__(512);
+
+	/** Used to match property names within property paths. */
+	var reIsDeepProp = /\.|\[(?:[^[\]]*|(["'])(?:(?!\1)[^\\]|\\.)*?\1)\]/,
+	    reIsPlainProp = /^\w*$/;
+
+	/**
+	 * Checks if `value` is a property name and not a property path.
+	 *
+	 * @private
+	 * @param {*} value The value to check.
+	 * @param {Object} [object] The object to query keys on.
+	 * @returns {boolean} Returns `true` if `value` is a property name, else `false`.
+	 */
+	function isKey(value, object) {
+	  if (isArray(value)) {
+	    return false;
+	  }
+	  var type = typeof value;
+	  if (type == 'number' || type == 'symbol' || type == 'boolean' ||
+	      value == null || isSymbol(value)) {
+	    return true;
+	  }
+	  return reIsPlainProp.test(value) || !reIsDeepProp.test(value) ||
+	    (object != null && value in Object(object));
+	}
+
+	module.exports = isKey;
+
+
+/***/ },
+/* 645 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var memoizeCapped = __webpack_require__(646);
+
+	/** Used to match property names within property paths. */
+	var reLeadingDot = /^\./,
+	    rePropName = /[^.[\]]+|\[(?:(-?\d+(?:\.\d+)?)|(["'])((?:(?!\2)[^\\]|\\.)*?)\2)\]|(?=(?:\.|\[\])(?:\.|\[\]|$))/g;
+
+	/** Used to match backslashes in property paths. */
+	var reEscapeChar = /\\(\\)?/g;
+
+	/**
+	 * Converts `string` to a property path array.
+	 *
+	 * @private
+	 * @param {string} string The string to convert.
+	 * @returns {Array} Returns the property path array.
+	 */
+	var stringToPath = memoizeCapped(function(string) {
+	  var result = [];
+	  if (reLeadingDot.test(string)) {
+	    result.push('');
+	  }
+	  string.replace(rePropName, function(match, number, quote, string) {
+	    result.push(quote ? string.replace(reEscapeChar, '$1') : (number || match));
+	  });
+	  return result;
+	});
+
+	module.exports = stringToPath;
+
+
+/***/ },
+/* 646 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var memoize = __webpack_require__(647);
+
+	/** Used as the maximum memoize cache size. */
+	var MAX_MEMOIZE_SIZE = 500;
+
+	/**
+	 * A specialized version of `_.memoize` which clears the memoized function's
+	 * cache when it exceeds `MAX_MEMOIZE_SIZE`.
+	 *
+	 * @private
+	 * @param {Function} func The function to have its output memoized.
+	 * @returns {Function} Returns the new memoized function.
+	 */
+	function memoizeCapped(func) {
+	  var result = memoize(func, function(key) {
+	    if (cache.size === MAX_MEMOIZE_SIZE) {
+	      cache.clear();
+	    }
+	    return key;
+	  });
+
+	  var cache = result.cache;
+	  return result;
+	}
+
+	module.exports = memoizeCapped;
+
+
+/***/ },
+/* 647 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var MapCache = __webpack_require__(579);
+
+	/** Error message constants. */
+	var FUNC_ERROR_TEXT = 'Expected a function';
+
+	/**
+	 * Creates a function that memoizes the result of `func`. If `resolver` is
+	 * provided, it determines the cache key for storing the result based on the
+	 * arguments provided to the memoized function. By default, the first argument
+	 * provided to the memoized function is used as the map cache key. The `func`
+	 * is invoked with the `this` binding of the memoized function.
+	 *
+	 * **Note:** The cache is exposed as the `cache` property on the memoized
+	 * function. Its creation may be customized by replacing the `_.memoize.Cache`
+	 * constructor with one whose instances implement the
+	 * [`Map`](http://ecma-international.org/ecma-262/7.0/#sec-properties-of-the-map-prototype-object)
+	 * method interface of `clear`, `delete`, `get`, `has`, and `set`.
+	 *
+	 * @static
+	 * @memberOf _
+	 * @since 0.1.0
+	 * @category Function
+	 * @param {Function} func The function to have its output memoized.
+	 * @param {Function} [resolver] The function to resolve the cache key.
+	 * @returns {Function} Returns the new memoized function.
+	 * @example
+	 *
+	 * var object = { 'a': 1, 'b': 2 };
+	 * var other = { 'c': 3, 'd': 4 };
+	 *
+	 * var values = _.memoize(_.values);
+	 * values(object);
+	 * // => [1, 2]
+	 *
+	 * values(other);
+	 * // => [3, 4]
+	 *
+	 * object.a = 2;
+	 * values(object);
+	 * // => [1, 2]
+	 *
+	 * // Modify the result cache.
+	 * values.cache.set(object, ['a', 'b']);
+	 * values(object);
+	 * // => ['a', 'b']
+	 *
+	 * // Replace `_.memoize.Cache`.
+	 * _.memoize.Cache = WeakMap;
+	 */
+	function memoize(func, resolver) {
+	  if (typeof func != 'function' || (resolver != null && typeof resolver != 'function')) {
+	    throw new TypeError(FUNC_ERROR_TEXT);
+	  }
+	  var memoized = function() {
+	    var args = arguments,
+	        key = resolver ? resolver.apply(this, args) : args[0],
+	        cache = memoized.cache;
+
+	    if (cache.has(key)) {
+	      return cache.get(key);
+	    }
+	    var result = func.apply(this, args);
+	    memoized.cache = cache.set(key, result) || cache;
+	    return result;
+	  };
+	  memoized.cache = new (memoize.Cache || MapCache);
+	  return memoized;
+	}
+
+	// Expose `MapCache`.
+	memoize.Cache = MapCache;
+
+	module.exports = memoize;
+
+
+/***/ },
+/* 648 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var baseToString = __webpack_require__(649);
+
+	/**
+	 * Converts `value` to a string. An empty string is returned for `null`
+	 * and `undefined` values. The sign of `-0` is preserved.
+	 *
+	 * @static
+	 * @memberOf _
+	 * @since 4.0.0
+	 * @category Lang
+	 * @param {*} value The value to convert.
+	 * @returns {string} Returns the converted string.
+	 * @example
+	 *
+	 * _.toString(null);
+	 * // => ''
+	 *
+	 * _.toString(-0);
+	 * // => '-0'
+	 *
+	 * _.toString([1, 2, 3]);
+	 * // => '1,2,3'
+	 */
+	function toString(value) {
+	  return value == null ? '' : baseToString(value);
+	}
+
+	module.exports = toString;
+
+
+/***/ },
+/* 649 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var Symbol = __webpack_require__(514),
+	    arrayMap = __webpack_require__(650),
+	    isArray = __webpack_require__(610),
+	    isSymbol = __webpack_require__(512);
+
+	/** Used as references for various `Number` constants. */
+	var INFINITY = 1 / 0;
+
+	/** Used to convert symbols to primitives and strings. */
+	var symbolProto = Symbol ? Symbol.prototype : undefined,
+	    symbolToString = symbolProto ? symbolProto.toString : undefined;
+
+	/**
+	 * The base implementation of `_.toString` which doesn't convert nullish
+	 * values to empty strings.
+	 *
+	 * @private
+	 * @param {*} value The value to process.
+	 * @returns {string} Returns the string.
+	 */
+	function baseToString(value) {
+	  // Exit early for strings to avoid a performance hit in some environments.
+	  if (typeof value == 'string') {
+	    return value;
+	  }
+	  if (isArray(value)) {
+	    // Recursively convert values (susceptible to call stack limits).
+	    return arrayMap(value, baseToString) + '';
+	  }
+	  if (isSymbol(value)) {
+	    return symbolToString ? symbolToString.call(value) : '';
+	  }
+	  var result = (value + '');
+	  return (result == '0' && (1 / value) == -INFINITY) ? '-0' : result;
+	}
+
+	module.exports = baseToString;
+
+
+/***/ },
+/* 650 */
+/***/ function(module, exports) {
+
+	/**
+	 * A specialized version of `_.map` for arrays without support for iteratee
+	 * shorthands.
+	 *
+	 * @private
+	 * @param {Array} [array] The array to iterate over.
+	 * @param {Function} iteratee The function invoked per iteration.
+	 * @returns {Array} Returns the new mapped array.
+	 */
+	function arrayMap(array, iteratee) {
+	  var index = -1,
+	      length = array == null ? 0 : array.length,
+	      result = Array(length);
+
+	  while (++index < length) {
+	    result[index] = iteratee(array[index], index, array);
+	  }
+	  return result;
+	}
+
+	module.exports = arrayMap;
+
+
+/***/ },
+/* 651 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var isSymbol = __webpack_require__(512);
+
+	/** Used as references for various `Number` constants. */
+	var INFINITY = 1 / 0;
+
+	/**
+	 * Converts `value` to a string key if it's not a string or symbol.
+	 *
+	 * @private
+	 * @param {*} value The value to inspect.
+	 * @returns {string|symbol} Returns the key.
+	 */
+	function toKey(value) {
+	  if (typeof value == 'string' || isSymbol(value)) {
+	    return value;
+	  }
+	  var result = (value + '');
+	  return (result == '0' && (1 / value) == -INFINITY) ? '-0' : result;
+	}
+
+	module.exports = toKey;
+
+
+/***/ },
+/* 652 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var baseHasIn = __webpack_require__(653),
+	    hasPath = __webpack_require__(654);
+
+	/**
+	 * Checks if `path` is a direct or inherited property of `object`.
+	 *
+	 * @static
+	 * @memberOf _
+	 * @since 4.0.0
+	 * @category Object
+	 * @param {Object} object The object to query.
+	 * @param {Array|string} path The path to check.
+	 * @returns {boolean} Returns `true` if `path` exists, else `false`.
+	 * @example
+	 *
+	 * var object = _.create({ 'a': _.create({ 'b': 2 }) });
+	 *
+	 * _.hasIn(object, 'a');
+	 * // => true
+	 *
+	 * _.hasIn(object, 'a.b');
+	 * // => true
+	 *
+	 * _.hasIn(object, ['a', 'b']);
+	 * // => true
+	 *
+	 * _.hasIn(object, 'b');
+	 * // => false
+	 */
+	function hasIn(object, path) {
+	  return object != null && hasPath(object, path, baseHasIn);
+	}
+
+	module.exports = hasIn;
+
+
+/***/ },
+/* 653 */
+/***/ function(module, exports) {
+
+	/**
+	 * The base implementation of `_.hasIn` without support for deep paths.
+	 *
+	 * @private
+	 * @param {Object} [object] The object to query.
+	 * @param {Array|string} key The key to check.
+	 * @returns {boolean} Returns `true` if `key` exists, else `false`.
+	 */
+	function baseHasIn(object, key) {
+	  return object != null && key in Object(object);
+	}
+
+	module.exports = baseHasIn;
+
+
+/***/ },
+/* 654 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var castPath = __webpack_require__(643),
+	    isArguments = __webpack_require__(617),
+	    isArray = __webpack_require__(610),
+	    isIndex = __webpack_require__(621),
+	    isLength = __webpack_require__(624),
+	    toKey = __webpack_require__(651);
+
+	/**
+	 * Checks if `path` exists on `object`.
+	 *
+	 * @private
+	 * @param {Object} object The object to query.
+	 * @param {Array|string} path The path to check.
+	 * @param {Function} hasFunc The function to check properties.
+	 * @returns {boolean} Returns `true` if `path` exists, else `false`.
+	 */
+	function hasPath(object, path, hasFunc) {
+	  path = castPath(path, object);
+
+	  var index = -1,
+	      length = path.length,
+	      result = false;
+
+	  while (++index < length) {
+	    var key = toKey(path[index]);
+	    if (!(result = object != null && hasFunc(object, key))) {
+	      break;
+	    }
+	    object = object[key];
+	  }
+	  if (result || ++index != length) {
+	    return result;
+	  }
+	  length = object == null ? 0 : object.length;
+	  return !!length && isLength(length) && isIndex(key, length) &&
+	    (isArray(object) || isArguments(object));
+	}
+
+	module.exports = hasPath;
+
+
+/***/ },
+/* 655 */
+/***/ function(module, exports) {
+
+	/**
+	 * This method returns the first argument it receives.
+	 *
+	 * @static
+	 * @since 0.1.0
+	 * @memberOf _
+	 * @category Util
+	 * @param {*} value Any value.
+	 * @returns {*} Returns `value`.
+	 * @example
+	 *
+	 * var object = { 'a': 1 };
+	 *
+	 * console.log(_.identity(object) === object);
+	 * // => true
+	 */
+	function identity(value) {
+	  return value;
+	}
+
+	module.exports = identity;
+
+
+/***/ },
+/* 656 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var baseProperty = __webpack_require__(657),
+	    basePropertyDeep = __webpack_require__(658),
+	    isKey = __webpack_require__(644),
+	    toKey = __webpack_require__(651);
+
+	/**
+	 * Creates a function that returns the value at `path` of a given object.
+	 *
+	 * @static
+	 * @memberOf _
+	 * @since 2.4.0
+	 * @category Util
+	 * @param {Array|string} path The path of the property to get.
+	 * @returns {Function} Returns the new accessor function.
+	 * @example
+	 *
+	 * var objects = [
+	 *   { 'a': { 'b': 2 } },
+	 *   { 'a': { 'b': 1 } }
+	 * ];
+	 *
+	 * _.map(objects, _.property('a.b'));
+	 * // => [2, 1]
+	 *
+	 * _.map(_.sortBy(objects, _.property(['a', 'b'])), 'a.b');
+	 * // => [1, 2]
+	 */
+	function property(path) {
+	  return isKey(path) ? baseProperty(toKey(path)) : basePropertyDeep(path);
+	}
+
+	module.exports = property;
+
+
+/***/ },
+/* 657 */
+/***/ function(module, exports) {
+
+	/**
+	 * The base implementation of `_.property` without support for deep paths.
+	 *
+	 * @private
+	 * @param {string} key The key of the property to get.
+	 * @returns {Function} Returns the new accessor function.
+	 */
+	function baseProperty(key) {
+	  return function(object) {
+	    return object == null ? undefined : object[key];
+	  };
+	}
+
+	module.exports = baseProperty;
+
+
+/***/ },
+/* 658 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var baseGet = __webpack_require__(642);
+
+	/**
+	 * A specialized version of `baseProperty` which supports deep paths.
+	 *
+	 * @private
+	 * @param {Array|string} path The path of the property to get.
+	 * @returns {Function} Returns the new accessor function.
+	 */
+	function basePropertyDeep(path) {
+	  return function(object) {
+	    return baseGet(object, path);
+	  };
+	}
+
+	module.exports = basePropertyDeep;
+
+
+/***/ },
+/* 659 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var SetCache = __webpack_require__(597),
+	    arrayIncludes = __webpack_require__(660),
+	    arrayIncludesWith = __webpack_require__(665),
+	    cacheHas = __webpack_require__(601),
+	    createSet = __webpack_require__(666),
+	    setToArray = __webpack_require__(605);
+
+	/** Used as the size to enable large array optimizations. */
+	var LARGE_ARRAY_SIZE = 200;
+
+	/**
+	 * The base implementation of `_.uniqBy` without support for iteratee shorthands.
+	 *
+	 * @private
+	 * @param {Array} array The array to inspect.
+	 * @param {Function} [iteratee] The iteratee invoked per element.
+	 * @param {Function} [comparator] The comparator invoked per element.
+	 * @returns {Array} Returns the new duplicate free array.
+	 */
+	function baseUniq(array, iteratee, comparator) {
+	  var index = -1,
+	      includes = arrayIncludes,
+	      length = array.length,
+	      isCommon = true,
+	      result = [],
+	      seen = result;
+
+	  if (comparator) {
+	    isCommon = false;
+	    includes = arrayIncludesWith;
+	  }
+	  else if (length >= LARGE_ARRAY_SIZE) {
+	    var set = iteratee ? null : createSet(array);
+	    if (set) {
+	      return setToArray(set);
+	    }
+	    isCommon = false;
+	    includes = cacheHas;
+	    seen = new SetCache;
+	  }
+	  else {
+	    seen = iteratee ? [] : result;
+	  }
+	  outer:
+	  while (++index < length) {
+	    var value = array[index],
+	        computed = iteratee ? iteratee(value) : value;
+
+	    value = (comparator || value !== 0) ? value : 0;
+	    if (isCommon && computed === computed) {
+	      var seenIndex = seen.length;
+	      while (seenIndex--) {
+	        if (seen[seenIndex] === computed) {
+	          continue outer;
+	        }
+	      }
+	      if (iteratee) {
+	        seen.push(computed);
+	      }
+	      result.push(value);
+	    }
+	    else if (!includes(seen, computed, comparator)) {
+	      if (seen !== result) {
+	        seen.push(computed);
+	      }
+	      result.push(value);
+	    }
+	  }
+	  return result;
+	}
+
+	module.exports = baseUniq;
+
+
+/***/ },
+/* 660 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var baseIndexOf = __webpack_require__(661);
+
+	/**
+	 * A specialized version of `_.includes` for arrays without support for
+	 * specifying an index to search from.
+	 *
+	 * @private
+	 * @param {Array} [array] The array to inspect.
+	 * @param {*} target The value to search for.
+	 * @returns {boolean} Returns `true` if `target` is found, else `false`.
+	 */
+	function arrayIncludes(array, value) {
+	  var length = array == null ? 0 : array.length;
+	  return !!length && baseIndexOf(array, value, 0) > -1;
+	}
+
+	module.exports = arrayIncludes;
+
+
+/***/ },
+/* 661 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var baseFindIndex = __webpack_require__(662),
+	    baseIsNaN = __webpack_require__(663),
+	    strictIndexOf = __webpack_require__(664);
+
+	/**
+	 * The base implementation of `_.indexOf` without `fromIndex` bounds checks.
+	 *
+	 * @private
+	 * @param {Array} array The array to inspect.
+	 * @param {*} value The value to search for.
+	 * @param {number} fromIndex The index to search from.
+	 * @returns {number} Returns the index of the matched value, else `-1`.
+	 */
+	function baseIndexOf(array, value, fromIndex) {
+	  return value === value
+	    ? strictIndexOf(array, value, fromIndex)
+	    : baseFindIndex(array, baseIsNaN, fromIndex);
+	}
+
+	module.exports = baseIndexOf;
+
+
+/***/ },
+/* 662 */
+/***/ function(module, exports) {
+
+	/**
+	 * The base implementation of `_.findIndex` and `_.findLastIndex` without
+	 * support for iteratee shorthands.
+	 *
+	 * @private
+	 * @param {Array} array The array to inspect.
+	 * @param {Function} predicate The function invoked per iteration.
+	 * @param {number} fromIndex The index to search from.
+	 * @param {boolean} [fromRight] Specify iterating from right to left.
+	 * @returns {number} Returns the index of the matched value, else `-1`.
+	 */
+	function baseFindIndex(array, predicate, fromIndex, fromRight) {
+	  var length = array.length,
+	      index = fromIndex + (fromRight ? 1 : -1);
+
+	  while ((fromRight ? index-- : ++index < length)) {
+	    if (predicate(array[index], index, array)) {
+	      return index;
+	    }
+	  }
+	  return -1;
+	}
+
+	module.exports = baseFindIndex;
+
+
+/***/ },
+/* 663 */
+/***/ function(module, exports) {
+
+	/**
+	 * The base implementation of `_.isNaN` without support for number objects.
+	 *
+	 * @private
+	 * @param {*} value The value to check.
+	 * @returns {boolean} Returns `true` if `value` is `NaN`, else `false`.
+	 */
+	function baseIsNaN(value) {
+	  return value !== value;
+	}
+
+	module.exports = baseIsNaN;
+
+
+/***/ },
+/* 664 */
+/***/ function(module, exports) {
+
+	/**
+	 * A specialized version of `_.indexOf` which performs strict equality
+	 * comparisons of values, i.e. `===`.
+	 *
+	 * @private
+	 * @param {Array} array The array to inspect.
+	 * @param {*} value The value to search for.
+	 * @param {number} fromIndex The index to search from.
+	 * @returns {number} Returns the index of the matched value, else `-1`.
+	 */
+	function strictIndexOf(array, value, fromIndex) {
+	  var index = fromIndex - 1,
+	      length = array.length;
+
+	  while (++index < length) {
+	    if (array[index] === value) {
+	      return index;
+	    }
+	  }
+	  return -1;
+	}
+
+	module.exports = strictIndexOf;
+
+
+/***/ },
+/* 665 */
+/***/ function(module, exports) {
+
+	/**
+	 * This function is like `arrayIncludes` except that it accepts a comparator.
+	 *
+	 * @private
+	 * @param {Array} [array] The array to inspect.
+	 * @param {*} target The value to search for.
+	 * @param {Function} comparator The comparator invoked per element.
+	 * @returns {boolean} Returns `true` if `target` is found, else `false`.
+	 */
+	function arrayIncludesWith(array, value, comparator) {
+	  var index = -1,
+	      length = array == null ? 0 : array.length;
+
+	  while (++index < length) {
+	    if (comparator(value, array[index])) {
+	      return true;
+	    }
+	  }
+	  return false;
+	}
+
+	module.exports = arrayIncludesWith;
+
+
+/***/ },
+/* 666 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var Set = __webpack_require__(635),
+	    noop = __webpack_require__(667),
+	    setToArray = __webpack_require__(605);
+
+	/** Used as references for various `Number` constants. */
+	var INFINITY = 1 / 0;
+
+	/**
+	 * Creates a set object of `values`.
+	 *
+	 * @private
+	 * @param {Array} values The values to add to the set.
+	 * @returns {Object} Returns the new set.
+	 */
+	var createSet = !(Set && (1 / setToArray(new Set([,-0]))[1]) == INFINITY) ? noop : function(values) {
+	  return new Set(values);
+	};
+
+	module.exports = createSet;
+
+
+/***/ },
+/* 667 */
+/***/ function(module, exports) {
+
+	/**
+	 * This method returns `undefined`.
+	 *
+	 * @static
+	 * @memberOf _
+	 * @since 2.3.0
+	 * @category Util
+	 * @example
+	 *
+	 * _.times(2, _.noop);
+	 * // => [undefined, undefined]
+	 */
+	function noop() {
+	  // No operation performed.
+	}
+
+	module.exports = noop;
+
+
+/***/ },
+/* 668 */
+/***/ function(module, exports, __webpack_require__) {
+
 	"use strict";
 
 	function _jade_template_fn(locals) {
 	  locals = locals || {};;;
-	  var result_of_with = function ($helpers, JSON, Object, confirmDeleteOpen, mixpanelHost, open, projectId, smartHubAlerts) {
+	  var result_of_with = function ($component, $helpers, JSON, Object, open, smartHubAlerts) {
 	    var h = __webpack_require__(299).h;
 	    return {
 	      value: h("div", {
@@ -51130,45 +55435,6 @@
 	        }
 	      }, function () {
 	        var __jade_nodes = [];
-	        __jade_nodes = __jade_nodes.concat(h("mp-confirm-delete", {
-	          "attrs": {
-	            id: 'confirmDelete',
-	            'delete-button-label': 'Delete it',
-	            closeable: true,
-	            open: confirmDeleteOpen
-	          },
-	          "on": {
-	            change: function change(e) {
-	              return $helpers.handleModalChange('confirmDelete', e.detail.state);
-	            },
-	            submit: $helpers.clearAllAlerts
-	          }
-	        }, function () {
-	          var __jade_nodes = [];
-	          __jade_nodes = __jade_nodes.concat(h("div", function () {
-	            var __jade_nodes = [];
-	            __jade_nodes = __jade_nodes.concat(h("div", {
-	              "class": {
-	                'mp-confirm-delete-title': true
-	              }
-	            }, function () {
-	              var __jade_nodes = [];
-	              __jade_nodes = __jade_nodes.concat("Delete all Alerts");;
-	              return __jade_nodes;
-	            }.call(this).filter(Boolean)));
-	            __jade_nodes = __jade_nodes.concat(h("div", {
-	              "class": {
-	                'mp-confirm-delete-description': true
-	              }
-	            }, function () {
-	              var __jade_nodes = [];
-	              __jade_nodes = __jade_nodes.concat("Are you sure you want to clear all alerts?");;
-	              return __jade_nodes;
-	            }.call(this).filter(Boolean)));;
-	            return __jade_nodes;
-	          }.call(this).filter(Boolean)));;
-	          return __jade_nodes;
-	        }.call(this).filter(Boolean)));
 	        __jade_nodes = __jade_nodes.concat(h("mp-drop-menu", {
 	          "attrs": {
 	            open: open
@@ -51208,8 +55474,7 @@
 	              var __jade_nodes = [];
 	              __jade_nodes = __jade_nodes.concat(h("div", {
 	                "class": {
-	                  'mp-sh-menu-title': true,
-	                  'mp-font-size-medium': true
+	                  'mp-sh-menu-title': true
 	                }
 	              }, function () {
 	                var __jade_nodes = [];
@@ -51218,13 +55483,12 @@
 	              }.call(this).filter(Boolean)));
 	              __jade_nodes = __jade_nodes.concat(h("div", {
 	                "on": {
-	                  click: $helpers.openConfirmDelete
+	                  click: $helpers.handleClearAllAlerts
 	                },
 	                "class": Object.assign({}, {
 	                  'mp-sh-hide-clear-all': smartHubAlerts.length == 0
 	                }, {
-	                  'mp-sh-menu-clear-all': true,
-	                  'mp-font-size-small': true
+	                  'mp-sh-menu-clear-all': true
 	                })
 	              }, function () {
 	                var __jade_nodes = [];
@@ -51238,29 +55502,57 @@
 	                'mp-sh-menu-divider': true
 	              }
 	            }));
-	            __jade_nodes = __jade_nodes.concat(h("div", {
-	              "class": {
-	                'mp-sh-alerts-container': true
-	              }
-	            }, function () {
+	            __jade_nodes = __jade_nodes.concat(smartHubAlerts.length > 0 ? function () {
 	              var __jade_nodes = [];
-	              __jade_nodes = __jade_nodes.concat(smartHubAlerts.length > 0 ? function () {
+	              __jade_nodes = __jade_nodes.concat(h("div", {
+	                "on": {
+	                  scroll: $helpers.fetchAlertsIfNeeded
+	                },
+	                "hook": {
+	                  insert: $helpers.fetchAlertsIfNeeded,
+	                  postpatch: $helpers.fetchAlertsIfNeeded
+	                },
+	                "class": {
+	                  'mp-sh-alerts-container': true
+	                }
+	              }, function () {
 	                var __jade_nodes = [];
 	                __jade_nodes = __jade_nodes.concat(smartHubAlerts.reduce(function (__each_nodes, smartHubAlert, $index) {
 	                  return __each_nodes.concat(function () {
 	                    var __jade_nodes = [];
-	                    __jade_nodes = __jade_nodes.concat(h("mp-smart-hub-alert", {
-	                      "attrs": {
-	                        'mixpanel-host': mixpanelHost,
-	                        'project-id': projectId,
-	                        'smart-hub-alert': JSON.stringify(smartHubAlert),
-	                        'is-link': true
-	                      },
-	                      "on": {
-	                        sentFeedback: $helpers.handleSentFeedback,
-	                        removedAlert: $helpers.handleRemovedAlert
-	                      }
-	                    }));
+	                    __jade_nodes = __jade_nodes.concat(smartHubAlert.isDeleted ? function () {
+	                      var __jade_nodes = [];
+	                      __jade_nodes = __jade_nodes.concat(h("div", {
+	                        "hook": {
+	                          insert: function insert(vnode) {
+	                            return $helpers.insertedDeletedAlert(vnode.elm, smartHubAlert);
+	                          }
+	                        },
+	                        "style": {
+	                          height: smartHubAlert.height + "px"
+	                        },
+	                        "class": {
+	                          'mp-sh-deleted-alert': true
+	                        }
+	                      }));;
+	                      return __jade_nodes;
+	                    }.call(this) : function () {
+	                      var __jade_nodes = [];
+	                      __jade_nodes = __jade_nodes.concat(h("mp-smart-hub-alert", {
+	                        "attrs": {
+	                          'project-id': $component.getAttribute("project-id") || "",
+	                          'access-token': $component.getAttribute("access-token") || "",
+	                          'display-context': "GLOBAL",
+	                          'smart-hub-alert': JSON.stringify(smartHubAlert)
+	                        },
+	                        "on": {
+	                          clickedLink: $helpers.handleClickedLink,
+	                          markedUsefulness: $helpers.handleMarkedUsefulness,
+	                          removedAlert: $helpers.handleRemovedAlert
+	                        }
+	                      }));;
+	                      return __jade_nodes;
+	                    }.call(this));
 	                    __jade_nodes = __jade_nodes.concat(h("div", {
 	                      "class": {
 	                        'mp-sh-menu-divider': true
@@ -51270,29 +55562,51 @@
 	                  }.call(this));
 	                }, []));;
 	                return __jade_nodes;
-	              }.call(this) : function () {
+	              }.call(this).filter(Boolean)));;
+	              return __jade_nodes;
+	            }.call(this) : function () {
+	              var __jade_nodes = [];
+	              __jade_nodes = __jade_nodes.concat(h("div", {
+	                "class": {
+	                  'mp-sh-empty-state': true
+	                }
+	              }, function () {
 	                var __jade_nodes = [];
 	                __jade_nodes = __jade_nodes.concat(h("div", {
 	                  "class": {
-	                    'mp-sh-alert-empty-state': true
+	                    'mp-sh-empty-state-icon': true
+	                  }
+	                }, function () {
+	                  var __jade_nodes = []; /*  TODO(mack): Add actual gif */
+	                  __jade_nodes = __jade_nodes.concat(h("svg-icon", {
+	                    "attrs": {
+	                      icon: "tv"
+	                    }
+	                  }));;
+	                  return __jade_nodes;
+	                }.call(this).filter(Boolean)));
+	                __jade_nodes = __jade_nodes.concat(h("div", {
+	                  "class": {
+	                    'mp-sh-empty-state-text-primary': true
 	                  }
 	                }, function () {
 	                  var __jade_nodes = [];
-	                  __jade_nodes = __jade_nodes.concat(h("div", {
-	                    "class": {
-	                      'mp-sh-alert-emtpy-state-text': true
-	                    }
-	                  }, function () {
-	                    var __jade_nodes = [];
-	                    __jade_nodes = __jade_nodes.concat("There are currently no insights");;
-	                    return __jade_nodes;
-	                  }.call(this).filter(Boolean)));;
+	                  __jade_nodes = __jade_nodes.concat("No current insights");;
+	                  return __jade_nodes;
+	                }.call(this).filter(Boolean)));
+	                __jade_nodes = __jade_nodes.concat(h("div", {
+	                  "class": {
+	                    'mp-sh-empty-state-text-secondary': true
+	                  }
+	                }, function () {
+	                  var __jade_nodes = [];
+	                  __jade_nodes = __jade_nodes.concat("We automatically find insights about your data and surface them here");;
 	                  return __jade_nodes;
 	                }.call(this).filter(Boolean)));;
 	                return __jade_nodes;
-	              }.call(this));;
+	              }.call(this).filter(Boolean)));;
 	              return __jade_nodes;
-	            }.call(this).filter(Boolean)));;
+	            }.call(this));;
 	            return __jade_nodes;
 	          }.call(this).filter(Boolean)));;
 	          return __jade_nodes;
@@ -51300,20 +55614,20 @@
 	        return __jade_nodes;
 	      }.call(this).filter(Boolean))
 	    };
-	  }.call(this, "$helpers" in locals ? locals.$helpers : typeof $helpers !== "undefined" ? $helpers : undefined, "JSON" in locals ? locals.JSON : typeof JSON !== "undefined" ? JSON : undefined, "Object" in locals ? locals.Object : typeof Object !== "undefined" ? Object : undefined, "confirmDeleteOpen" in locals ? locals.confirmDeleteOpen : typeof confirmDeleteOpen !== "undefined" ? confirmDeleteOpen : undefined, "mixpanelHost" in locals ? locals.mixpanelHost : typeof mixpanelHost !== "undefined" ? mixpanelHost : undefined, "open" in locals ? locals.open : typeof open !== "undefined" ? open : undefined, "projectId" in locals ? locals.projectId : typeof projectId !== "undefined" ? projectId : undefined, "smartHubAlerts" in locals ? locals.smartHubAlerts : typeof smartHubAlerts !== "undefined" ? smartHubAlerts : undefined);
+	  }.call(this, "$component" in locals ? locals.$component : typeof $component !== "undefined" ? $component : undefined, "$helpers" in locals ? locals.$helpers : typeof $helpers !== "undefined" ? $helpers : undefined, "JSON" in locals ? locals.JSON : typeof JSON !== "undefined" ? JSON : undefined, "Object" in locals ? locals.Object : typeof Object !== "undefined" ? Object : undefined, "open" in locals ? locals.open : typeof open !== "undefined" ? open : undefined, "smartHubAlerts" in locals ? locals.smartHubAlerts : typeof smartHubAlerts !== "undefined" ? smartHubAlerts : undefined);
 	  if (result_of_with) return result_of_with.value;
 	}
 	module.exports = _jade_template_fn;
 
 /***/ },
-/* 551 */
+/* 669 */
 /***/ function(module, exports) {
 
-	module.exports = "* {   -webkit-font-smoothing: antialiased; } *:focus {   outline: 0; } *::-ms-clear {   height: 0;   width: 0; } body {   color: #6d859e;   font-family: 'Helvetica Neue', 'Helvetica', 'Tahoma', 'Geneva', 'Arial', sans-serif;   font-size: 13px;   font-stretch: normal;   font-weight: 400; } a, .mp-link {   cursor: pointer;   text-decoration: none; } a, .mp-link, a:visited, .mp-link:visited {   color: #3b99f0; } a:hover, .mp-link:hover {   color: #4ba8ff; } .mp-font-size-xl {   font-size: 18px; } .mp-font-size-large {   font-size: 16px; } .mp-font-size-medium {   font-size: 14px; } .mp-font-size-default {   font-size: 13px; } .mp-font-size-xs {   font-size: 11px;   text-transform: uppercase; } .mp-font-weight-bold {   font-weight: 600; } .mp-font-weight-medium {   font-weight: 500; } .mp-font-weight-regular {   font-weight: 400; } .mp-font-paragraph {   color: #6d859e;   font-size: 14px;   font-family: 'Helvetica Neue', 'Helvetica', 'Tahoma', 'Geneva', 'Arial', sans-serif;   font-stretch: normal;   font-weight: 500;   line-height: 18px; } input[type=text], textarea {   border: 1px solid #d8e0ea;   border-radius: 5px;   box-sizing: border-box;   color: #4c6072;   display: inline-block;   font-family: 'Helvetica Neue', 'Helvetica', 'Tahoma', 'Geneva', 'Arial', sans-serif;   font-size: 13px;   font-weight: 400;   padding: 8px;   transition: border-color 150ms ease-out; } input[type=text]::-webkit-input-placeholder, textarea::-webkit-input-placeholder {   color: #9bacbf !important;   font-weight: weight-normal !important; } input[type=text]::-moz-placeholder, textarea::-moz-placeholder {   color: #9bacbf !important;   font-weight: weight-normal !important; } input[type=text]:-ms-input-placeholder, textarea:-ms-input-placeholder {   color: #9bacbf !important;   font-weight: weight-normal !important; } input[type=text]::placeholder, textarea::placeholder {   color: #9bacbf !important;   font-weight: weight-normal !important; } input[type=text]:focus, textarea:focus, input[type=text]:active, textarea:active {   border-color: #3391e9;   transition: border-color 200ms ease-in; } input[type=text] {   height: 36px; } mp-truncated-text {   display: inline-block;   white-space: nowrap;   width: 100%; } svg-icon {   display: inline-block;   height: 22px;   min-height: 22px;   min-width: 22px;   position: relative;   width: 22px; } svg-icon[icon=type-boolean] #left-dot {   color: #fff;   fill: #fff; } svg-icon[icon=type-boolean] #right-dot {   color: #4c6072;   fill: #4c6072; } svg-icon[icon=lightning-bolt] #bolt, svg-icon[icon=lighting-bolt] #bolt {   color: #fff;   fill: #fff; } svg-icon[icon=alert] #circle, svg-icon[icon=alert] #stem {   color: #fff;   fill: #fff; } svg-icon svg {   height: 22px;   left: 0;   min-height: 22px;   min-width: 22px;   position: absolute;   top: 0;   width: 22px; } mp-smart-hub-dropdown {   display: -webkit-inline-box;   display: -ms-inline-flexbox;   display: inline-flex; } :host {   display: -webkit-inline-box;   display: -ms-inline-flexbox;   display: inline-flex; } .mp-sh-menu mp-drop-menu {   left: -257px;   top: 40px; } .mp-sh-menu .mp-sh-menu-container {   position: relative; } .mp-sh-menu .mp-sh-menu-container .mp-sh-triangle-up {   left: 255px;   position: absolute;   top: -19px; } .mp-sh-menu .mp-sh-menu-container .mp-sh-triangle-up svg-icon {   display: inline-block;   height: 30px;   min-height: 30px;   min-width: 30px;   position: relative;   width: 30px; } .mp-sh-menu .mp-sh-menu-container .mp-sh-triangle-up svg-icon[icon=type-boolean] #left-dot {   color: #fff;   fill: #fff; } .mp-sh-menu .mp-sh-menu-container .mp-sh-triangle-up svg-icon[icon=type-boolean] #right-dot {   color: #4c6072;   fill: #4c6072; } .mp-sh-menu .mp-sh-menu-container .mp-sh-triangle-up svg-icon[icon=lightning-bolt] #bolt, .mp-sh-menu .mp-sh-menu-container .mp-sh-triangle-up svg-icon[icon=lighting-bolt] #bolt {   color: #fff;   fill: #fff; } .mp-sh-menu .mp-sh-menu-container .mp-sh-triangle-up svg-icon[icon=alert] #circle, .mp-sh-menu .mp-sh-menu-container .mp-sh-triangle-up svg-icon[icon=alert] #stem {   color: #fff;   fill: #fff; } .mp-sh-menu .mp-sh-menu-container .mp-sh-triangle-up svg-icon svg {   height: 30px;   left: 0;   min-height: 30px;   min-width: 30px;   position: absolute;   top: 0;   width: 30px; } .mp-sh-menu .mp-sh-menu-container .mp-sh-triangle-up svg-icon svg, .mp-sh-menu .mp-sh-menu-container .mp-sh-triangle-up svg-icon path {   color: #fff;   fill: #fff;   transition: 0.2s; } .mp-sh-menu .mp-sh-menu-container .mp-sh-menu-header {   -webkit-box-align: end;       -ms-flex-align: end;           align-items: flex-end;   display: -webkit-box;   display: -ms-flexbox;   display: flex;   -webkit-box-orient: horizontal;   -webkit-box-direction: normal;       -ms-flex-direction: row;           flex-direction: row;   -webkit-box-pack: justify;       -ms-flex-pack: justify;           justify-content: space-between;   padding: 15px 20px; } .mp-sh-menu .mp-sh-menu-container .mp-sh-menu-header .mp-sh-menu-title {   color: #4c6072;   font-weight: 600; } .mp-sh-menu .mp-sh-menu-container .mp-sh-menu-header .mp-sh-menu-clear-all {   color: #4ba8ff;   cursor: pointer; } .mp-sh-menu .mp-sh-menu-container .mp-sh-menu-header .mp-sh-hide-clear-all {   display: none; } .mp-sh-menu .mp-sh-menu-container .mp-sh-menu-divider, .mp-sh-menu .mp-sh-menu-container .mp-sh-alert-divider:not(:last-child) {   border-top: 1px solid #d8e0ea;   padding: 0;   position: relative;   width: 100%; } .mp-sh-menu .mp-sh-menu-container .mp-sh-alerts-container {   max-height: 510px;   overflow-y: scroll; } .mp-sh-menu .mp-sh-menu-container .mp-sh-alerts-container .mp-sh-alert-empty-state {   -webkit-box-align: center;       -ms-flex-align: center;           align-items: center;   color: #6d859e;   display: -webkit-box;   display: -ms-flexbox;   display: flex;   -webkit-box-orient: horizontal;   -webkit-box-direction: normal;       -ms-flex-direction: row;           flex-direction: row;   font-weight: 500;   height: 100px;   -webkit-box-pack: center;       -ms-flex-pack: center;           justify-content: center;   width: 300px; } ";
+	module.exports = "* {   -webkit-font-smoothing: antialiased; } *:focus {   outline: 0; } *::-ms-clear {   height: 0;   width: 0; } body {   color: #6d859e;   font-family: 'Helvetica Neue', 'Helvetica', 'Tahoma', 'Geneva', 'Arial', sans-serif;   font-size: 13px;   font-stretch: normal;   font-weight: 400; } a, .mp-link {   cursor: pointer;   text-decoration: none; } a, .mp-link, a:visited, .mp-link:visited {   color: #3b99f0; } a:hover, .mp-link:hover {   color: #4ba8ff; } .mp-font-size-xl {   font-size: 18px; } .mp-font-size-large {   font-size: 16px; } .mp-font-size-medium {   font-size: 14px; } .mp-font-size-default {   font-size: 13px; } .mp-font-size-xs {   font-size: 11px;   text-transform: uppercase; } .mp-font-weight-bold {   font-weight: 600; } .mp-font-weight-medium {   font-weight: 500; } .mp-font-weight-regular {   font-weight: 400; } .mp-font-paragraph {   color: #6d859e;   font-size: 14px;   font-family: 'Helvetica Neue', 'Helvetica', 'Tahoma', 'Geneva', 'Arial', sans-serif;   font-stretch: normal;   font-weight: 500;   line-height: 18px; } input[type=text], textarea {   border: 1px solid #d8e0ea;   border-radius: 5px;   box-sizing: border-box;   color: #4c6072;   display: inline-block;   font-family: 'Helvetica Neue', 'Helvetica', 'Tahoma', 'Geneva', 'Arial', sans-serif;   font-size: 13px;   font-weight: 400;   padding: 8px;   transition: border-color 150ms ease-out; } input[type=text]::-webkit-input-placeholder, textarea::-webkit-input-placeholder {   color: #9bacbf !important;   font-weight: weight-normal !important; } input[type=text]::-moz-placeholder, textarea::-moz-placeholder {   color: #9bacbf !important;   font-weight: weight-normal !important; } input[type=text]:-ms-input-placeholder, textarea:-ms-input-placeholder {   color: #9bacbf !important;   font-weight: weight-normal !important; } input[type=text]::placeholder, textarea::placeholder {   color: #9bacbf !important;   font-weight: weight-normal !important; } input[type=text]:focus, textarea:focus, input[type=text]:active, textarea:active {   border-color: #3391e9;   transition: border-color 200ms ease-in; } input[type=text] {   height: 36px; } mp-truncated-text {   display: inline-block;   white-space: nowrap;   width: 100%; } svg-icon {   display: inline-block;   height: 22px;   min-height: 22px;   min-width: 22px;   position: relative;   width: 22px; } svg-icon[icon=type-boolean] #left-dot {   color: #fff;   fill: #fff; } svg-icon[icon=type-boolean] #right-dot {   color: #4c6072;   fill: #4c6072; } svg-icon[icon=lightning-bolt] #bolt, svg-icon[icon=lighting-bolt] #bolt {   color: #fff;   fill: #fff; } svg-icon[icon=alert] #circle, svg-icon[icon=alert] #stem {   color: #fff;   fill: #fff; } svg-icon svg {   height: 22px;   left: 0;   min-height: 22px;   min-width: 22px;   position: absolute;   top: 0;   width: 22px; } mp-smart-hub-dropdown {   display: -webkit-inline-box;   display: -ms-inline-flexbox;   display: inline-flex; } :host {   display: -webkit-inline-box;   display: -ms-inline-flexbox;   display: inline-flex; } .mp-sh-menu mp-drop-menu {   left: -257px;   top: 40px; } .mp-sh-menu .mp-sh-menu-container {   position: relative;   width: 375px; } .mp-sh-menu .mp-sh-menu-container .mp-sh-triangle-up {   left: 255px;   position: absolute;   top: -19px; } .mp-sh-menu .mp-sh-menu-container .mp-sh-triangle-up svg-icon {   display: inline-block;   height: 30px;   min-height: 30px;   min-width: 30px;   position: relative;   width: 30px; } .mp-sh-menu .mp-sh-menu-container .mp-sh-triangle-up svg-icon[icon=type-boolean] #left-dot {   color: #fff;   fill: #fff; } .mp-sh-menu .mp-sh-menu-container .mp-sh-triangle-up svg-icon[icon=type-boolean] #right-dot {   color: #4c6072;   fill: #4c6072; } .mp-sh-menu .mp-sh-menu-container .mp-sh-triangle-up svg-icon[icon=lightning-bolt] #bolt, .mp-sh-menu .mp-sh-menu-container .mp-sh-triangle-up svg-icon[icon=lighting-bolt] #bolt {   color: #fff;   fill: #fff; } .mp-sh-menu .mp-sh-menu-container .mp-sh-triangle-up svg-icon[icon=alert] #circle, .mp-sh-menu .mp-sh-menu-container .mp-sh-triangle-up svg-icon[icon=alert] #stem {   color: #fff;   fill: #fff; } .mp-sh-menu .mp-sh-menu-container .mp-sh-triangle-up svg-icon svg {   height: 30px;   left: 0;   min-height: 30px;   min-width: 30px;   position: absolute;   top: 0;   width: 30px; } .mp-sh-menu .mp-sh-menu-container .mp-sh-triangle-up svg-icon svg, .mp-sh-menu .mp-sh-menu-container .mp-sh-triangle-up svg-icon path {   color: #fff;   fill: #fff;   transition: 0.2s; } .mp-sh-menu .mp-sh-menu-container .mp-sh-menu-header {   -webkit-box-align: end;       -ms-flex-align: end;           align-items: flex-end;   display: -webkit-box;   display: -ms-flexbox;   display: flex;   -webkit-box-orient: horizontal;   -webkit-box-direction: normal;       -ms-flex-direction: row;           flex-direction: row;   -webkit-box-pack: justify;       -ms-flex-pack: justify;           justify-content: space-between;   padding: 15px 20px; } .mp-sh-menu .mp-sh-menu-container .mp-sh-menu-header .mp-sh-menu-title {   color: #4c6072;   font-size: 16px;   font-weight: 600; } .mp-sh-menu .mp-sh-menu-container .mp-sh-menu-header .mp-sh-menu-clear-all {   color: #4ba8ff;   cursor: pointer;   font-size: 14px; } .mp-sh-menu .mp-sh-menu-container .mp-sh-menu-header .mp-sh-hide-clear-all {   display: none; } .mp-sh-menu .mp-sh-menu-container .mp-sh-menu-divider, .mp-sh-menu .mp-sh-menu-container .mp-sh-alert-divider:not(:last-child) {   border-top: 1px solid #d8e0ea;   padding: 0;   position: relative;   width: 100%; } .mp-sh-menu .mp-sh-menu-container .mp-sh-alerts-container {   max-height: 510px;   overflow-y: scroll; } .mp-sh-menu .mp-sh-menu-container .mp-sh-alerts-container .mp-sh-deleted-alert {   background-color: #9bacbf;   transition: height 0.5s; } .mp-sh-menu .mp-sh-menu-container .mp-sh-empty-state {   -webkit-box-align: center;       -ms-flex-align: center;           align-items: center;   color: #6d859e;   display: -webkit-box;   display: -ms-flexbox;   display: flex;   -webkit-box-orient: vertical;   -webkit-box-direction: normal;       -ms-flex-direction: column;           flex-direction: column;   font-weight: 500;   -webkit-box-pack: center;       -ms-flex-pack: center;           justify-content: center;   padding: 50px 60px; } .mp-sh-menu .mp-sh-menu-container .mp-sh-empty-state .mp-sh-empty-state-icon svg-icon {   display: inline-block;   height: 192px;   min-height: 192px;   min-width: 192px;   position: relative;   width: 192px; } .mp-sh-menu .mp-sh-menu-container .mp-sh-empty-state .mp-sh-empty-state-icon svg-icon[icon=type-boolean] #left-dot {   color: #fff;   fill: #fff; } .mp-sh-menu .mp-sh-menu-container .mp-sh-empty-state .mp-sh-empty-state-icon svg-icon[icon=type-boolean] #right-dot {   color: #4c6072;   fill: #4c6072; } .mp-sh-menu .mp-sh-menu-container .mp-sh-empty-state .mp-sh-empty-state-icon svg-icon[icon=lightning-bolt] #bolt, .mp-sh-menu .mp-sh-menu-container .mp-sh-empty-state .mp-sh-empty-state-icon svg-icon[icon=lighting-bolt] #bolt {   color: #fff;   fill: #fff; } .mp-sh-menu .mp-sh-menu-container .mp-sh-empty-state .mp-sh-empty-state-icon svg-icon[icon=alert] #circle, .mp-sh-menu .mp-sh-menu-container .mp-sh-empty-state .mp-sh-empty-state-icon svg-icon[icon=alert] #stem {   color: #fff;   fill: #fff; } .mp-sh-menu .mp-sh-menu-container .mp-sh-empty-state .mp-sh-empty-state-icon svg-icon svg {   height: 192px;   left: 0;   min-height: 192px;   min-width: 192px;   position: absolute;   top: 0;   width: 192px; } .mp-sh-menu .mp-sh-menu-container .mp-sh-empty-state .mp-sh-empty-state-icon svg-icon svg, .mp-sh-menu .mp-sh-menu-container .mp-sh-empty-state .mp-sh-empty-state-icon svg-icon path {   color: #6d859e;   fill: #6d859e;   transition: 0.2s; } .mp-sh-menu .mp-sh-menu-container .mp-sh-empty-state .mp-sh-empty-state-text-primary {   color: #4c6072;   font-size: 14px;   font-weight: 600;   margin-top: 10px; } .mp-sh-menu .mp-sh-menu-container .mp-sh-empty-state .mp-sh-empty-state-text-secondary {   color: #6d859e;   font-size: 14px;   font-weight: 500;   margin-top: 10px;   text-align: center; } ";
 
 
 /***/ },
-/* 552 */
+/* 670 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -51330,11 +55644,15 @@
 
 	var _registerElement = __webpack_require__(320);
 
-	var _index = __webpack_require__(553);
+	var _index = __webpack_require__(671);
 
 	var _index2 = _interopRequireDefault(_index);
 
-	__webpack_require__(554);
+	var _index3 = __webpack_require__(672);
+
+	var _index4 = _interopRequireDefault(_index3);
+
+	__webpack_require__(673);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -51365,15 +55683,13 @@
 	        ev.stopPropagation();
 	        _this2.dispatchEvent(new CustomEvent(ev.type, ev));
 	      };
-	      this.tooltipEl.addEventListener('click', this._handleEventPropagation);
 	      this.tooltipEl.addEventListener('removedAlert', this._handleEventPropagation);
-	      this.tooltipEl.addEventListener('sentFeedback', this._handleEventPropagation);
+	      this.tooltipEl.addEventListener('markedUsefulness', this._handleEventPropagation);
 	    }
 	  }, {
 	    key: 'attachedCallback',
 	    value: function attachedCallback() {
 	      _get(_class.prototype.__proto__ || Object.getPrototypeOf(_class.prototype), 'attachedCallback', this).apply(this, arguments);
-	      document.body.appendChild(this.tooltipEl);
 	      this._updateTooltip();
 	    }
 	  }, {
@@ -51385,23 +55701,28 @@
 	        return;
 	      }
 
-	      var placement = this.getAttribute('placement');
-	      if (!this.getAttribute('offset-left') || !this.getAttribute('offset-top')) {
-	        console.error('Missing required arg offset-left/top');
+	      if (!this._parentEl || !this._placementElRect) {
+	        console.error('Missing required parentEl and/or placementElRect');
+	        return;
 	      }
 
-	      this.tooltipEl.style.visibility = 'hidden';
+	      var placement = this.getAttribute('placement');
 	      this.tooltipEl.style.position = 'absolute';
 
 	      window.requestAnimationFrame(function () {
+	        var parentElRect = _this3._parentEl.getBoundingClientRect();
+	        var placementElRect = _this3._placementElRect;
 	        var tooltipElRect = _this3.tooltipEl.getBoundingClientRect();
-	        var offsetLeft = Number(_this3.getAttribute('offset-left'));
-	        var offsetTop = Number(_this3.getAttribute('offset-top'));
-	        _this3.tooltipEl.style.left = offsetLeft - tooltipElRect.width / 2 + 'px';
+
+	        var offsetTop = placementElRect.top - parentElRect.top;
+	        var offsetLeft = placementElRect.left - parentElRect.left;
+
+	        _this3.tooltipEl.style.left = offsetLeft + placementElRect.width / 2 - tooltipElRect.width / 2 + 'px';
+
 	        if (placement === 'top') {
 	          _this3.tooltipEl.style.top = offsetTop - tooltipElRect.height + 'px';
 	        } else if (placement === 'bottom') {
-	          _this3.tooltipEl.style.top = offsetTop + 'px';
+	          _this3.tooltipEl.style.top = offsetTop + placementElRect.height + 'px';
 	        } else {
 	          console.error('Unsupported placement: ' + placement);
 	        }
@@ -51411,25 +55732,24 @@
 	  }, {
 	    key: 'detachedCallback',
 	    value: function detachedCallback() {
-	      document.body.removeChild(this.tooltipEl);
-	      this.tooltipEl.removeEventListener('click', this._handleEventPropagation);
+	      this._parentEl.removeChild(this.tooltipEl);
 	      this.tooltipEl.removeEventListener('removedAlert', this._handleEventPropagation);
-	      this.tooltipEl.removeEventListener('sentFeedback', this._handleEventPropagation);
+	      this.tooltipEl.removeEventListener('markedUsefulness', this._handleEventPropagation);
 	      _get(_class.prototype.__proto__ || Object.getPrototypeOf(_class.prototype), 'detachedCallback', this).apply(this, arguments);
 	    }
 	  }, {
 	    key: 'attributeChangedCallback',
 	    value: function attributeChangedCallback(name, oldValue, value) {
 	      _get(_class.prototype.__proto__ || Object.getPrototypeOf(_class.prototype), 'attributeChangedCallback', this).apply(this, arguments);
-	      if (['alert', 'placement'].includes(name)) {
+	      if (['access-token', 'project-id', 'alert', 'placement'].includes(name)) {
 	        this.tooltipEl.setAttribute(name, value);
 	      }
-	      this._updateTooltip();
 	    }
 	  }, {
 	    key: 'config',
 	    get: function get() {
 	      return {
+	        css: _index4.default,
 	        template: _index2.default,
 	        useShadowDom: true,
 	        defaultState: {
@@ -51438,13 +55758,28 @@
 	        }
 	      };
 	    }
+	  }, {
+	    key: 'parentEl',
+	    set: function set(parentEl) {
+	      this._parentEl = parentEl;
+	      this._parentEl.appendChild(this.tooltipEl);
+	    }
+	  }, {
+	    key: 'placementElRect',
+	    set: function set(placementElRect) {
+	      // For highcharts, the placementEl is the anomaly icon point on the chart. However, when highcharts is redrawn,
+	      // the actual point element can change. Thus the placementEl will be stale. So, instead get the bounding rect
+	      // of the placementEl right when it's set.
+	      // TODO(mack): Find cleaner way to do this.
+	      this._placementElRect = placementElRect;
+	    }
 	  }]);
 
 	  return _class;
 	}(_panel.Component));
 
 /***/ },
-/* 553 */
+/* 671 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -51457,7 +55792,14 @@
 	module.exports = _jade_template_fn;
 
 /***/ },
-/* 554 */
+/* 672 */
+/***/ function(module, exports) {
+
+	module.exports = "* {   -webkit-font-smoothing: antialiased; } *:focus {   outline: 0; } *::-ms-clear {   height: 0;   width: 0; } body {   color: #6d859e;   font-family: 'Helvetica Neue', 'Helvetica', 'Tahoma', 'Geneva', 'Arial', sans-serif;   font-size: 13px;   font-stretch: normal;   font-weight: 400; } a, .mp-link {   cursor: pointer;   text-decoration: none; } a, .mp-link, a:visited, .mp-link:visited {   color: #3b99f0; } a:hover, .mp-link:hover {   color: #4ba8ff; } .mp-font-size-xl {   font-size: 18px; } .mp-font-size-large {   font-size: 16px; } .mp-font-size-medium {   font-size: 14px; } .mp-font-size-default {   font-size: 13px; } .mp-font-size-xs {   font-size: 11px;   text-transform: uppercase; } .mp-font-weight-bold {   font-weight: 600; } .mp-font-weight-medium {   font-weight: 500; } .mp-font-weight-regular {   font-weight: 400; } .mp-font-paragraph {   color: #6d859e;   font-size: 14px;   font-family: 'Helvetica Neue', 'Helvetica', 'Tahoma', 'Geneva', 'Arial', sans-serif;   font-stretch: normal;   font-weight: 500;   line-height: 18px; } input[type=text], textarea {   border: 1px solid #d8e0ea;   border-radius: 5px;   box-sizing: border-box;   color: #4c6072;   display: inline-block;   font-family: 'Helvetica Neue', 'Helvetica', 'Tahoma', 'Geneva', 'Arial', sans-serif;   font-size: 13px;   font-weight: 400;   padding: 8px;   transition: border-color 150ms ease-out; } input[type=text]::-webkit-input-placeholder, textarea::-webkit-input-placeholder {   color: #9bacbf !important;   font-weight: weight-normal !important; } input[type=text]::-moz-placeholder, textarea::-moz-placeholder {   color: #9bacbf !important;   font-weight: weight-normal !important; } input[type=text]:-ms-input-placeholder, textarea:-ms-input-placeholder {   color: #9bacbf !important;   font-weight: weight-normal !important; } input[type=text]::placeholder, textarea::placeholder {   color: #9bacbf !important;   font-weight: weight-normal !important; } input[type=text]:focus, textarea:focus, input[type=text]:active, textarea:active {   border-color: #3391e9;   transition: border-color 200ms ease-in; } input[type=text] {   height: 36px; } mp-truncated-text {   display: inline-block;   white-space: nowrap;   width: 100%; } svg-icon {   display: inline-block;   height: 22px;   min-height: 22px;   min-width: 22px;   position: relative;   width: 22px; } svg-icon[icon=type-boolean] #left-dot {   color: #fff;   fill: #fff; } svg-icon[icon=type-boolean] #right-dot {   color: #4c6072;   fill: #4c6072; } svg-icon[icon=lightning-bolt] #bolt, svg-icon[icon=lighting-bolt] #bolt {   color: #fff;   fill: #fff; } svg-icon[icon=alert] #circle, svg-icon[icon=alert] #stem {   color: #fff;   fill: #fff; } svg-icon svg {   height: 22px;   left: 0;   min-height: 22px;   min-width: 22px;   position: absolute;   top: 0;   width: 22px; } mp-smart-hub-tooltip {   position: absolute; } :host {   position: absolute; } ";
+
+
+/***/ },
+/* 673 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -51474,11 +55816,11 @@
 
 	var _registerElement = __webpack_require__(320);
 
-	var _index = __webpack_require__(555);
+	var _index = __webpack_require__(674);
 
 	var _index2 = _interopRequireDefault(_index);
 
-	var _index3 = __webpack_require__(556);
+	var _index3 = __webpack_require__(675);
 
 	var _index4 = _interopRequireDefault(_index3);
 
@@ -51507,18 +55849,32 @@
 	        this.update({ alert: this.getJSONAttribute(name) });
 	      } else if (name === 'placement') {
 	        this.update({ placement: value });
+	      } else if (name === 'access-token') {
+	        this.update({ accessToken: value });
+	      } else if (name === 'project-id') {
+	        this.update({ projectId: value });
 	      }
 	    }
 	  }, {
 	    key: 'config',
 	    get: function get() {
+	      var _this2 = this;
+
 	      return {
 	        css: _index4.default,
 	        template: _index2.default,
 	        useShadowDom: true,
 	        defaultState: {
 	          alert: null,
-	          placement: 'top'
+	          placement: 'top',
+	          accessToken: null,
+	          projectId: null
+	        },
+	        helpers: {
+	          handleEventPropagation: function handleEventPropagation(ev) {
+	            ev.stopPropagation();
+	            _this2.dispatchEvent(new CustomEvent(ev.type, ev));
+	          }
 	        }
 	      };
 	    }
@@ -51528,7 +55884,7 @@
 	}(_panel.Component));
 
 /***/ },
-/* 555 */
+/* 674 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -51537,7 +55893,7 @@
 
 	function _jade_template_fn(locals) {
 	  locals = locals || {};;;
-	  var result_of_with = function (JSON, Object, alert, placement) {
+	  var result_of_with = function ($helpers, JSON, Object, accessToken, alert, placement, projectId) {
 	    var h = __webpack_require__(299).h;
 	    return {
 	      value: h("div", {
@@ -51548,29 +55904,35 @@
 	        var __jade_nodes = [];
 	        __jade_nodes = __jade_nodes.concat(h("mp-smart-hub-alert", {
 	          "attrs": {
-	            'is-link': false,
+	            'access-token': accessToken || "",
+	            'project-id': projectId || "",
+	            'display-context': "VISUALIZED",
 	            'smart-hub-alert': JSON.stringify({
 	              alert: alert
 	            })
+	          },
+	          "on": {
+	            markedUsefulness: $helpers.handleEventPropagation,
+	            removedAlert: $helpers.handleEventPropagation
 	          }
 	        }));;
 	        return __jade_nodes;
 	      }.call(this).filter(Boolean))
 	    };
-	  }.call(this, "JSON" in locals ? locals.JSON : typeof JSON !== "undefined" ? JSON : undefined, "Object" in locals ? locals.Object : typeof Object !== "undefined" ? Object : undefined, "alert" in locals ? locals.alert : typeof alert !== "undefined" ? alert : undefined, "placement" in locals ? locals.placement : typeof placement !== "undefined" ? placement : undefined);
+	  }.call(this, "$helpers" in locals ? locals.$helpers : typeof $helpers !== "undefined" ? $helpers : undefined, "JSON" in locals ? locals.JSON : typeof JSON !== "undefined" ? JSON : undefined, "Object" in locals ? locals.Object : typeof Object !== "undefined" ? Object : undefined, "accessToken" in locals ? locals.accessToken : typeof accessToken !== "undefined" ? accessToken : undefined, "alert" in locals ? locals.alert : typeof alert !== "undefined" ? alert : undefined, "placement" in locals ? locals.placement : typeof placement !== "undefined" ? placement : undefined, "projectId" in locals ? locals.projectId : typeof projectId !== "undefined" ? projectId : undefined);
 	  if (result_of_with) return result_of_with.value;
 	}
 	module.exports = _jade_template_fn;
 
 /***/ },
-/* 556 */
+/* 675 */
 /***/ function(module, exports) {
 
-	module.exports = "* {   -webkit-font-smoothing: antialiased; } *:focus {   outline: 0; } *::-ms-clear {   height: 0;   width: 0; } body {   color: #6d859e;   font-family: 'Helvetica Neue', 'Helvetica', 'Tahoma', 'Geneva', 'Arial', sans-serif;   font-size: 13px;   font-stretch: normal;   font-weight: 400; } a, .mp-link {   cursor: pointer;   text-decoration: none; } a, .mp-link, a:visited, .mp-link:visited {   color: #3b99f0; } a:hover, .mp-link:hover {   color: #4ba8ff; } .mp-font-size-xl {   font-size: 18px; } .mp-font-size-large {   font-size: 16px; } .mp-font-size-medium {   font-size: 14px; } .mp-font-size-default {   font-size: 13px; } .mp-font-size-xs {   font-size: 11px;   text-transform: uppercase; } .mp-font-weight-bold {   font-weight: 600; } .mp-font-weight-medium {   font-weight: 500; } .mp-font-weight-regular {   font-weight: 400; } .mp-font-paragraph {   color: #6d859e;   font-size: 14px;   font-family: 'Helvetica Neue', 'Helvetica', 'Tahoma', 'Geneva', 'Arial', sans-serif;   font-stretch: normal;   font-weight: 500;   line-height: 18px; } input[type=text], textarea {   border: 1px solid #d8e0ea;   border-radius: 5px;   box-sizing: border-box;   color: #4c6072;   display: inline-block;   font-family: 'Helvetica Neue', 'Helvetica', 'Tahoma', 'Geneva', 'Arial', sans-serif;   font-size: 13px;   font-weight: 400;   padding: 8px;   transition: border-color 150ms ease-out; } input[type=text]::-webkit-input-placeholder, textarea::-webkit-input-placeholder {   color: #9bacbf !important;   font-weight: weight-normal !important; } input[type=text]::-moz-placeholder, textarea::-moz-placeholder {   color: #9bacbf !important;   font-weight: weight-normal !important; } input[type=text]:-ms-input-placeholder, textarea:-ms-input-placeholder {   color: #9bacbf !important;   font-weight: weight-normal !important; } input[type=text]::placeholder, textarea::placeholder {   color: #9bacbf !important;   font-weight: weight-normal !important; } input[type=text]:focus, textarea:focus, input[type=text]:active, textarea:active {   border-color: #3391e9;   transition: border-color 200ms ease-in; } input[type=text] {   height: 36px; } mp-truncated-text {   display: inline-block;   white-space: nowrap;   width: 100%; } svg-icon {   display: inline-block;   height: 22px;   min-height: 22px;   min-width: 22px;   position: relative;   width: 22px; } svg-icon[icon=type-boolean] #left-dot {   color: #fff;   fill: #fff; } svg-icon[icon=type-boolean] #right-dot {   color: #4c6072;   fill: #4c6072; } svg-icon[icon=lightning-bolt] #bolt, svg-icon[icon=lighting-bolt] #bolt {   color: #fff;   fill: #fff; } svg-icon[icon=alert] #circle, svg-icon[icon=alert] #stem {   color: #fff;   fill: #fff; } svg-icon svg {   height: 22px;   left: 0;   min-height: 22px;   min-width: 22px;   position: absolute;   top: 0;   width: 22px; } mp-smart-hub-tooltip-internal {   display: inline-block; } :host {   display: inline-block; } .mp-sh-tooltip-internal-container {   border: 1px solid #ecf3f8;   border-radius: 5px;   box-shadow: 0 10px 40px rgba(0,0,0,0.15);   position: relative; } .mp-sh-tooltip-internal-container mp-smart-hub-alert {   border-radius: 5px;   overflow: hidden; } .mp-sh-tooltip-internal-container::after {   border: 5px solid transparent;   content: '';   height: 0;   position: absolute;   width: 0; } .mp-sh-tooltip-internal-container.mp-sh-tooltip-internal-placement-top {   margin-bottom: 5px; } .mp-sh-tooltip-internal-container.mp-sh-tooltip-internal-placement-top::after {   border-top-color: #fff;   left: 50%;   margin-left: -5px;   top: 100%; } .mp-sh-tooltip-internal-container.mp-sh-tooltip-internal-placement-bottom {   margin-top: 5px; } .mp-sh-tooltip-internal-container.mp-sh-tooltip-internal-placement-bottom::after {   border-bottom-color: #fff;   bottom: 100%;   left: 50%;   margin-left: -5px; } .mp-sh-tooltip-internal-container.mp-sh-tooltip-internal-placement-left {   margin-right: 5px; } .mp-sh-tooltip-internal-container.mp-sh-tooltip-internal-placement-left::after {   border-left-color: #fff;   left: 100%;   margin-top: -5px;   top: 50%; } .mp-sh-tooltip-internal-container.mp-sh-tooltip-internal-placement-right {   margin-left: 5px; } .mp-sh-tooltip-internal-container.mp-sh-tooltip-internal-placement-right::after {   border-right-color: #fff;   margin-top: -5px;   right: 100%;   top: 50%; } ";
+	module.exports = "* {   -webkit-font-smoothing: antialiased; } *:focus {   outline: 0; } *::-ms-clear {   height: 0;   width: 0; } body {   color: #6d859e;   font-family: 'Helvetica Neue', 'Helvetica', 'Tahoma', 'Geneva', 'Arial', sans-serif;   font-size: 13px;   font-stretch: normal;   font-weight: 400; } a, .mp-link {   cursor: pointer;   text-decoration: none; } a, .mp-link, a:visited, .mp-link:visited {   color: #3b99f0; } a:hover, .mp-link:hover {   color: #4ba8ff; } .mp-font-size-xl {   font-size: 18px; } .mp-font-size-large {   font-size: 16px; } .mp-font-size-medium {   font-size: 14px; } .mp-font-size-default {   font-size: 13px; } .mp-font-size-xs {   font-size: 11px;   text-transform: uppercase; } .mp-font-weight-bold {   font-weight: 600; } .mp-font-weight-medium {   font-weight: 500; } .mp-font-weight-regular {   font-weight: 400; } .mp-font-paragraph {   color: #6d859e;   font-size: 14px;   font-family: 'Helvetica Neue', 'Helvetica', 'Tahoma', 'Geneva', 'Arial', sans-serif;   font-stretch: normal;   font-weight: 500;   line-height: 18px; } input[type=text], textarea {   border: 1px solid #d8e0ea;   border-radius: 5px;   box-sizing: border-box;   color: #4c6072;   display: inline-block;   font-family: 'Helvetica Neue', 'Helvetica', 'Tahoma', 'Geneva', 'Arial', sans-serif;   font-size: 13px;   font-weight: 400;   padding: 8px;   transition: border-color 150ms ease-out; } input[type=text]::-webkit-input-placeholder, textarea::-webkit-input-placeholder {   color: #9bacbf !important;   font-weight: weight-normal !important; } input[type=text]::-moz-placeholder, textarea::-moz-placeholder {   color: #9bacbf !important;   font-weight: weight-normal !important; } input[type=text]:-ms-input-placeholder, textarea:-ms-input-placeholder {   color: #9bacbf !important;   font-weight: weight-normal !important; } input[type=text]::placeholder, textarea::placeholder {   color: #9bacbf !important;   font-weight: weight-normal !important; } input[type=text]:focus, textarea:focus, input[type=text]:active, textarea:active {   border-color: #3391e9;   transition: border-color 200ms ease-in; } input[type=text] {   height: 36px; } mp-truncated-text {   display: inline-block;   white-space: nowrap;   width: 100%; } svg-icon {   display: inline-block;   height: 22px;   min-height: 22px;   min-width: 22px;   position: relative;   width: 22px; } svg-icon[icon=type-boolean] #left-dot {   color: #fff;   fill: #fff; } svg-icon[icon=type-boolean] #right-dot {   color: #4c6072;   fill: #4c6072; } svg-icon[icon=lightning-bolt] #bolt, svg-icon[icon=lighting-bolt] #bolt {   color: #fff;   fill: #fff; } svg-icon[icon=alert] #circle, svg-icon[icon=alert] #stem {   color: #fff;   fill: #fff; } svg-icon svg {   height: 22px;   left: 0;   min-height: 22px;   min-width: 22px;   position: absolute;   top: 0;   width: 22px; } mp-smart-hub-tooltip-internal {   display: inline-block;   visibility: hidden;   z-index: 100; } :host {   display: inline-block;   visibility: hidden;   z-index: 100; } .mp-sh-tooltip-internal-container {   border: 1px solid #ecf3f8;   border-radius: 5px;   box-shadow: 0 10px 40px rgba(0,0,0,0.15);   position: relative; } .mp-sh-tooltip-internal-container mp-smart-hub-alert {   border-radius: 5px;   overflow: hidden; } .mp-sh-tooltip-internal-container::after {   border: 5px solid transparent;   content: '';   height: 0;   position: absolute;   width: 0; } .mp-sh-tooltip-internal-container.mp-sh-tooltip-internal-placement-top {   margin-bottom: 5px; } .mp-sh-tooltip-internal-container.mp-sh-tooltip-internal-placement-top::after {   border-top-color: #fff;   left: 50%;   margin-left: -5px;   top: 100%; } .mp-sh-tooltip-internal-container.mp-sh-tooltip-internal-placement-bottom {   margin-top: 5px; } .mp-sh-tooltip-internal-container.mp-sh-tooltip-internal-placement-bottom::after {   border-bottom-color: #fff;   bottom: 100%;   left: 50%;   margin-left: -5px; } .mp-sh-tooltip-internal-container.mp-sh-tooltip-internal-placement-left {   margin-right: 5px; } .mp-sh-tooltip-internal-container.mp-sh-tooltip-internal-placement-left::after {   border-left-color: #fff;   left: 100%;   margin-top: -5px;   top: 50%; } .mp-sh-tooltip-internal-container.mp-sh-tooltip-internal-placement-right {   margin-left: 5px; } .mp-sh-tooltip-internal-container.mp-sh-tooltip-internal-placement-right::after {   border-right-color: #fff;   margin-top: -5px;   right: 100%;   top: 50%; } ";
 
 
 /***/ },
-/* 557 */
+/* 676 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -51591,11 +55953,11 @@
 
 	var _function = __webpack_require__(487);
 
-	var _index = __webpack_require__(558);
+	var _index = __webpack_require__(677);
 
 	var _index2 = _interopRequireDefault(_index);
 
-	var _index3 = __webpack_require__(559);
+	var _index3 = __webpack_require__(678);
 
 	var _index4 = _interopRequireDefault(_index3);
 
@@ -51822,14 +56184,14 @@
 	}(_panel.Component));
 
 /***/ },
-/* 558 */
+/* 677 */
 /***/ function(module, exports) {
 
 	module.exports = "* {   -webkit-font-smoothing: antialiased; } *:focus {   outline: 0; } *::-ms-clear {   height: 0;   width: 0; } body {   color: #6d859e;   font-family: 'Helvetica Neue', 'Helvetica', 'Tahoma', 'Geneva', 'Arial', sans-serif;   font-size: 13px;   font-stretch: normal;   font-weight: 400; } a, .mp-link {   cursor: pointer;   text-decoration: none; } a, .mp-link, a:visited, .mp-link:visited {   color: #3b99f0; } a:hover, .mp-link:hover {   color: #4ba8ff; } .mp-font-size-xl {   font-size: 18px; } .mp-font-size-large {   font-size: 16px; } .mp-font-size-medium {   font-size: 14px; } .mp-font-size-default {   font-size: 13px; } .mp-font-size-xs {   font-size: 11px;   text-transform: uppercase; } .mp-font-weight-bold {   font-weight: 600; } .mp-font-weight-medium {   font-weight: 500; } .mp-font-weight-regular {   font-weight: 400; } .mp-font-paragraph {   color: #6d859e;   font-size: 14px;   font-family: 'Helvetica Neue', 'Helvetica', 'Tahoma', 'Geneva', 'Arial', sans-serif;   font-stretch: normal;   font-weight: 500;   line-height: 18px; } input[type=text], textarea {   border: 1px solid #d8e0ea;   border-radius: 5px;   box-sizing: border-box;   color: #4c6072;   display: inline-block;   font-family: 'Helvetica Neue', 'Helvetica', 'Tahoma', 'Geneva', 'Arial', sans-serif;   font-size: 13px;   font-weight: 400;   padding: 8px;   transition: border-color 150ms ease-out; } input[type=text]::-webkit-input-placeholder, textarea::-webkit-input-placeholder {   color: #9bacbf !important;   font-weight: weight-normal !important; } input[type=text]::-moz-placeholder, textarea::-moz-placeholder {   color: #9bacbf !important;   font-weight: weight-normal !important; } input[type=text]:-ms-input-placeholder, textarea:-ms-input-placeholder {   color: #9bacbf !important;   font-weight: weight-normal !important; } input[type=text]::placeholder, textarea::placeholder {   color: #9bacbf !important;   font-weight: weight-normal !important; } input[type=text]:focus, textarea:focus, input[type=text]:active, textarea:active {   border-color: #3391e9;   transition: border-color 200ms ease-in; } input[type=text] {   height: 36px; } mp-truncated-text {   display: inline-block;   white-space: nowrap;   width: 100%; } svg-icon {   display: inline-block;   height: 22px;   min-height: 22px;   min-width: 22px;   position: relative;   width: 22px; } svg-icon[icon=type-boolean] #left-dot {   color: #fff;   fill: #fff; } svg-icon[icon=type-boolean] #right-dot {   color: #4c6072;   fill: #4c6072; } svg-icon[icon=lightning-bolt] #bolt, svg-icon[icon=lighting-bolt] #bolt {   color: #fff;   fill: #fff; } svg-icon[icon=alert] #circle, svg-icon[icon=alert] #stem {   color: #fff;   fill: #fff; } svg-icon svg {   height: 22px;   left: 0;   min-height: 22px;   min-width: 22px;   position: absolute;   top: 0;   width: 22px; } mp-drop-menu {   border-radius: 5px;   display: -webkit-box;   display: -ms-flexbox;   display: flex;   width: 340px; } :host {   border-radius: 5px;   display: -webkit-box;   display: -ms-flexbox;   display: flex;   width: 340px; } .mp-tag-selector-container {   border-radius: inherit;   width: 100%; } .mp-tag-selector-container, .mp-tag-selector-container * {   box-sizing: border-box; } .mp-tag-selector-container .mp-tag-selector-top-input-wrapper {   margin: 0 auto;   margin-bottom: 20px;   padding: 0 20px; } .mp-tag-selector-container .mp-tag-selector-top-input-wrapper .mp-tag-selector-input-wrapper {   -webkit-box-align: center;       -ms-flex-align: center;           align-items: center;   cursor: text;   display: -webkit-box;   display: -ms-flexbox;   display: flex;   -webkit-box-orient: horizontal;   -webkit-box-direction: normal;       -ms-flex-direction: row;           flex-direction: row;   -ms-flex-wrap: wrap;       flex-wrap: wrap;   -webkit-box-pack: start;       -ms-flex-pack: start;           justify-content: flex-start;   min-height: 36px;   padding: 6px 6px 0;   position: relative;   width: 300px; } .mp-tag-selector-container .mp-tag-selector-top-input-wrapper .mp-tag-selector-input-wrapper input:focus::-webkit-contacts-auto-fill-button {   display: none;   height: 0;   margin: 0;   opacity: 0;   padding: 0;   width: 0; } .mp-tag-selector-container .mp-tag-selector-top-input-wrapper .mp-tag-selector-input-wrapper .mp-tag-selector-mp-icon {   -webkit-box-align: center;       -ms-flex-align: center;           align-items: center;   bottom: 0;   display: -webkit-box;   display: -ms-flexbox;   display: flex;   left: 8px;   position: absolute;   top: -1px; } .mp-tag-selector-container .mp-tag-selector-top-input-wrapper .mp-tag-selector-input-wrapper .mp-tag-selector-mp-icon svg-icon {   display: inline-block;   height: 22px;   min-height: 22px;   min-width: 22px;   position: relative;   width: 22px; } .mp-tag-selector-container .mp-tag-selector-top-input-wrapper .mp-tag-selector-input-wrapper .mp-tag-selector-mp-icon svg-icon[icon=type-boolean] #left-dot {   color: #fff;   fill: #fff; } .mp-tag-selector-container .mp-tag-selector-top-input-wrapper .mp-tag-selector-input-wrapper .mp-tag-selector-mp-icon svg-icon[icon=type-boolean] #right-dot {   color: #4c6072;   fill: #4c6072; } .mp-tag-selector-container .mp-tag-selector-top-input-wrapper .mp-tag-selector-input-wrapper .mp-tag-selector-mp-icon svg-icon[icon=lightning-bolt] #bolt, .mp-tag-selector-container .mp-tag-selector-top-input-wrapper .mp-tag-selector-input-wrapper .mp-tag-selector-mp-icon svg-icon[icon=lighting-bolt] #bolt {   color: #fff;   fill: #fff; } .mp-tag-selector-container .mp-tag-selector-top-input-wrapper .mp-tag-selector-input-wrapper .mp-tag-selector-mp-icon svg-icon[icon=alert] #circle, .mp-tag-selector-container .mp-tag-selector-top-input-wrapper .mp-tag-selector-input-wrapper .mp-tag-selector-mp-icon svg-icon[icon=alert] #stem {   color: #fff;   fill: #fff; } .mp-tag-selector-container .mp-tag-selector-top-input-wrapper .mp-tag-selector-input-wrapper .mp-tag-selector-mp-icon svg-icon svg {   height: 22px;   left: 0;   min-height: 22px;   min-width: 22px;   position: absolute;   top: 0;   width: 22px; } .mp-tag-selector-container .mp-tag-selector-top-input-wrapper .mp-tag-selector-input-wrapper .mp-tag-selector-mp-icon svg-icon svg, .mp-tag-selector-container .mp-tag-selector-top-input-wrapper .mp-tag-selector-input-wrapper .mp-tag-selector-mp-icon svg-icon path {   color: #9bacbf;   fill: #9bacbf;   transition: 0.2s; } .mp-tag-selector-container .mp-tag-selector-top-input-wrapper .mp-tag-selector-input-wrapper mp-tag {   margin: 0 0 6px 4px; } .mp-tag-selector-container .mp-tag-selector-top-input-wrapper .mp-tag-selector-input-wrapper .mp-tag-selector-border {   border: 1px solid #d8e0ea;   border-radius: 5px;   height: 100%;   left: 0;   pointer-events: none;   position: absolute;   top: 0;   transition: border-color 0.25s;   width: 100%; } .mp-tag-selector-container .mp-tag-selector-top-input-wrapper .mp-tag-selector-input-wrapper .mp-tag-selector-border.mp-tag-selector-error {   border-color: #e4567b; } .mp-tag-selector-container .mp-tag-selector-top-input-wrapper .mp-tag-selector-input-wrapper:active .mp-tag-selector-border {   border-color: #3b99f0; } .mp-tag-selector-container .mp-tag-selector-top-input-wrapper .mp-tag-selector-input-wrapper .mp-tag-selector-search-input {   background-color: transparent;   border: 0;   font-family: 'Helvetica Neue', 'Helvetica', 'Tahoma', 'Geneva', 'Arial', sans-serif;   font-size: 13px;   font-style: normal;   font-weight: 400;   height: auto;   line-height: 1.5;   margin-bottom: 7px;   margin-left: 6px;   max-width: 100%;   min-width: 0;   padding: 0; } .mp-tag-selector-container .mp-tag-selector-top-input-wrapper .mp-tag-selector-input-wrapper .mp-tag-selector-search-input.mp-tag-selector-empty {   padding-left: 24px;   padding-top: 1px; } .mp-tag-selector-container .mp-tag-selector-top-input-wrapper .mp-tag-selector-input-wrapper .mp-tag-selector-search-input:focus + .mp-tag-selector-border:not(.mp-tag-selector-loaded-error) {   border-color: #3b99f0; } .mp-tag-selector-container .mp-tag-selector-empty {   font-style: italic; } .mp-tag-selector-container .mp-tag-selector-hr {   background-color: #e5eef4;   height: 1px;   width: 100%; } .mp-tag-selector-container .mp-tag-selector-tag-list {   margin-bottom: 8px;   max-height: 280px;   overflow-y: auto; } .mp-tag-selector-container .mp-tag-selector-tag-list mp-list-item {   margin-left: 12px;   margin-right: 12px; } .mp-tag-selector-container .mp-tag-selector-tag-list mp-list-item svg-icon {   display: inline-block;   height: 16px;   min-height: 16px;   min-width: 16px;   position: relative;   width: 16px; } .mp-tag-selector-container .mp-tag-selector-tag-list mp-list-item svg-icon[icon=type-boolean] #left-dot {   color: #fff;   fill: #fff; } .mp-tag-selector-container .mp-tag-selector-tag-list mp-list-item svg-icon[icon=type-boolean] #right-dot {   color: #4c6072;   fill: #4c6072; } .mp-tag-selector-container .mp-tag-selector-tag-list mp-list-item svg-icon[icon=lightning-bolt] #bolt, .mp-tag-selector-container .mp-tag-selector-tag-list mp-list-item svg-icon[icon=lighting-bolt] #bolt {   color: #fff;   fill: #fff; } .mp-tag-selector-container .mp-tag-selector-tag-list mp-list-item svg-icon[icon=alert] #circle, .mp-tag-selector-container .mp-tag-selector-tag-list mp-list-item svg-icon[icon=alert] #stem {   color: #fff;   fill: #fff; } .mp-tag-selector-container .mp-tag-selector-tag-list mp-list-item svg-icon svg {   height: 16px;   left: -3px;   min-height: 16px;   min-width: 16px;   position: absolute;   top: -1px;   width: 16px; } .mp-tag-selector-container .mp-tag-selector-tag-list mp-list-item svg-icon svg, .mp-tag-selector-container .mp-tag-selector-tag-list mp-list-item svg-icon path {   color: #6d859e;   fill: #6d859e;   transition: 0s; } .mp-tag-selector-container .mp-tag-selector-tag-list mp-list-item:last-child {   margin-bottom: 0; } .mp-tag-selector-container .mp-tag-selector-tag-list mp-list-item[active='true'] svg-icon, .mp-tag-selector-container .mp-tag-selector-tag-list mp-list-item:hover svg-icon {   display: inline-block;   height: 16px;   min-height: 16px;   min-width: 16px;   position: relative;   width: 16px; } .mp-tag-selector-container .mp-tag-selector-tag-list mp-list-item[active='true'] svg-icon[icon=type-boolean] #left-dot, .mp-tag-selector-container .mp-tag-selector-tag-list mp-list-item:hover svg-icon[icon=type-boolean] #left-dot {   color: #fff;   fill: #fff; } .mp-tag-selector-container .mp-tag-selector-tag-list mp-list-item[active='true'] svg-icon[icon=type-boolean] #right-dot, .mp-tag-selector-container .mp-tag-selector-tag-list mp-list-item:hover svg-icon[icon=type-boolean] #right-dot {   color: #4c6072;   fill: #4c6072; } .mp-tag-selector-container .mp-tag-selector-tag-list mp-list-item[active='true'] svg-icon[icon=lightning-bolt] #bolt, .mp-tag-selector-container .mp-tag-selector-tag-list mp-list-item:hover svg-icon[icon=lightning-bolt] #bolt, .mp-tag-selector-container .mp-tag-selector-tag-list mp-list-item[active='true'] svg-icon[icon=lighting-bolt] #bolt, .mp-tag-selector-container .mp-tag-selector-tag-list mp-list-item:hover svg-icon[icon=lighting-bolt] #bolt {   color: #fff;   fill: #fff; } .mp-tag-selector-container .mp-tag-selector-tag-list mp-list-item[active='true'] svg-icon[icon=alert] #circle, .mp-tag-selector-container .mp-tag-selector-tag-list mp-list-item:hover svg-icon[icon=alert] #circle, .mp-tag-selector-container .mp-tag-selector-tag-list mp-list-item[active='true'] svg-icon[icon=alert] #stem, .mp-tag-selector-container .mp-tag-selector-tag-list mp-list-item:hover svg-icon[icon=alert] #stem {   color: #fff;   fill: #fff; } .mp-tag-selector-container .mp-tag-selector-tag-list mp-list-item[active='true'] svg-icon svg, .mp-tag-selector-container .mp-tag-selector-tag-list mp-list-item:hover svg-icon svg {   height: 16px;   left: -3px;   min-height: 16px;   min-width: 16px;   position: absolute;   top: -1px;   width: 16px; } .mp-tag-selector-container .mp-tag-selector-tag-list mp-list-item[active='true'] svg-icon svg, .mp-tag-selector-container .mp-tag-selector-tag-list mp-list-item:hover svg-icon svg, .mp-tag-selector-container .mp-tag-selector-tag-list mp-list-item[active='true'] svg-icon path, .mp-tag-selector-container .mp-tag-selector-tag-list mp-list-item:hover svg-icon path {   color: #4ba8ff;   fill: #4ba8ff;   transition: 0s; } .mp-tag-selector-container .mp-tag-selector-tag-list mp-list-item .mp-tag-selector-tag-list-item {   display: block; } .mp-tag-selector-create-tag-btn {   display: -webkit-box;   display: -ms-flexbox;   display: flex;   max-width: 100%;   overflow: hidden;   white-space: nowrap; } .mp-tag-selector-create-tag-btn .mp-tag-selector-copy {   color: #4c6072;   -webkit-box-flex: 0;       -ms-flex: none;           flex: none;   margin-right: 4px; } .mp-tag-selector-create-tag-btn .mp-tag-selector-label-name {   color: #3391e9;   -webkit-box-flex: 1;       -ms-flex: 1;           flex: 1;   overflow: hidden;   text-overflow: ellipsis; } .mp-tag-selector-search-input-dummy {   font-family: 'Helvetica Neue', 'Helvetica', 'Tahoma', 'Geneva', 'Arial', sans-serif;   font-size: 13px;   font-weight: 400;   padding: 0;   position: absolute;   visibility: hidden;   white-space: nowrap; } ";
 
 
 /***/ },
-/* 559 */
+/* 678 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -52120,7 +56482,7 @@
 	module.exports = _jade_template_fn;
 
 /***/ },
-/* 560 */
+/* 679 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -52141,11 +56503,11 @@
 
 	var _timingJson2 = _interopRequireDefault(_timingJson);
 
-	var _index = __webpack_require__(561);
+	var _index = __webpack_require__(680);
 
 	var _index2 = _interopRequireDefault(_index);
 
-	var _index3 = __webpack_require__(562);
+	var _index3 = __webpack_require__(681);
 
 	var _index4 = _interopRequireDefault(_index3);
 
@@ -52221,7 +56583,7 @@
 	}(_panel.Component));
 
 /***/ },
-/* 561 */
+/* 680 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -52372,14 +56734,14 @@
 	module.exports = _jade_template_fn;
 
 /***/ },
-/* 562 */
+/* 681 */
 /***/ function(module, exports) {
 
 	module.exports = "* {   -webkit-font-smoothing: antialiased; } *:focus {   outline: 0; } *::-ms-clear {   height: 0;   width: 0; } body {   color: #6d859e;   font-family: 'Helvetica Neue', 'Helvetica', 'Tahoma', 'Geneva', 'Arial', sans-serif;   font-size: 13px;   font-stretch: normal;   font-weight: 400; } a, .mp-link {   cursor: pointer;   text-decoration: none; } a, .mp-link, a:visited, .mp-link:visited {   color: #3b99f0; } a:hover, .mp-link:hover {   color: #4ba8ff; } .mp-font-size-xl {   font-size: 18px; } .mp-font-size-large {   font-size: 16px; } .mp-font-size-medium {   font-size: 14px; } .mp-font-size-default {   font-size: 13px; } .mp-font-size-xs {   font-size: 11px;   text-transform: uppercase; } .mp-font-weight-bold {   font-weight: 600; } .mp-font-weight-medium {   font-weight: 500; } .mp-font-weight-regular {   font-weight: 400; } .mp-font-paragraph {   color: #6d859e;   font-size: 14px;   font-family: 'Helvetica Neue', 'Helvetica', 'Tahoma', 'Geneva', 'Arial', sans-serif;   font-stretch: normal;   font-weight: 500;   line-height: 18px; } input[type=text], textarea {   border: 1px solid #d8e0ea;   border-radius: 5px;   box-sizing: border-box;   color: #4c6072;   display: inline-block;   font-family: 'Helvetica Neue', 'Helvetica', 'Tahoma', 'Geneva', 'Arial', sans-serif;   font-size: 13px;   font-weight: 400;   padding: 8px;   transition: border-color 150ms ease-out; } input[type=text]::-webkit-input-placeholder, textarea::-webkit-input-placeholder {   color: #9bacbf !important;   font-weight: weight-normal !important; } input[type=text]::-moz-placeholder, textarea::-moz-placeholder {   color: #9bacbf !important;   font-weight: weight-normal !important; } input[type=text]:-ms-input-placeholder, textarea:-ms-input-placeholder {   color: #9bacbf !important;   font-weight: weight-normal !important; } input[type=text]::placeholder, textarea::placeholder {   color: #9bacbf !important;   font-weight: weight-normal !important; } input[type=text]:focus, textarea:focus, input[type=text]:active, textarea:active {   border-color: #3391e9;   transition: border-color 200ms ease-in; } input[type=text] {   height: 36px; } mp-truncated-text {   display: inline-block;   white-space: nowrap;   width: 100%; } svg-icon {   display: inline-block;   height: 22px;   min-height: 22px;   min-width: 22px;   position: relative;   width: 22px; } svg-icon[icon=type-boolean] #left-dot {   color: #fff;   fill: #fff; } svg-icon[icon=type-boolean] #right-dot {   color: #4c6072;   fill: #4c6072; } svg-icon[icon=lightning-bolt] #bolt, svg-icon[icon=lighting-bolt] #bolt {   color: #fff;   fill: #fff; } svg-icon[icon=alert] #circle, svg-icon[icon=alert] #stem {   color: #fff;   fill: #fff; } svg-icon svg {   height: 22px;   left: 0;   min-height: 22px;   min-width: 22px;   position: absolute;   top: 0;   width: 22px; } mp-tutorial-tooltip {   color: rgba(255,255,255,0.64);   cursor: default;   font-weight: 500;   height: 172px;   position: absolute;   width: 424px;   z-index: 6000;   bottom: calc(100% + 12px);   left: calc(50% - 212px); } :host {   color: rgba(255,255,255,0.64);   cursor: default;   font-weight: 500;   height: 172px;   position: absolute;   width: 424px;   z-index: 6000;   bottom: calc(100% + 12px);   left: calc(50% - 212px); } mp-tutorial-tooltip[hide=\"true\"] {   pointer-events: none; } :host([hide=\"true\"]) {   pointer-events: none; } mp-tutorial-tooltip[placement=\"bottom\"] {   bottom: initial;   left: calc(50% - 212px);   top: calc(100% + 12px); } :host([placement=\"bottom\"]) {   bottom: initial;   left: calc(50% - 212px);   top: calc(100% + 12px); } mp-tutorial-tooltip[placement=\"left\"] {   bottom: initial;   left: initial;   right: calc(100% + 12px);   top: calc(50% - 86px); } :host([placement=\"left\"]) {   bottom: initial;   left: initial;   right: calc(100% + 12px);   top: calc(50% - 86px); } mp-tutorial-tooltip[placement=\"right\"] {   bottom: initial;   left: calc(100% + 12px);   top: calc(50% - 86px); } :host([placement=\"right\"]) {   bottom: initial;   left: calc(100% + 12px);   top: calc(50% - 86px); } mp-tutorial-tooltip[placement=\"center\"] {   bottom: initial;   left: calc(50% - 212px);   top: calc(50% - 86px); } :host([placement=\"center\"]) {   bottom: initial;   left: calc(50% - 212px);   top: calc(50% - 86px); } mp-tutorial-tooltip[arrow-align=\"top\"] {   bottom: initial;   top: calc(50% - 31px); } :host([arrow-align=\"top\"]) {   bottom: initial;   top: calc(50% - 31px); } mp-tutorial-tooltip[arrow-align=\"bottom\"] {   bottom: calc(50% - 24px);   top: initial; } :host([arrow-align=\"bottom\"]) {   bottom: calc(50% - 24px);   top: initial; } mp-tutorial-tooltip[arrow-align=\"left\"] {   left: calc(50% - 32px);   right: initial; } :host([arrow-align=\"left\"]) {   left: calc(50% - 32px);   right: initial; } mp-tutorial-tooltip[arrow-align=\"right\"] {   left: initial;   right: calc(50% - 36px); } :host([arrow-align=\"right\"]) {   left: initial;   right: calc(50% - 36px); } .mp-tutorial-tooltip-stage {   height: inherit; } .mp-tutorial-tooltip-wrapper {   background: #3391e9;   border-radius: 8px;   box-shadow: 0 16px 41px 0 rgba(18,82,143,0.37);   height: inherit;   opacity: 0; } .mp-tutorial-tooltip-wrapper.mp-tutorial-tooltip-in {   opacity: 1;   transition: all 400ms cubic-bezier(0.165, 0.84, 0.44, 1); } .mp-tutorial-tooltip-wrapper.mp-tutorial-tooltip-out {   opacity: 0;   transition: all 400ms cubic-bezier(0.895, 0.03, 0.685, 0.22); } .mp-tutorial-tooltip-wrapper.mp-tutorial-tooltip-placement-bottom.mp-tutorial-tooltip-in, .mp-tutorial-tooltip-wrapper.mp-tutorial-tooltip-placement-top.mp-tutorial-tooltip-in, .mp-tutorial-tooltip-wrapper.mp-tutorial-tooltip-placement-left.mp-tutorial-tooltip-in, .mp-tutorial-tooltip-wrapper.mp-tutorial-tooltip-placement-right.mp-tutorial-tooltip-in {   -webkit-transform: translate(0);           transform: translate(0); } .mp-tutorial-tooltip-wrapper.mp-tutorial-tooltip-placement-top, .mp-tutorial-tooltip-wrapper.mp-tutorial-tooltip-placement-top.mp-tutorial-tooltip-out {   -webkit-transform: translateY(-20px);           transform: translateY(-20px); } .mp-tutorial-tooltip-wrapper.mp-tutorial-tooltip-placement-bottom, .mp-tutorial-tooltip-wrapper.mp-tutorial-tooltip-placement-bottom.mp-tutorial-tooltip-out {   -webkit-transform: translateY(20px);           transform: translateY(20px); } .mp-tutorial-tooltip-wrapper.mp-tutorial-tooltip-placement-left, .mp-tutorial-tooltip-wrapper.mp-tutorial-tooltip-placement-left.mp-tutorial-tooltip-out {   -webkit-transform: translateX(-20px);           transform: translateX(-20px); } .mp-tutorial-tooltip-wrapper.mp-tutorial-tooltip-placement-right, .mp-tutorial-tooltip-wrapper.mp-tutorial-tooltip-placement-right.mp-tutorial-tooltip-out {   -webkit-transform: translateX(20px);           transform: translateX(20px); } .mp-tutorial-tooltip-wrapper.mp-tutorial-tooltip-placement-center.mp-tutorial-tooltip-in {   -webkit-transform: scale(1);           transform: scale(1); } .mp-tutorial-tooltip-wrapper.mp-tutorial-tooltip-placement-center, .mp-tutorial-tooltip-wrapper.mp-tutorial-tooltip-placement-center.mp-tutorial-tooltip-out {   -webkit-transform: scale(0.95);           transform: scale(0.95); } .mp-tutorial-tooltip-wrapper::after {   border: 11px solid transparent;   content: '';   height: 0;   pointer-events: none;   position: absolute;   width: 0; } .mp-tutorial-tooltip-wrapper.mp-tutorial-tooltip-placement-top::after {   border-top-color: #2687e3;   left: 50%;   margin-left: -11px;   top: 100%; } .mp-tutorial-tooltip-wrapper.mp-tutorial-tooltip-placement-top.mp-tutorial-tooltip-hide-footer::after {   border-top-color: #3391e9; } .mp-tutorial-tooltip-wrapper.mp-tutorial-tooltip-placement-bottom::after {   border-bottom-color: #3391e9;   bottom: 100%;   left: 50%;   margin-left: -11px; } .mp-tutorial-tooltip-wrapper.mp-tutorial-tooltip-placement-left::after {   border-left-color: #3391e9;   left: 100%;   margin-top: -11px;   top: 50%; } .mp-tutorial-tooltip-wrapper.mp-tutorial-tooltip-placement-right::after {   border-right-color: #3391e9;   margin-top: -11px;   right: 100%;   top: 50%; } .mp-tutorial-tooltip-wrapper.mp-tutorial-tooltip-arrow-align-top.mp-tutorial-tooltip-placement-left::after, .mp-tutorial-tooltip-wrapper.mp-tutorial-tooltip-arrow-align-top.mp-tutorial-tooltip-placement-right::after {   bottom: initial;   top: 32px; } .mp-tutorial-tooltip-wrapper.mp-tutorial-tooltip-arrow-align-bottom.mp-tutorial-tooltip-placement-left::after, .mp-tutorial-tooltip-wrapper.mp-tutorial-tooltip-arrow-align-bottom.mp-tutorial-tooltip-placement-right::after {   bottom: 13px;   top: initial; } .mp-tutorial-tooltip-wrapper.mp-tutorial-tooltip-arrow-align-bottom.mp-tutorial-tooltip-placement-left:not(.mp-tutorial-tooltip-hide-footer)::after, .mp-tutorial-tooltip-wrapper.mp-tutorial-tooltip-arrow-align-bottom.mp-tutorial-tooltip-placement-right:not(.mp-tutorial-tooltip-hide-footer)::after {   border-right-color: #2687e3; } .mp-tutorial-tooltip-wrapper.mp-tutorial-tooltip-arrow-align-right.mp-tutorial-tooltip-placement-top::after, .mp-tutorial-tooltip-wrapper.mp-tutorial-tooltip-arrow-align-right.mp-tutorial-tooltip-placement-bottom::after {   left: initial;   right: 23px; } .mp-tutorial-tooltip-wrapper.mp-tutorial-tooltip-arrow-align-left.mp-tutorial-tooltip-placement-top::after, .mp-tutorial-tooltip-wrapper.mp-tutorial-tooltip-arrow-align-left.mp-tutorial-tooltip-placement-bottom::after {   left: 32px;   right: initial; } .mp-tutorial-tooltip-close-btn {   cursor: pointer;   position: absolute;   right: 10px;   top: 10px; } .mp-tutorial-tooltip-close-btn svg-icon {   display: inline-block;   height: 22px;   min-height: 22px;   min-width: 22px;   position: relative;   width: 22px; } .mp-tutorial-tooltip-close-btn svg-icon[icon=type-boolean] #left-dot {   color: #fff;   fill: #fff; } .mp-tutorial-tooltip-close-btn svg-icon[icon=type-boolean] #right-dot {   color: #4c6072;   fill: #4c6072; } .mp-tutorial-tooltip-close-btn svg-icon[icon=lightning-bolt] #bolt, .mp-tutorial-tooltip-close-btn svg-icon[icon=lighting-bolt] #bolt {   color: #fff;   fill: #fff; } .mp-tutorial-tooltip-close-btn svg-icon[icon=alert] #circle, .mp-tutorial-tooltip-close-btn svg-icon[icon=alert] #stem {   color: #fff;   fill: #fff; } .mp-tutorial-tooltip-close-btn svg-icon svg {   height: 22px;   left: 0;   min-height: 22px;   min-width: 22px;   position: absolute;   top: 0;   width: 22px; } .mp-tutorial-tooltip-close-btn svg-icon svg, .mp-tutorial-tooltip-close-btn svg-icon path {   color: #6cb8ff;   fill: #6cb8ff;   transition: 0.2s; } .mp-tutorial-tooltip-close-btn:hover svg-icon svg, .mp-tutorial-tooltip-close-btn:hover svg-icon path {   color: #fff;   fill: #fff; } .mp-tutorial-tooltip-content {   padding: 23px 30px; } .mp-tutorial-tooltip-footer {   background: #2687e3;   border-radius: 0 0 8px 8px;   border-top: 1px solid #2687e3;   bottom: 0;   display: -webkit-box;   display: -ms-flexbox;   display: flex;   -webkit-box-orient: horizontal;   -webkit-box-direction: normal;       -ms-flex-direction: row;           flex-direction: row;   height: 42px;   -webkit-box-pack: justify;       -ms-flex-pack: justify;           justify-content: space-between;   position: absolute;   width: 100%; } .mp-tutorial-tooltip-footer ul.mp-tutorial-tooltip-steps {   list-style: none;   margin: 0;   padding: 0;   padding-left: 30px; } .mp-tutorial-tooltip-footer ul.mp-tutorial-tooltip-steps li.mp-tutorial-tooltip-step {   background: #6cb8ff;   border-radius: 50%;   float: left;   height: 6px;   margin: 17px 14px 17px 0;   position: relative;   width: 6px; } .mp-tutorial-tooltip-footer ul.mp-tutorial-tooltip-steps li.mp-tutorial-tooltip-step.mp-tutorial-tooltip-active {   background: transparent; } .mp-tutorial-tooltip-footer ul.mp-tutorial-tooltip-steps li.mp-tutorial-tooltip-step.mp-tutorial-tooltip-active::after {   border: 4px solid #ffd209;   border-radius: 50%;   box-shadow: 0 2px 3px 0 rgba(19,102,179,0.66);   content: '';   height: 4px;   left: -3px;   position: absolute;   top: -3px;   width: 4px; } .mp-tutorial-tooltip-footer .mp-tutorial-tooltip-next, .mp-tutorial-tooltip-footer .mp-tutorial-tooltip-done {   color: #6cb8ff;   cursor: pointer;   font-size: 12px;   font-weight: bold;   padding: 13px 25px 17px 0;   text-transform: uppercase; } .mp-tutorial-tooltip-footer .mp-tutorial-tooltip-next:hover, .mp-tutorial-tooltip-footer .mp-tutorial-tooltip-done:hover {   color: #fff; } ";
 
 
 /***/ },
-/* 563 */
+/* 682 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -52394,11 +56756,11 @@
 
 	var _registerElement = __webpack_require__(320);
 
-	var _index = __webpack_require__(564);
+	var _index = __webpack_require__(683);
 
 	var _index2 = _interopRequireDefault(_index);
 
-	var _index3 = __webpack_require__(565);
+	var _index3 = __webpack_require__(684);
 
 	var _index4 = _interopRequireDefault(_index3);
 
@@ -52434,7 +56796,7 @@
 	}(_panel.Component));
 
 /***/ },
-/* 564 */
+/* 683 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -52678,14 +57040,14 @@
 	module.exports = _jade_template_fn;
 
 /***/ },
-/* 565 */
+/* 684 */
 /***/ function(module, exports) {
 
 	module.exports = "* {   -webkit-font-smoothing: antialiased; } *:focus {   outline: 0; } *::-ms-clear {   height: 0;   width: 0; } body {   color: #6d859e;   font-family: 'Helvetica Neue', 'Helvetica', 'Tahoma', 'Geneva', 'Arial', sans-serif;   font-size: 13px;   font-stretch: normal;   font-weight: 400; } a, .mp-link {   cursor: pointer;   text-decoration: none; } a, .mp-link, a:visited, .mp-link:visited {   color: #3b99f0; } a:hover, .mp-link:hover {   color: #4ba8ff; } .mp-font-size-xl {   font-size: 18px; } .mp-font-size-large {   font-size: 16px; } .mp-font-size-medium {   font-size: 14px; } .mp-font-size-default {   font-size: 13px; } .mp-font-size-xs {   font-size: 11px;   text-transform: uppercase; } .mp-font-weight-bold {   font-weight: 600; } .mp-font-weight-medium {   font-weight: 500; } .mp-font-weight-regular {   font-weight: 400; } .mp-font-paragraph {   color: #6d859e;   font-size: 14px;   font-family: 'Helvetica Neue', 'Helvetica', 'Tahoma', 'Geneva', 'Arial', sans-serif;   font-stretch: normal;   font-weight: 500;   line-height: 18px; } input[type=text], textarea {   border: 1px solid #d8e0ea;   border-radius: 5px;   box-sizing: border-box;   color: #4c6072;   display: inline-block;   font-family: 'Helvetica Neue', 'Helvetica', 'Tahoma', 'Geneva', 'Arial', sans-serif;   font-size: 13px;   font-weight: 400;   padding: 8px;   transition: border-color 150ms ease-out; } input[type=text]::-webkit-input-placeholder, textarea::-webkit-input-placeholder {   color: #9bacbf !important;   font-weight: weight-normal !important; } input[type=text]::-moz-placeholder, textarea::-moz-placeholder {   color: #9bacbf !important;   font-weight: weight-normal !important; } input[type=text]:-ms-input-placeholder, textarea:-ms-input-placeholder {   color: #9bacbf !important;   font-weight: weight-normal !important; } input[type=text]::placeholder, textarea::placeholder {   color: #9bacbf !important;   font-weight: weight-normal !important; } input[type=text]:focus, textarea:focus, input[type=text]:active, textarea:active {   border-color: #3391e9;   transition: border-color 200ms ease-in; } input[type=text] {   height: 36px; } mp-truncated-text {   display: inline-block;   white-space: nowrap;   width: 100%; } svg-icon {   display: inline-block;   height: 22px;   min-height: 22px;   min-width: 22px;   position: relative;   width: 22px; } svg-icon[icon=type-boolean] #left-dot {   color: #fff;   fill: #fff; } svg-icon[icon=type-boolean] #right-dot {   color: #4c6072;   fill: #4c6072; } svg-icon[icon=lightning-bolt] #bolt, svg-icon[icon=lighting-bolt] #bolt {   color: #fff;   fill: #fff; } svg-icon[icon=alert] #circle, svg-icon[icon=alert] #stem {   color: #fff;   fill: #fff; } svg-icon svg {   height: 22px;   left: 0;   min-height: 22px;   min-width: 22px;   position: absolute;   top: 0;   width: 22px; } mp-modal {   width: 285px; } .mp-upsell-popup-content {   box-shadow: 0 1px 30px 0 rgba(0,0,0,0.19);   display: -webkit-box;   display: -ms-flexbox;   display: flex;   padding: 20px; } .mp-upsell-popup-content .mp-upsell-popup-icon {   margin-right: 10px; } .mp-upsell-popup-content .mp-upsell-popup-icon svg {   height: 42px;   width: 53px; } .mp-upsell-popup-content .mp-upsell-popup-text {   color: #6d859e;   font-family: 'Helvetica Neue', 'Helvetica', 'Tahoma', 'Geneva', 'Arial', sans-serif;   font-size: 14px;   font-weight: 400;   line-height: 18px;   margin: 3px 20px 0 0;   max-width: 180px;   text-shadow: 0 1px 0 rgba(255,255,255,0.5); } .mp-upsell-popup-content .mp-upsell-popup-text .mp-upsell-popup-upgrade-link {   color: #2687e3;   cursor: pointer;   font-weight: 600;   text-decoration: none; } .mp-upsell-popup-content .mp-upsell-popup-text .mp-upsell-popup-upgrade-link:hover {   color: #4ba8ff; } ";
 
 
 /***/ },
-/* 566 */
+/* 685 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -52704,11 +57066,11 @@
 
 	var _string = __webpack_require__(492);
 
-	var _index = __webpack_require__(567);
+	var _index = __webpack_require__(686);
 
 	var _index2 = _interopRequireDefault(_index);
 
-	var _index3 = __webpack_require__(568);
+	var _index3 = __webpack_require__(687);
 
 	var _index4 = _interopRequireDefault(_index3);
 
@@ -52778,7 +57140,7 @@
 	}(_panel.Component));
 
 /***/ },
-/* 567 */
+/* 686 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -52821,14 +57183,14 @@
 	module.exports = _jade_template_fn;
 
 /***/ },
-/* 568 */
+/* 687 */
 /***/ function(module, exports) {
 
 	module.exports = "* {   -webkit-font-smoothing: antialiased; } *:focus {   outline: 0; } *::-ms-clear {   height: 0;   width: 0; } body {   color: #6d859e;   font-family: 'Helvetica Neue', 'Helvetica', 'Tahoma', 'Geneva', 'Arial', sans-serif;   font-size: 13px;   font-stretch: normal;   font-weight: 400; } a, .mp-link {   cursor: pointer;   text-decoration: none; } a, .mp-link, a:visited, .mp-link:visited {   color: #3b99f0; } a:hover, .mp-link:hover {   color: #4ba8ff; } .mp-font-size-xl {   font-size: 18px; } .mp-font-size-large {   font-size: 16px; } .mp-font-size-medium {   font-size: 14px; } .mp-font-size-default {   font-size: 13px; } .mp-font-size-xs {   font-size: 11px;   text-transform: uppercase; } .mp-font-weight-bold {   font-weight: 600; } .mp-font-weight-medium {   font-weight: 500; } .mp-font-weight-regular {   font-weight: 400; } .mp-font-paragraph {   color: #6d859e;   font-size: 14px;   font-family: 'Helvetica Neue', 'Helvetica', 'Tahoma', 'Geneva', 'Arial', sans-serif;   font-stretch: normal;   font-weight: 500;   line-height: 18px; } input[type=text], textarea {   border: 1px solid #d8e0ea;   border-radius: 5px;   box-sizing: border-box;   color: #4c6072;   display: inline-block;   font-family: 'Helvetica Neue', 'Helvetica', 'Tahoma', 'Geneva', 'Arial', sans-serif;   font-size: 13px;   font-weight: 400;   padding: 8px;   transition: border-color 150ms ease-out; } input[type=text]::-webkit-input-placeholder, textarea::-webkit-input-placeholder {   color: #9bacbf !important;   font-weight: weight-normal !important; } input[type=text]::-moz-placeholder, textarea::-moz-placeholder {   color: #9bacbf !important;   font-weight: weight-normal !important; } input[type=text]:-ms-input-placeholder, textarea:-ms-input-placeholder {   color: #9bacbf !important;   font-weight: weight-normal !important; } input[type=text]::placeholder, textarea::placeholder {   color: #9bacbf !important;   font-weight: weight-normal !important; } input[type=text]:focus, textarea:focus, input[type=text]:active, textarea:active {   border-color: #3391e9;   transition: border-color 200ms ease-in; } input[type=text] {   height: 36px; } mp-truncated-text {   display: inline-block;   white-space: nowrap;   width: 100%; } svg-icon {   display: inline-block;   height: 22px;   min-height: 22px;   min-width: 22px;   position: relative;   width: 22px; } svg-icon[icon=type-boolean] #left-dot {   color: #fff;   fill: #fff; } svg-icon[icon=type-boolean] #right-dot {   color: #4c6072;   fill: #4c6072; } svg-icon[icon=lightning-bolt] #bolt, svg-icon[icon=lighting-bolt] #bolt {   color: #fff;   fill: #fff; } svg-icon[icon=alert] #circle, svg-icon[icon=alert] #stem {   color: #fff;   fill: #fff; } svg-icon svg {   height: 22px;   left: 0;   min-height: 22px;   min-width: 22px;   position: absolute;   top: 0;   width: 22px; } mp-user-icon {   display: inline-block; } :host {   display: inline-block; } .mp-user-icon-container {   background-color: #1e7171;   border-radius: 50%;   color: #fff;   cursor: default;   font-family: 'Helvetica Neue', 'Helvetica', 'Tahoma', 'Geneva', 'Arial', sans-serif;   font-size: 11px;   text-transform: uppercase;   font-weight: 600;   height: 26px;   line-height: 26px;   overflow: hidden;   text-align: center;   text-transform: uppercase;   width: 26px; } .mp-user-icon-container mp-tooltip {   line-height: normal;   z-index: 6000; } .mp-user-icon-container .mp-user-icon-color-A {   background-color: #33bcbd; } .mp-user-icon-container .mp-user-icon-color-B {   background-color: #2da9aa; } .mp-user-icon-container .mp-user-icon-color-C {   background-color: #289697; } .mp-user-icon-container .mp-user-icon-color-D {   background-color: #238384; } .mp-user-icon-container .mp-user-icon-color-E {   background-color: #64ade8; } .mp-user-icon-container .mp-user-icon-color-F {   background-color: #5a9bd1; } .mp-user-icon-container .mp-user-icon-color-G {   background-color: #508bba; } .mp-user-icon-container .mp-user-icon-color-H {   background-color: #4679a2; } .mp-user-icon-container .mp-user-icon-color-I {   background-color: #3c688b; } .mp-user-icon-container .mp-user-icon-color-J {   background-color: #a28ccb; } .mp-user-icon-container .mp-user-icon-color-K {   background-color: #917db6; } .mp-user-icon-container .mp-user-icon-color-L {   background-color: #826fa2; } .mp-user-icon-container .mp-user-icon-color-M {   background-color: #71618d; } .mp-user-icon-container .mp-user-icon-color-N {   background-color: #61547a; } .mp-user-icon-container .mp-user-icon-color-O {   background-color: #d97b7f; } .mp-user-icon-container .mp-user-icon-color-P {   background-color: #c36e72; } .mp-user-icon-container .mp-user-icon-color-Q {   background-color: #ad6366; } .mp-user-icon-container .mp-user-icon-color-R {   background-color: #985559; } .mp-user-icon-container .mp-user-icon-color-S {   background-color: #e8bc65; } .mp-user-icon-container .mp-user-icon-color-T {   background-color: #d0a95b; } .mp-user-icon-container .mp-user-icon-color-U {   background-color: #b99651; } .mp-user-icon-container .mp-user-icon-color-V {   background-color: #a28347; } .mp-user-icon-container .mp-user-icon-color-W {   background-color: #f6893b; } .mp-user-icon-container .mp-user-icon-color-X {   background-color: #dd7b35; } .mp-user-icon-container .mp-user-icon-color-Y {   background-color: #c46e30; } ";
 
 
 /***/ },
-/* 569 */
+/* 688 */
 /***/ function(module, exports) {
 
 	module.exports = {
@@ -52881,13 +57243,13 @@
 	};
 
 /***/ },
-/* 570 */,
-/* 571 */,
-/* 572 */,
-/* 573 */,
-/* 574 */,
-/* 575 */,
-/* 576 */
+/* 689 */,
+/* 690 */,
+/* 691 */,
+/* 692 */,
+/* 693 */,
+/* 694 */,
+/* 695 */
 /***/ function(module, exports) {
 
 	/*
@@ -52943,10 +57305,10 @@
 
 
 /***/ },
-/* 577 */
+/* 696 */
 /***/ function(module, exports, __webpack_require__) {
 
-	exports = module.exports = __webpack_require__(576)();
+	exports = module.exports = __webpack_require__(695)();
 	// imports
 
 
@@ -52957,7 +57319,7 @@
 
 
 /***/ },
-/* 578 */
+/* 697 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/*
@@ -53209,42 +57571,42 @@
 
 
 /***/ },
-/* 579 */,
-/* 580 */,
-/* 581 */,
-/* 582 */,
-/* 583 */,
-/* 584 */,
-/* 585 */,
-/* 586 */,
-/* 587 */,
-/* 588 */,
-/* 589 */,
-/* 590 */,
-/* 591 */,
-/* 592 */,
-/* 593 */,
-/* 594 */,
-/* 595 */,
-/* 596 */,
-/* 597 */,
-/* 598 */,
-/* 599 */,
-/* 600 */,
-/* 601 */,
-/* 602 */,
-/* 603 */,
-/* 604 */,
-/* 605 */,
-/* 606 */,
-/* 607 */,
-/* 608 */,
-/* 609 */,
-/* 610 */,
-/* 611 */,
-/* 612 */,
-/* 613 */,
-/* 614 */
+/* 698 */,
+/* 699 */,
+/* 700 */,
+/* 701 */,
+/* 702 */,
+/* 703 */,
+/* 704 */,
+/* 705 */,
+/* 706 */,
+/* 707 */,
+/* 708 */,
+/* 709 */,
+/* 710 */,
+/* 711 */,
+/* 712 */,
+/* 713 */,
+/* 714 */,
+/* 715 */,
+/* 716 */,
+/* 717 */,
+/* 718 */,
+/* 719 */,
+/* 720 */,
+/* 721 */,
+/* 722 */,
+/* 723 */,
+/* 724 */,
+/* 725 */,
+/* 726 */,
+/* 727 */,
+/* 728 */,
+/* 729 */,
+/* 730 */,
+/* 731 */,
+/* 732 */,
+/* 733 */
 /***/ function(module, exports) {
 
 	module.exports = [
@@ -53349,7 +57711,7 @@
 	];
 
 /***/ },
-/* 615 */
+/* 734 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -56288,16 +60650,16 @@
 	module.exports = _jade_template_fn;
 
 /***/ },
-/* 616 */
+/* 735 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// style-loader: Adds some css to the DOM by adding a <style> tag
 
 	// load the styles
-	var content = __webpack_require__(617);
+	var content = __webpack_require__(736);
 	if(typeof content === 'string') content = [[module.id, content, '']];
 	// add the styles to the DOM
-	var update = __webpack_require__(578)(content, {});
+	var update = __webpack_require__(697)(content, {});
 	if(content.locals) module.exports = content.locals;
 	// Hot Module Replacement
 	if(false) {
@@ -56314,15 +60676,15 @@
 	}
 
 /***/ },
-/* 617 */
+/* 736 */
 /***/ function(module, exports, __webpack_require__) {
 
-	exports = module.exports = __webpack_require__(576)();
+	exports = module.exports = __webpack_require__(695)();
 	// imports
-	exports.i(__webpack_require__(577), "");
+	exports.i(__webpack_require__(696), "");
 
 	// module
-	exports.push([module.id, ".section {\n  border-bottom: 1px solid #ecf3f8;\n  padding: 10px 20px;\n}\n.section .item-palette {\n  display: -webkit-box;\n  display: -ms-flexbox;\n  display: flex;\n  -ms-flex-flow: column wrap;\n      flex-flow: column wrap;\n}\n.section .item-palette.color-palette {\n  height: 180px;\n}\n.section .item-palette.icon-palette {\n  height: 320px;\n}\n.section .list-block {\n  -webkit-box-align: center;\n      -ms-flex-align: center;\n          align-items: center;\n  display: -webkit-box;\n  display: -ms-flexbox;\n  display: flex;\n  margin: 5px;\n}\n.section .list-block svg-icon {\n  display: inline-block;\n  height: 22px;\n  min-height: 22px;\n  min-width: 22px;\n  position: relative;\n  width: 22px;\n}\n.section .list-block svg-icon[icon=type-boolean] #left-dot {\n  color: #fff;\n  fill: #fff;\n}\n.section .list-block svg-icon[icon=type-boolean] #right-dot {\n  color: #4c6072;\n  fill: #4c6072;\n}\n.section .list-block svg-icon[icon=lightning-bolt] #bolt,\n.section .list-block svg-icon[icon=lighting-bolt] #bolt {\n  color: #fff;\n  fill: #fff;\n}\n.section .list-block svg-icon[icon=alert] #circle,\n.section .list-block svg-icon[icon=alert] #stem {\n  color: #fff;\n  fill: #fff;\n}\n.section .list-block svg-icon svg {\n  height: 22px;\n  left: 0;\n  min-height: 22px;\n  min-width: 22px;\n  position: absolute;\n  top: 0;\n  width: 22px;\n}\n.section .list-block svg-icon svg,\n.section .list-block svg-icon path {\n  color: #6d859e;\n  fill: #6d859e;\n  transition: 0.2s;\n}\n.section .list-block:hover svg-icon svg,\n.section .list-block:hover svg-icon path {\n  color: #6cb8ff;\n  fill: #6cb8ff;\n}\n.section .list-block .square {\n  display: inline-block;\n  vertical-align: middle;\n  margin-right: 4px;\n  width: 20px;\n  height: 20px;\n}\n.section .list-block .label {\n  display: inline-block;\n  margin-left: 10px;\n  vertical-align: middle;\n}\n.section.buttons mp-button {\n  margin-right: 4px;\n  vertical-align: middle;\n}\n.section.buttons p.button-field {\n  background: #4ba8ff;\n  display: table;\n  padding: 10px;\n}\n.section.button-bars .button-bar-container {\n  max-width: 600px;\n}\n.section.modals .modal {\n  width: 500px;\n}\n.section.modals mp-confirm {\n  width: 480px;\n}\n.section.modals p {\n  position: relative;\n}\n.section.toggles mp-toggle {\n  margin-bottom: 10px;\n}\n.section.toggles mp-toggle.inline-toggle {\n  width: 500px;\n}\n.section.toggles mp-toggle.full-width-toggle {\n  display: block;\n}\n.section.toggles .toggle-val {\n  margin-left: 10px;\n}\n.section.tooltips .tooltips-container {\n  display: -webkit-box;\n  display: -ms-flexbox;\n  display: flex;\n  -webkit-box-orient: vertical;\n  -webkit-box-direction: normal;\n      -ms-flex-direction: column;\n          flex-direction: column;\n  -webkit-box-align: center;\n      -ms-flex-align: center;\n          align-items: center;\n}\n.section.tooltips .tooltips-container .tooltip-container {\n  margin: 5px 0;\n}\n.section.tooltips .tooltips-container .tooltip-container.position-relative {\n  position: relative;\n  left: 100px;\n  top: 10px;\n}\n.section.tooltips .tooltips-container .tooltip-container mp-tooltip.multiline span {\n  max-width: 200px;\n}\n.section.calendars .calendar-group {\n  display: -webkit-box;\n  display: -ms-flexbox;\n  display: flex;\n  -ms-flex-wrap: wrap;\n      flex-wrap: wrap;\n}\n.section.calendars .calendar-group .calendar-container {\n  display: -webkit-box;\n  display: -ms-flexbox;\n  display: flex;\n  -webkit-box-orient: vertical;\n  -webkit-box-direction: normal;\n      -ms-flex-direction: column;\n          flex-direction: column;\n  -webkit-box-pack: justify;\n      -ms-flex-pack: justify;\n          justify-content: space-between;\n  margin: 10px;\n}\n.section.calendars .calendar-group.single-calendar .calendar-container {\n  width: 240px;\n}\n.section.calendars .calendar-group.double-calendar .calendar-container {\n  width: 492px;\n}\n.section .toast-container {\n  height: 400px;\n  display: -webkit-box;\n  display: -ms-flexbox;\n  display: flex;\n  -webkit-box-orient: vertical;\n  -webkit-box-direction: normal;\n      -ms-flex-direction: column;\n          flex-direction: column;\n  -webkit-box-pack: end;\n      -ms-flex-pack: end;\n          justify-content: flex-end;\n}\n.section.menus .drop-menu-container {\n  position: relative;\n}\n.section.forms .mp-icon-input {\n  -webkit-box-align: center;\n      -ms-flex-align: center;\n          align-items: center;\n  display: -webkit-inline-box;\n  display: -ms-inline-flexbox;\n  display: inline-flex;\n  position: relative;\n}\n.section.forms .mp-icon-input input {\n  padding: 6px;\n  padding-left: 36px;\n  padding-right: 18px;\n  width: 100%;\n}\n.section.forms .mp-icon-input input:focus + .mp-icon svg-icon {\n  display: inline-block;\n  height: 22px;\n  min-height: 22px;\n  min-width: 22px;\n  position: relative;\n  width: 22px;\n}\n.section.forms .mp-icon-input input:focus + .mp-icon svg-icon[icon=type-boolean] #left-dot {\n  color: #fff;\n  fill: #fff;\n}\n.section.forms .mp-icon-input input:focus + .mp-icon svg-icon[icon=type-boolean] #right-dot {\n  color: #4c6072;\n  fill: #4c6072;\n}\n.section.forms .mp-icon-input input:focus + .mp-icon svg-icon[icon=lightning-bolt] #bolt,\n.section.forms .mp-icon-input input:focus + .mp-icon svg-icon[icon=lighting-bolt] #bolt {\n  color: #fff;\n  fill: #fff;\n}\n.section.forms .mp-icon-input input:focus + .mp-icon svg-icon[icon=alert] #circle,\n.section.forms .mp-icon-input input:focus + .mp-icon svg-icon[icon=alert] #stem {\n  color: #fff;\n  fill: #fff;\n}\n.section.forms .mp-icon-input input:focus + .mp-icon svg-icon svg {\n  height: 22px;\n  left: 0;\n  min-height: 22px;\n  min-width: 22px;\n  position: absolute;\n  top: 0;\n  width: 22px;\n}\n.section.forms .mp-icon-input input:focus + .mp-icon svg-icon svg,\n.section.forms .mp-icon-input input:focus + .mp-icon svg-icon path {\n  color: #6d859e;\n  fill: #6d859e;\n  transition: 0.2s;\n}\n.section.forms .mp-icon-input .mp-icon {\n  -webkit-box-align: center;\n      -ms-flex-align: center;\n          align-items: center;\n  bottom: 0;\n  display: -webkit-box;\n  display: -ms-flexbox;\n  display: flex;\n  left: 8px;\n  position: absolute;\n  top: 0;\n}\n.section.forms .mp-icon-input .mp-icon svg-icon {\n  display: inline-block;\n  height: 22px;\n  min-height: 22px;\n  min-width: 22px;\n  position: relative;\n  width: 22px;\n}\n.section.forms .mp-icon-input .mp-icon svg-icon[icon=type-boolean] #left-dot {\n  color: #fff;\n  fill: #fff;\n}\n.section.forms .mp-icon-input .mp-icon svg-icon[icon=type-boolean] #right-dot {\n  color: #4c6072;\n  fill: #4c6072;\n}\n.section.forms .mp-icon-input .mp-icon svg-icon[icon=lightning-bolt] #bolt,\n.section.forms .mp-icon-input .mp-icon svg-icon[icon=lighting-bolt] #bolt {\n  color: #fff;\n  fill: #fff;\n}\n.section.forms .mp-icon-input .mp-icon svg-icon[icon=alert] #circle,\n.section.forms .mp-icon-input .mp-icon svg-icon[icon=alert] #stem {\n  color: #fff;\n  fill: #fff;\n}\n.section.forms .mp-icon-input .mp-icon svg-icon svg {\n  height: 22px;\n  left: 0;\n  min-height: 22px;\n  min-width: 22px;\n  position: absolute;\n  top: 0;\n  width: 22px;\n}\n.section.forms .mp-icon-input .mp-icon svg-icon svg,\n.section.forms .mp-icon-input .mp-icon svg-icon path {\n  color: #9bacbf;\n  fill: #9bacbf;\n  transition: 0.2s;\n}\n.section.widgets {\n  padding-bottom: 500px;\n}\n.section.widgets .items-menu input {\n  margin-bottom: 20px;\n}\n.section.widgets .items-menu .drop-menu-container {\n  position: relative;\n}\n.section.widgets .items-menu .drop-menu-container mp-items-menu {\n  width: 320px;\n  height: 300px;\n}\n.section.widgets .bookmarks-widget {\n  background-color: #ecf3f8;\n  border: 1px solid #bdc9d6;\n  display: -webkit-box;\n  display: -ms-flexbox;\n  display: flex;\n  height: 54px;\n  -webkit-box-pack: end;\n      -ms-flex-pack: end;\n          justify-content: flex-end;\n  width: 100%;\n}\n.section.widgets .bookmarks-widget mp-bookmarks-widget {\n  border-left: 1px solid #d8e0ea;\n  border-right: 1px solid #d8e0ea;\n  margin-right: 50px;\n}\n.section.widgets .tag-selector-container {\n  position: relative;\n}\n.section.widgets .tag-selector-container mp-drop-menu {\n  top: 40px;\n}\n.section.widgets .tag-selector-container .title {\n  padding-top: 20px;\n}\n.section.widgets .tag-selector-container .title .header {\n  display: -webkit-box;\n  display: -ms-flexbox;\n  display: flex;\n  margin-left: 18px;\n}\n.section.widgets .tag-selector-container .title .header svg-icon {\n  display: inline-block;\n  height: 22px;\n  min-height: 22px;\n  min-width: 22px;\n  position: relative;\n  width: 22px;\n}\n.section.widgets .tag-selector-container .title .header svg-icon[icon=type-boolean] #left-dot {\n  color: #fff;\n  fill: #fff;\n}\n.section.widgets .tag-selector-container .title .header svg-icon[icon=type-boolean] #right-dot {\n  color: #4c6072;\n  fill: #4c6072;\n}\n.section.widgets .tag-selector-container .title .header svg-icon[icon=lightning-bolt] #bolt,\n.section.widgets .tag-selector-container .title .header svg-icon[icon=lighting-bolt] #bolt {\n  color: #fff;\n  fill: #fff;\n}\n.section.widgets .tag-selector-container .title .header svg-icon[icon=alert] #circle,\n.section.widgets .tag-selector-container .title .header svg-icon[icon=alert] #stem {\n  color: #fff;\n  fill: #fff;\n}\n.section.widgets .tag-selector-container .title .header svg-icon svg {\n  height: 22px;\n  left: 0;\n  min-height: 22px;\n  min-width: 22px;\n  position: absolute;\n  top: 0;\n  width: 22px;\n}\n.section.widgets .tag-selector-container .title .header svg-icon svg,\n.section.widgets .tag-selector-container .title .header svg-icon path {\n  color: #39d183;\n  fill: #39d183;\n  transition: 0.2s;\n}\n.section.widgets .tag-selector-container .title .header .header-text {\n  color: #4c6072;\n  display: inline-block;\n  font-size: 16px;\n  font-weight: 600;\n  line-height: 1.12;\n  margin: auto 0;\n  padding-left: 10px;\n}\n.section.widgets .tag-selector-container .title .subtext {\n  color: #9bacbf;\n  font-size: 13px;\n  font-weight: 500;\n  line-height: 1.5;\n  margin: 0 0 20px 50px;\n}\n.section.widgets .tutorial-tooltips-container {\n  display: -webkit-box;\n  display: -ms-flexbox;\n  display: flex;\n  -webkit-box-orient: vertical;\n  -webkit-box-direction: normal;\n      -ms-flex-direction: column;\n          flex-direction: column;\n  -webkit-box-align: center;\n      -ms-flex-align: center;\n          align-items: center;\n}\n.section.widgets .tutorial-tooltips-container .tutorial-tooltip-container {\n  position: relative;\n  margin: 20px;\n}\n.section.widgets .tutorial-tooltips-container .tutorial-tooltip-container.top {\n  margin-top: 200px;\n}\n.section.widgets .tutorial-tooltips-container .tutorial-tooltip-container.bottom {\n  margin-bottom: 200px;\n}\n.section.widgets .tutorial-tooltips-container .tutorial-tooltip-container.left {\n  margin: 100px;\n}\n.section.widgets .tutorial-tooltips-container .tutorial-tooltip-container.right {\n  margin: 100px;\n}\n.section.widgets .tutorial-tooltips-container .tutorial-tooltip-container.center {\n  margin-bottom: 200px;\n}\n.section.widgets .tutorial-tooltips-container .tutorial-tooltip-container.center mp-tutorial-tooltip {\n  top: 40px;\n}\n", ""]);
+	exports.push([module.id, ".section {\n  border-bottom: 1px solid #ecf3f8;\n  padding: 10px 20px;\n}\n.section .item-palette {\n  display: -webkit-box;\n  display: -ms-flexbox;\n  display: flex;\n  -webkit-box-orient: vertical;\n  -webkit-box-direction: normal;\n      -ms-flex-flow: column wrap;\n          flex-flow: column wrap;\n}\n.section .item-palette.color-palette {\n  height: 180px;\n}\n.section .item-palette.icon-palette {\n  height: 320px;\n}\n.section .list-block {\n  -webkit-box-align: center;\n      -ms-flex-align: center;\n          align-items: center;\n  display: -webkit-box;\n  display: -ms-flexbox;\n  display: flex;\n  margin: 5px;\n}\n.section .list-block svg-icon {\n  display: inline-block;\n  height: 22px;\n  min-height: 22px;\n  min-width: 22px;\n  position: relative;\n  width: 22px;\n}\n.section .list-block svg-icon[icon=type-boolean] #left-dot {\n  color: #fff;\n  fill: #fff;\n}\n.section .list-block svg-icon[icon=type-boolean] #right-dot {\n  color: #4c6072;\n  fill: #4c6072;\n}\n.section .list-block svg-icon[icon=lightning-bolt] #bolt,\n.section .list-block svg-icon[icon=lighting-bolt] #bolt {\n  color: #fff;\n  fill: #fff;\n}\n.section .list-block svg-icon[icon=alert] #circle,\n.section .list-block svg-icon[icon=alert] #stem {\n  color: #fff;\n  fill: #fff;\n}\n.section .list-block svg-icon svg {\n  height: 22px;\n  left: 0;\n  min-height: 22px;\n  min-width: 22px;\n  position: absolute;\n  top: 0;\n  width: 22px;\n}\n.section .list-block svg-icon svg,\n.section .list-block svg-icon path {\n  color: #6d859e;\n  fill: #6d859e;\n  transition: 0.2s;\n}\n.section .list-block:hover svg-icon svg,\n.section .list-block:hover svg-icon path {\n  color: #6cb8ff;\n  fill: #6cb8ff;\n}\n.section .list-block .square {\n  display: inline-block;\n  vertical-align: middle;\n  margin-right: 4px;\n  width: 20px;\n  height: 20px;\n}\n.section .list-block .label {\n  display: inline-block;\n  margin-left: 10px;\n  vertical-align: middle;\n}\n.section.buttons mp-button {\n  margin-right: 4px;\n  vertical-align: middle;\n}\n.section.buttons p.button-field {\n  background: #4ba8ff;\n  display: table;\n  padding: 10px;\n}\n.section.button-bars .button-bar-container {\n  max-width: 600px;\n}\n.section.modals .modal {\n  width: 500px;\n}\n.section.modals mp-confirm {\n  width: 480px;\n}\n.section.modals p {\n  position: relative;\n}\n.section.toggles mp-toggle {\n  margin-bottom: 10px;\n}\n.section.toggles mp-toggle.inline-toggle {\n  width: 500px;\n}\n.section.toggles mp-toggle.full-width-toggle {\n  display: block;\n}\n.section.toggles .toggle-val {\n  margin-left: 10px;\n}\n.section.tooltips .tooltips-container {\n  display: -webkit-box;\n  display: -ms-flexbox;\n  display: flex;\n  -webkit-box-orient: vertical;\n  -webkit-box-direction: normal;\n      -ms-flex-direction: column;\n          flex-direction: column;\n  -webkit-box-align: center;\n      -ms-flex-align: center;\n          align-items: center;\n}\n.section.tooltips .tooltips-container .tooltip-container {\n  margin: 5px 0;\n}\n.section.tooltips .tooltips-container .tooltip-container.position-relative {\n  position: relative;\n  left: 100px;\n  top: 10px;\n}\n.section.tooltips .tooltips-container .tooltip-container mp-tooltip.multiline span {\n  max-width: 200px;\n}\n.section.calendars .calendar-group {\n  display: -webkit-box;\n  display: -ms-flexbox;\n  display: flex;\n  -ms-flex-wrap: wrap;\n      flex-wrap: wrap;\n}\n.section.calendars .calendar-group .calendar-container {\n  display: -webkit-box;\n  display: -ms-flexbox;\n  display: flex;\n  -webkit-box-orient: vertical;\n  -webkit-box-direction: normal;\n      -ms-flex-direction: column;\n          flex-direction: column;\n  -webkit-box-pack: justify;\n      -ms-flex-pack: justify;\n          justify-content: space-between;\n  margin: 10px;\n}\n.section.calendars .calendar-group.single-calendar .calendar-container {\n  width: 240px;\n}\n.section.calendars .calendar-group.double-calendar .calendar-container {\n  width: 492px;\n}\n.section .toast-container {\n  height: 400px;\n  display: -webkit-box;\n  display: -ms-flexbox;\n  display: flex;\n  -webkit-box-orient: vertical;\n  -webkit-box-direction: normal;\n      -ms-flex-direction: column;\n          flex-direction: column;\n  -webkit-box-pack: end;\n      -ms-flex-pack: end;\n          justify-content: flex-end;\n}\n.section.menus .drop-menu-container {\n  position: relative;\n}\n.section.forms .mp-icon-input {\n  -webkit-box-align: center;\n      -ms-flex-align: center;\n          align-items: center;\n  display: -webkit-inline-box;\n  display: -ms-inline-flexbox;\n  display: inline-flex;\n  position: relative;\n}\n.section.forms .mp-icon-input input {\n  padding: 6px;\n  padding-left: 36px;\n  padding-right: 18px;\n  width: 100%;\n}\n.section.forms .mp-icon-input input:focus + .mp-icon svg-icon {\n  display: inline-block;\n  height: 22px;\n  min-height: 22px;\n  min-width: 22px;\n  position: relative;\n  width: 22px;\n}\n.section.forms .mp-icon-input input:focus + .mp-icon svg-icon[icon=type-boolean] #left-dot {\n  color: #fff;\n  fill: #fff;\n}\n.section.forms .mp-icon-input input:focus + .mp-icon svg-icon[icon=type-boolean] #right-dot {\n  color: #4c6072;\n  fill: #4c6072;\n}\n.section.forms .mp-icon-input input:focus + .mp-icon svg-icon[icon=lightning-bolt] #bolt,\n.section.forms .mp-icon-input input:focus + .mp-icon svg-icon[icon=lighting-bolt] #bolt {\n  color: #fff;\n  fill: #fff;\n}\n.section.forms .mp-icon-input input:focus + .mp-icon svg-icon[icon=alert] #circle,\n.section.forms .mp-icon-input input:focus + .mp-icon svg-icon[icon=alert] #stem {\n  color: #fff;\n  fill: #fff;\n}\n.section.forms .mp-icon-input input:focus + .mp-icon svg-icon svg {\n  height: 22px;\n  left: 0;\n  min-height: 22px;\n  min-width: 22px;\n  position: absolute;\n  top: 0;\n  width: 22px;\n}\n.section.forms .mp-icon-input input:focus + .mp-icon svg-icon svg,\n.section.forms .mp-icon-input input:focus + .mp-icon svg-icon path {\n  color: #6d859e;\n  fill: #6d859e;\n  transition: 0.2s;\n}\n.section.forms .mp-icon-input .mp-icon {\n  -webkit-box-align: center;\n      -ms-flex-align: center;\n          align-items: center;\n  bottom: 0;\n  display: -webkit-box;\n  display: -ms-flexbox;\n  display: flex;\n  left: 8px;\n  position: absolute;\n  top: 0;\n}\n.section.forms .mp-icon-input .mp-icon svg-icon {\n  display: inline-block;\n  height: 22px;\n  min-height: 22px;\n  min-width: 22px;\n  position: relative;\n  width: 22px;\n}\n.section.forms .mp-icon-input .mp-icon svg-icon[icon=type-boolean] #left-dot {\n  color: #fff;\n  fill: #fff;\n}\n.section.forms .mp-icon-input .mp-icon svg-icon[icon=type-boolean] #right-dot {\n  color: #4c6072;\n  fill: #4c6072;\n}\n.section.forms .mp-icon-input .mp-icon svg-icon[icon=lightning-bolt] #bolt,\n.section.forms .mp-icon-input .mp-icon svg-icon[icon=lighting-bolt] #bolt {\n  color: #fff;\n  fill: #fff;\n}\n.section.forms .mp-icon-input .mp-icon svg-icon[icon=alert] #circle,\n.section.forms .mp-icon-input .mp-icon svg-icon[icon=alert] #stem {\n  color: #fff;\n  fill: #fff;\n}\n.section.forms .mp-icon-input .mp-icon svg-icon svg {\n  height: 22px;\n  left: 0;\n  min-height: 22px;\n  min-width: 22px;\n  position: absolute;\n  top: 0;\n  width: 22px;\n}\n.section.forms .mp-icon-input .mp-icon svg-icon svg,\n.section.forms .mp-icon-input .mp-icon svg-icon path {\n  color: #9bacbf;\n  fill: #9bacbf;\n  transition: 0.2s;\n}\n.section.widgets {\n  padding-bottom: 500px;\n}\n.section.widgets .items-menu input {\n  margin-bottom: 20px;\n}\n.section.widgets .items-menu .drop-menu-container {\n  position: relative;\n}\n.section.widgets .items-menu .drop-menu-container mp-items-menu {\n  width: 320px;\n  height: 300px;\n}\n.section.widgets .bookmarks-widget {\n  background-color: #ecf3f8;\n  border: 1px solid #bdc9d6;\n  display: -webkit-box;\n  display: -ms-flexbox;\n  display: flex;\n  height: 54px;\n  -webkit-box-pack: end;\n      -ms-flex-pack: end;\n          justify-content: flex-end;\n  width: 100%;\n}\n.section.widgets .bookmarks-widget mp-bookmarks-widget {\n  border-left: 1px solid #d8e0ea;\n  border-right: 1px solid #d8e0ea;\n  margin-right: 50px;\n}\n.section.widgets .tag-selector-container {\n  position: relative;\n}\n.section.widgets .tag-selector-container mp-drop-menu {\n  top: 40px;\n}\n.section.widgets .tag-selector-container .title {\n  padding-top: 20px;\n}\n.section.widgets .tag-selector-container .title .header {\n  display: -webkit-box;\n  display: -ms-flexbox;\n  display: flex;\n  margin-left: 18px;\n}\n.section.widgets .tag-selector-container .title .header svg-icon {\n  display: inline-block;\n  height: 22px;\n  min-height: 22px;\n  min-width: 22px;\n  position: relative;\n  width: 22px;\n}\n.section.widgets .tag-selector-container .title .header svg-icon[icon=type-boolean] #left-dot {\n  color: #fff;\n  fill: #fff;\n}\n.section.widgets .tag-selector-container .title .header svg-icon[icon=type-boolean] #right-dot {\n  color: #4c6072;\n  fill: #4c6072;\n}\n.section.widgets .tag-selector-container .title .header svg-icon[icon=lightning-bolt] #bolt,\n.section.widgets .tag-selector-container .title .header svg-icon[icon=lighting-bolt] #bolt {\n  color: #fff;\n  fill: #fff;\n}\n.section.widgets .tag-selector-container .title .header svg-icon[icon=alert] #circle,\n.section.widgets .tag-selector-container .title .header svg-icon[icon=alert] #stem {\n  color: #fff;\n  fill: #fff;\n}\n.section.widgets .tag-selector-container .title .header svg-icon svg {\n  height: 22px;\n  left: 0;\n  min-height: 22px;\n  min-width: 22px;\n  position: absolute;\n  top: 0;\n  width: 22px;\n}\n.section.widgets .tag-selector-container .title .header svg-icon svg,\n.section.widgets .tag-selector-container .title .header svg-icon path {\n  color: #39d183;\n  fill: #39d183;\n  transition: 0.2s;\n}\n.section.widgets .tag-selector-container .title .header .header-text {\n  color: #4c6072;\n  display: inline-block;\n  font-size: 16px;\n  font-weight: 600;\n  line-height: 1.12;\n  margin: auto 0;\n  padding-left: 10px;\n}\n.section.widgets .tag-selector-container .title .subtext {\n  color: #9bacbf;\n  font-size: 13px;\n  font-weight: 500;\n  line-height: 1.5;\n  margin: 0 0 20px 50px;\n}\n.section.widgets .tutorial-tooltips-container {\n  display: -webkit-box;\n  display: -ms-flexbox;\n  display: flex;\n  -webkit-box-orient: vertical;\n  -webkit-box-direction: normal;\n      -ms-flex-direction: column;\n          flex-direction: column;\n  -webkit-box-align: center;\n      -ms-flex-align: center;\n          align-items: center;\n}\n.section.widgets .tutorial-tooltips-container .tutorial-tooltip-container {\n  position: relative;\n  margin: 20px;\n}\n.section.widgets .tutorial-tooltips-container .tutorial-tooltip-container.top {\n  margin-top: 200px;\n}\n.section.widgets .tutorial-tooltips-container .tutorial-tooltip-container.bottom {\n  margin-bottom: 200px;\n}\n.section.widgets .tutorial-tooltips-container .tutorial-tooltip-container.left {\n  margin: 100px;\n}\n.section.widgets .tutorial-tooltips-container .tutorial-tooltip-container.right {\n  margin: 100px;\n}\n.section.widgets .tutorial-tooltips-container .tutorial-tooltip-container.center {\n  margin-bottom: 200px;\n}\n.section.widgets .tutorial-tooltips-container .tutorial-tooltip-container.center mp-tutorial-tooltip {\n  top: 40px;\n}\n", ""]);
 
 	// exports
 
