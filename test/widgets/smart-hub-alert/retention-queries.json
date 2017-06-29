@@ -122,7 +122,6 @@
             "source": "properties",
             "type": "string"
           },
-          "selected_property_type": "string",
           "type": "string",
           "filter": {
             "operator": "in",
@@ -136,7 +135,6 @@
             "source": "properties",
             "type": "number"
           },
-          "selected_property_type": "number",
           "type": "number",
           "filter": {
             "operator": "><",
@@ -153,7 +151,6 @@
             "source": "properties",
             "type": "datetime"
           },
-          "selected_property_type": "datetime",
           "type": "datetime",
           "filter": {
             "operator": "><",
@@ -170,7 +167,6 @@
             "source": "properties",
             "type": "datetime"
           },
-          "selected_property_type": "datetime",
           "type": "datetime",
           "filter": {
             "operator": "<",
@@ -185,7 +181,6 @@
             "source": "properties",
             "type": "boolean"
           },
-          "selected_property_type": "boolean",
           "type": "boolean",
           "filter": {
             "operand": "true"
@@ -198,7 +193,6 @@
             "source": "properties",
             "type": "list"
           },
-          "selected_property_type": "list",
           "type": "list",
           "filter": {
             "operator": "in",
@@ -262,7 +256,6 @@
             "source": "properties",
             "type": "string"
           },
-          "selected_property_type": "string",
           "type": "string",
           "filter": {
             "operator": "in",

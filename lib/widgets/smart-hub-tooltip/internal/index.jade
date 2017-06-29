@@ -3,7 +3,13 @@
 )
   mp-smart-hub-alert(
     attrs={
-      'is-link': false,
+      'access-token': accessToken || ``,
+      'project-id': projectId || ``,
+      'display-context': `VISUALIZED`,
       'smart-hub-alert': JSON.stringify({alert}),
+    }
+    on={
+      markedUsefulness: $helpers.handleEventPropagation,
+      removedAlert: $helpers.handleEventPropagation,
     }
   )

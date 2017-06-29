@@ -373,7 +373,7 @@
                   span.grey-500 // Items Menu Widget
 
   if sectionOpen == 'widgets' || searchSections.includes('smart-hub')
-    .sub-section-container#smart-hub
+    .sub-section-container.smart-hub#smart-hub
       .divider
       .section-content
         section
@@ -382,34 +382,52 @@
         .indent-container
           .example-block
             .call-out.first-call-out
-                  strong.icon +
-                  strong .mp-smart-hub-tooltip
-                .common-example.small(style={width: '40px'})
-                  .anomaly-up(on={click: $helpers.handleClickAnomalyUp})
-                    include ../../../../lib/widgets/smart-hub-alert/smart-hub-assets/anomaly-up.svg
-                  if smartHubTooltip
-                      mp-smart-hub-tooltip(
-                        attrs={
-                          'placement': smartHubTooltip.placement,
-                          'offset-left': `${smartHubTooltip.offsetLeft}`,
-                          'offset-top': `${smartHubTooltip.offsetTop}`,
-                          'alert': JSON.stringify(smartHubTooltip.alert),
-                        }
-                        on={removedAlert: $helpers.handleRemovedTooltipAlert}
-                      )
+              strong.icon +
+              strong .mp-smart-hub-tooltip
+            .common-example.small.smart-hub-tooltip-example(style={width: '40px'})
+              .anomaly-icon(on={click: $helpers.handleClickAnomalyUp})
+                include ../../../../lib/widgets/smart-hub-alert/smart-hub-assets/anomaly-up.svg
+              if smartHubTooltipPositive
+                mp-smart-hub-tooltip(
+                attrs={
+                  'placement': smartHubTooltipPositive.placement,
+                  'project-id': 3,
+                  'alert': JSON.stringify(smartHubTooltipPositive.alert),
+                }
+                props={
+                  parentEl: smartHubTooltipPositive.parentEl,
+                  placementElRect: smartHubTooltipPositive.placementElRect,
+                }
+                on={removedAlert: $helpers.handleRemovedSmartHubTooltipPositive}
+                )
+            .common-example.small.smart-hub-tooltip-example(style={width: '40px'})
+              .anomaly-icon(on={click: $helpers.handleClickAnomalyDown})
+                include ../../../../lib/widgets/smart-hub-alert/smart-hub-assets/anomaly-down.svg
+              if smartHubTooltipNegative
+                mp-smart-hub-tooltip(
+                attrs={
+                  'placement': smartHubTooltipNegative.placement,
+                  'project-id': 3,
+                  'alert': JSON.stringify(smartHubTooltipNegative.alert),
+                }
+                props={
+                  parentEl: smartHubTooltipNegative.parentEl,
+                  placementElRect: smartHubTooltipNegative.placementElRect,
+                }
+                on={removedAlert: $helpers.handleRemovedSmartHubTooltipNegative}
+                )
             .call-out.first-call-out
               strong.icon +
               strong mp-smart-hub-dropdown
-            .floating-example-bar.alerts-example
+            .floating-example-bar.smart-hub-dropdown-example
               .alert-button(on={click: $helpers.toggleSmartHubDropdown})
                 svg-icon(attrs={icon: `hubs-notif`})
                 mp-smart-hub-dropdown(
-                 attrs={
-                   'open': smartHubDropdownOpen,
-                   'smart-hub-alerts': JSON.stringify(smartHubAlerts),
-                   'mixpanel-host': `https://mixpanel.com`,
-                   'project-id': 3,
-                 }
+                  on={change: $helpers.handleSmartHubDropdownChange}
+                  attrs={
+                    'open': smartHubDropdownOpen,
+                    'project-id': 3,
+                  }
                 )
           .code-snippet
             .call-out.first-call-out

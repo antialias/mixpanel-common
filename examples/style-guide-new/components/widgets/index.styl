@@ -64,12 +64,22 @@
       width 320px
       height 300px
 
-.alerts-example
-  display flex
-  justify-content flex-end
-  padding-right 50px
-  margin-bottom 320px
-
-  .alert-button
+.smart-hub
+  .smart-hub-tooltip-example
     position relative
-    svg-icon-style(mp-blue, blue-900)
+
+    .anomaly-icon
+      display inline-flex
+
+      & > div
+        display inline-flex
+
+  .smart-hub-dropdown-example
+    display flex
+    justify-content flex-end
+    padding-right 50px
+    margin-bottom 320px
+
+    .alert-button
+      position relative
+      svg-icon-style(mp-blue, blue-900)

@@ -11,6 +11,7 @@
 
     .menu-container
       position relative
+      width 375px
 
       .triangle-up
         left 255px
@@ -27,12 +28,14 @@
 
         .menu-title
           color grey-900
+          font-size-large()
           font-weight weight-bold
 
         .menu-clear-all
           color mp-blue
           cursor pointer
-        
+          font-size-medium()
+
         .hide-clear-all
           display none
 
@@ -46,12 +49,31 @@
         max-height 510px
         overflow-y scroll
 
-        .alert-empty-state
-          align-items center
+        .deleted-alert
+          background-color grey-500
+          transition height 0.5s
+
+      .empty-state
+        align-items center
+        color grey-700
+        display flex
+        flex-direction column
+        font-weight weight-medium
+        justify-content center
+        padding 50px 60px
+
+        .empty-state-icon
+          svg-icon-style(grey-700, size: 192px)
+
+        .empty-state-text-primary
+          color grey-900
+          font-size-medium()
+          font-weight weight-bold
+          margin-top 10px
+
+        .empty-state-text-secondary
           color grey-700
-          display flex
-          flex-direction row
+          font-size-medium()
           font-weight weight-medium
-          height 100px
-          justify-content center
-          width 300px
+          margin-top 10px
+          text-align center

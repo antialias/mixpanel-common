@@ -2,6 +2,9 @@
 
 +host-styles('mp-smart-hub-tooltip-internal')
   display inline-block
+  // Start initially hidden. Unhidden in JS after it's been positioned
+  visibility hidden
+  z-index 100
 
 +prefix-classes('mp-sh-tooltip-internal-')
   .container

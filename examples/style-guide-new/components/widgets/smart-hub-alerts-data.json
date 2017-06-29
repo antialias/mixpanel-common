@@ -1,13 +1,14 @@
 [
   {
     "alert": {
-      "alertContentId": "insights-basic",
-      "alertId": "insights-alert-id1",
+      "alertContentId": "insights-basic-alert-content-id",
+      "alertId": "insights-basic-alert-id",
       "alertMetadata": {
         "type": "ANOMALY",
         "message": "Insights: basic with single event time series",
+        "isAlertOwner": true,
+        "ingestedAtMs": "1496275200000",
         "readAtMs": "1490908189900",
-        "ingestedAtMs": "1490908189900",
         "markedUsefulAtMs": "1490908189900"
       },
       "insightsQuery": {
@@ -35,19 +36,20 @@
         "direction": "POSITIVE",
         "valueAtTimestamp": 105954,
         "anomalyId": "anomaly-id-insights1",
-        "anomalyTimestamp": 1473145200000
+        "anomalyTimestamp": "1473145200000"
       }
     }
   },
   {
     "alert": {
-      "alertContentId": "insights-group-by",
-      "alertId": "insights-alert-id1",
+      "alertContentId": "insights-group-by-alert-content-id",
+      "alertId": "insights-group-by-alert-id",
       "alertMetadata": {
         "type": "ANOMALY",
         "message": "Insights: single time series with two group by",
-        "readAtMs": "1490908189900",
-        "ingestedAtMs": "1490908189900",
+        "isAlertOwner": false,
+        "readAtMs": "1498780800000",
+        "ingestedAtMs": "1496361600000",
         "markedUsefulAtMs": "1490908189900"
       },
       "insightsQuery": {
@@ -90,18 +92,19 @@
         "direction": "POSITIVE",
         "valueAtTimestamp": 66814,
         "anomalyId": "anomaly-id-insights1",
-        "anomalyTimestamp": 1473145200000
+        "anomalyTimestamp": "1473145200000"
       }
     }
   },
   {
     "alert": {
-      "alertContentId": "funnels-basic",
+      "alertContentId": "funnels-basic-alert-content-id",
+      "alertId": "funnels-basic-alert-id",
       "alertMetadata": {
         "type": "ANOMALY",
         "message": "Funnels: single anomaly",
-        "readAtMs": "1490908189900",
-        "ingestedAtMs": "1490908189900",
+        "isAlertOwner": true,
+        "ingestedAtMs": "1496448000000",
         "markedUsefulAtMs": "1490908189900"
       },
       "anomaly": {
@@ -112,7 +115,7 @@
         "direction": "NEGATIVE",
         "valueAtTimestamp": 71.62,
         "anomalyId": "anomaly-id-funnels1",
-        "anomalyTimestamp": 1495263600000
+        "anomalyTimestamp": "1495263600000"
       },
       "funnelsQuery": {
         "timeUnit": "DAY",
@@ -142,8 +145,7 @@
             }
           }
         ]
-      },
-      "alertId": "funnel-alert-id1"
+      }
     }
   },
   {
@@ -152,6 +154,7 @@
       "alertMetadata": {
         "type": "ANOMALY",
         "message": "Retention: two intervals",
+        "isAlertOwner": true,
         "readAtMs": "1490908189900",
         "ingestedAtMs": "1490908189900",
         "markedUsefulAtMs": "1490908189900"
@@ -159,9 +162,11 @@
       "alerts": [
         {
           "alertContentId": "retention-single-interval-1",
+          "alertId": "retention-single-interval-1",
           "alertMetadata": {
             "type": "ANOMALY",
             "message": "Retention: single interval 1",
+            "isAlertOwner": true,
             "readAtMs": "1490908189900",
             "ingestedAtMs": "1490908189900",
             "markedUsefulAtMs": "1490908189900"
@@ -207,7 +212,6 @@
             "countType": "PERCENT",
             "timeUnit": "DAY"
           },
-          "alertId": "retention-alert-id1",
           "anomaly": {
             "retentionDetails": {
               "interval": 6
@@ -215,14 +219,16 @@
             "direction": "POSITIVE",
             "valueAtTimestamp": 19.13,
             "anomalyId": "anomaly-id-retention1",
-            "anomalyTimestamp": 1473318000000
+            "anomalyTimestamp": "1473318000000"
           }
         },
         {
           "alertContentId": "retention-single-interval-2",
+          "alertId": "retention-single-interval-2",
           "alertMetadata": {
             "type": "ANOMALY",
             "message": "Retention: single interval 2",
+            "isAlertOwner": true,
             "readAtMs": "1490908189900",
             "ingestedAtMs": "1490908189900",
             "markedUsefulAtMs": "1490908189900"
@@ -268,7 +274,6 @@
             "countType": "PERCENT",
             "timeUnit": "DAY"
           },
-          "alertId": "retention-alert-id1",
           "anomaly": {
             "retentionDetails": {
               "interval": 13
@@ -276,7 +281,7 @@
             "direction": "POSITIVE",
             "valueAtTimestamp": 11.74,
             "anomalyId": "anomaly-id-retention1",
-            "anomalyTimestamp": 1473318000000
+            "anomalyTimestamp": "1473318000000"
           }
         }
       ]
